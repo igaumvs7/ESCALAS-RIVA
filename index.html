@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Escalas Riva Vendas</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --azul: #0D2B5E;
@@ -851,8 +853,9 @@ tbody tr:hover td { background: #FAFBFF; }
         <ul style="margin-left:18px">
           <li><strong>💾 Salvo</strong> — indicador no topo. Fica laranja quando há mudanças não salvas. O sistema salva automaticamente após cada ação.</li>
           <li>Os dados ficam no <strong>armazenamento local do navegador</strong> — persistem ao fechar e reabrir o arquivo no mesmo navegador.</li>
-          <li><strong>🗂️ Histórico:</strong> guarda até 20 escalas geradas. Clique em <em>"📂 Abrir"</em> para visualizar ou imprimir uma escala antiga.</li>
-          <li><strong>Atenção:</strong> limpar o cache do navegador apaga os dados. Use o histórico como backup e exporte PDFs regularmente.</li>
+          <li><strong>🗂️ Histórico:</strong> guarda todas as escalas geradas e permite abrir, renomear, salvar o PDF, enviar ao banco e excluir.</li>
+          <li><strong>☁️ Banco:</strong> o botão “Enviar ao banco” guarda o PDF e os dados no Google Drive e registra o link na planilha.</li>
+          <li><strong>Atenção:</strong> enquanto a escala estiver marcada como “Somente neste navegador”, limpar o cache pode apagá-la.</li>
         </ul>
       </div></details></div>
 
@@ -917,6 +920,11 @@ tbody tr:hover td { background: #FAFBFF; }
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--azul);margin-bottom:4px;text-align:center">Gerar Escalas</div>
     <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:14px;text-align:center" id="confirmar-desc">—</div>
 
+    <div style="background:#F8F9FC;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
+      <label for="escala-nome-personalizado" style="display:block;font-size:12px;font-weight:700;color:var(--azul);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.5px">✏️ Nome da Escala</label>
+      <input type="text" id="escala-nome-personalizado" maxlength="100" style="width:100%;font-size:14px;font-weight:600" placeholder="Ex.: Escala Equipe Julho 2026">
+      <div style="font-size:11px;color:var(--cinza-texto);margin-top:6px">Esse nome aparecerá no histórico e será usado como nome do PDF. Você poderá renomear depois.</div>
+    </div>
     <div style="background:var(--azul-fundo);border-radius:var(--radius);padding:14px;margin-bottom:14px">
       <div style="font-size:12px;font-weight:700;color:var(--azul);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">📅 Período da Escala</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -991,6 +999,9 @@ tbody tr:hover td { background: #FAFBFF; }
 
 <script>
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
+const CLOUD_SPREADSHEET_URL='https://docs.google.com/spreadsheets/d/12jTIthOgHc1GI7D6DdkyD_kqhtDC7-aaR12Pgn9_F40/edit';
+const CLOUD_WEBAPP_STORAGE_KEY='riva_banco_webapp_url';
+const CLOUD_RESPONSAVEL_STORAGE_KEY='riva_banco_responsavel';
 const MESES = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DSEM = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const TURNOS_LABEL = {m:'Manhã', t:'Tarde', n:'Noite'};
@@ -1459,9 +1470,10 @@ function renderAjuda(){
 
     ${ajudaTopico('🗂️ Aba — Histórico',`
       <ul>
-        <li>Cada escala gerada é salva automaticamente no histórico (limite: 20 escalas).</li>
+        <li>Cada escala gerada é salva automaticamente no histórico, sem limite fixo de 20 itens.</li>
         <li>Clique em <strong>"📂 Abrir"</strong> para carregar uma escala anterior e ver sua visualização e relatório.</li>
-        <li>Clique em <strong>"🗑 Excluir"</strong> para remover uma entrada do histórico.</li>
+        <li>Use <strong>"✏️ Renomear"</strong> para escolher o nome, <strong>"📄 Salvar PDF"</strong> para baixar e <strong>"☁️ Enviar ao banco"</strong> para guardar no Google Drive e Sheets.</li>
+          <li>Clique em <strong>"🗑 Excluir"</strong> para remover a entrada deste navegador. Arquivos já enviados permanecem preservados no banco.</li>
       </ul>
     `)}
 
@@ -1477,7 +1489,8 @@ function renderAjuda(){
 
     ${ajudaTopico('💾 Salvamento Automático',`
       <ul>
-        <li>Todos os dados são salvos automaticamente no navegador (<em>localStorage</em>) a cada alteração. Você nunca precisa apertar "salvar".</li>
+        <li>As alterações são salvas automaticamente neste navegador a cada ação.</li>
+          <li>Para ter uma cópia permanente e acessível em outros computadores, use <strong>"☁️ Enviar ao banco"</strong> no histórico.</li>
         <li>O indicador <strong>"💾 Salvo"</strong> no cabeçalho confirma que os dados estão salvos.</li>
         <li>Os dados persistem mesmo após fechar e reabrir o navegador, <strong>desde que seja o mesmo navegador e dispositivo</strong>.</li>
         <li>⚠️ Limpar o cache/histórico do navegador pode apagar os dados. Faça backups pelo botão de exportação se disponível.</li>
@@ -2077,6 +2090,8 @@ function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regiona
 function confirmarGerarEscalas(){
   calPeriodoMes={mes:S.mes,ano:S.ano};
   periodoSel={ini:null,fim:null};
+  const nomeEscalaEl=document.getElementById('escala-nome-personalizado');
+  if(nomeEscalaEl) nomeEscalaEl.value=`Escala ${MESES[S.mes]} ${S.ano}`;
   const lista=document.getElementById('locais-check-list');
   lista.innerHTML='';
   S.locais.forEach(l=>{
@@ -2249,6 +2264,8 @@ function fecharModalConfirmar(e){if(!e||e.target===document.getElementById('moda
 function executarGerarEscalas(){
   if(!periodoSel.ini){showToast('Selecione o período no calendário!','warning');return;}
   if(!periodoSel.fim) periodoSel.fim=periodoSel.ini;
+  const nomeInformado=(document.getElementById('escala-nome-personalizado')?.value||'').trim();
+  S._nomeEscala=nomeInformado||`Escala ${MESES[periodoSel.ini.mes]} ${periodoSel.ini.ano}`;
   const dsIni=periodoSel.ini.ds;
   const dsFim=periodoSel.fim.ds;
   const periodoPorLocal={};
@@ -2704,14 +2721,13 @@ function gerarEscalasInterno(){
     });
   });
 
-  S.escala={id:Date.now(),nome:`${periodoSel.ini.dia}/${periodoSel.ini.mes}/${periodoSel.ini.ano} → ${periodoSel.fim.dia}/${periodoSel.fim.mes}/${periodoSel.fim.ano}`,geradoEm:new Date().toLocaleString('pt-BR'),agenda,periodoIni:dsIni,periodoFim:dsFim,periodoPorLocal,zeradosPorLocal:S._zeradosPorLocal||{}};delete S._zeradosPorLocal;
+  const periodoNome=`${periodoSel.ini.dia}/${periodoSel.ini.mes}/${periodoSel.ini.ano} → ${periodoSel.fim.dia}/${periodoSel.fim.mes}/${periodoSel.fim.ano}`;
+  S.escala={id:Date.now(),nome:S._nomeEscala||periodoNome,periodoNome,geradoEm:new Date().toLocaleString('pt-BR'),agenda,periodoIni:dsIni,periodoFim:dsFim,periodoPorLocal,zeradosPorLocal:S._zeradosPorLocal||{},banco:{status:'local'}};delete S._zeradosPorLocal;delete S._nomeEscala;
 
   if(!S.historicoEscalas) S.historicoEscalas=[];
   S.historicoEscalas=S.historicoEscalas.filter(e=>e.id!==S.escala.id);
   S.historicoEscalas.unshift({...S.escala});
-  if(S.historicoEscalas.length>20) S.historicoEscalas=S.historicoEscalas.slice(0,20);
-
-  document.getElementById('print-mes-titulo').textContent=`Escala de Plantões — ${periodoSel.ini.dia}/${periodoSel.ini.mes}/${periodoSel.ini.ano} a ${periodoSel.fim.dia}/${periodoSel.fim.mes}/${periodoSel.fim.ano}`;
+  document.getElementById('print-mes-titulo').textContent=S.escala.nome;
   document.getElementById('print-data-geracao').textContent='Gerado em: '+new Date().toLocaleString('pt-BR');
   renderEscalasVisu();
   renderRelatorio();
@@ -3018,9 +3034,14 @@ function executarImpressao(){
   });
   irAba(4);
   document.getElementById('modal-imprimir').style.display='none';
+  const tituloOriginal=document.title;
+  document.title=nomeArquivoSeguro(S.escala?.nome||'Escala Riva');
   setTimeout(()=>{
     window.print();
-    setTimeout(()=>{document.querySelectorAll('.escala-bloco').forEach(b=>b.classList.remove('print-oculto'));},1000);
+    setTimeout(()=>{
+      document.title=tituloOriginal;
+      document.querySelectorAll('.escala-bloco').forEach(b=>b.classList.remove('print-oculto'));
+    },1000);
   },200);
 }
 
@@ -3143,7 +3164,7 @@ function carregarDados(){
 
 function atualizarIndicadorSalvo(salvo){
   const el=document.getElementById('save-indicator');if(!el) return;
-  if(salvo){el.innerHTML='💾 Salvo';el.style.color='rgba(255,255,255,0.55)';}
+  if(salvo){el.innerHTML='💾 Salvo neste navegador';el.style.color='rgba(255,255,255,0.65)';}
   else{el.innerHTML='● Não salvo';el.style.color='#F6C344';}
 }
 
@@ -3154,25 +3175,69 @@ function autoSave(){
 }
 
 // ─── HISTÓRICO DE ESCALAS ─────────────────────────────────────────────────────
+function escaparHtml(valor){
+  return String(valor??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+}
+
+function nomeArquivoSeguro(nome){
+  const limpo=String(nome||'Escala Riva').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim();
+  return (limpo||'Escala Riva').slice(0,100);
+}
+
+function dataPeriodoDaEscala(ds){
+  const partes=String(ds||'').split('-').map(Number);
+  if(partes.length!==3||!partes[0]) return null;
+  return {ano:partes[0],mes:partes[1],dia:partes[2],ds:String(ds)};
+}
+
 function renderHistorico(){
   const cont=document.getElementById('historico-cont');if(!cont) return;
   cont.innerHTML='';
   const hist=S.historicoEscalas||[];
-  if(hist.length===0){cont.innerHTML='<div class="warn-box">📋 Nenhuma escala gerada ainda.</div>';return;}
-  const tit=document.createElement('div');
-  tit.style.cssText='font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:800;color:var(--azul);margin-bottom:16px';
-  tit.textContent=`📋 Histórico de Escalas (${hist.length})`;
-  cont.appendChild(tit);
+
+  const topo=document.createElement('div');
+  topo.style.cssText='display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px';
+  topo.innerHTML=`<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--azul)">📋 Histórico de Escalas (${hist.length})</div>
+    <div style="font-size:12px;color:var(--cinza-texto);margin-top:3px">As alterações ficam salvas neste navegador. Use “Enviar ao banco” para guardar PDF e dados permanentemente no Google Drive e Sheets.</div></div>
+    <div class="row" style="gap:8px">
+      <button class="btn btn-outline btn-sm" onclick="abrirPlanilhaBanco()">📊 Abrir planilha</button>
+      <button class="btn btn-outline btn-sm" onclick="configurarBancoEscalas()">⚙️ Configurar banco</button>
+    </div>`;
+  cont.appendChild(topo);
+
+  if(hist.length===0){
+    cont.insertAdjacentHTML('beforeend','<div class="warn-box">📋 Nenhuma escala gerada ainda.</div>');
+    return;
+  }
+
   hist.forEach(esc=>{
+    if(!esc.banco) esc.banco={status:'local'};
+    const status=esc.banco.status||'local';
+    const statusMap={
+      local:['Somente neste navegador','#92400E','#FFFBEB'],
+      enviando:['Enviando ao banco...','#1A4A9C','#E8F0FD'],
+      salva:['Salva no banco','#1A7A42','#E8F8EF'],
+      alterada:['Alterada — envie novamente','#92400E','#FFFBEB'],
+      erro:['Falha ao enviar','#C0272D','#FDEAEA']
+    };
+    const st=statusMap[status]||statusMap.local;
     const card=document.createElement('div');
     card.className='card';
-    card.style.cssText='margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px';
+    card.style.cssText='margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px';
     const info=document.createElement('div');
-    info.innerHTML=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--azul)">${esc.nome}</div>
-      <div style="font-size:12px;color:var(--cinza-texto);margin-top:2px">Gerado em: ${esc.geradoEm} &nbsp;·&nbsp; ${Object.keys(esc.agenda||{}).length} locais</div>`;
+    info.style.minWidth='240px';
+    info.innerHTML=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:var(--azul)">${escaparHtml(esc.nome||esc.periodoNome||'Escala sem nome')}</div>
+      <div style="font-size:12px;color:var(--cinza-texto);margin-top:2px">Período: ${escaparHtml(esc.periodoNome||`${esc.periodoIni||'—'} → ${esc.periodoFim||'—'}`)} &nbsp;·&nbsp; Gerado em: ${escaparHtml(esc.geradoEm||'—')} &nbsp;·&nbsp; ${Object.keys(esc.agenda||{}).length} locais</div>
+      <span style="display:inline-block;margin-top:7px;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;color:${st[1]};background:${st[2]}">${st[0]}</span>`;
     card.appendChild(info);
-    const btns=document.createElement('div');btns.className='row';btns.style.gap='8px';
+    const btns=document.createElement('div');btns.className='row';btns.style.cssText='gap:7px;flex-wrap:wrap;justify-content:flex-end';
+    const pdfBanco=esc.banco.pdfUrl?`<button class="btn btn-outline btn-sm" onclick="abrirPdfBanco('${esc.id}')">☁️ Abrir PDF</button>`:'';
+    const enviarTexto=status==='salva'?'🔄 Atualizar banco':'☁️ Enviar ao banco';
     btns.innerHTML=`<button class="btn btn-outline btn-sm" onclick="carregarEscalaHistorico('${esc.id}')">📂 Abrir</button>
+      <button class="btn btn-outline btn-sm" onclick="renomearEscalaHistorico('${esc.id}')">✏️ Renomear</button>
+      <button class="btn btn-outline btn-sm" onclick="baixarPdfHistorico('${esc.id}')">📄 Salvar PDF</button>
+      ${pdfBanco}
+      <button class="btn btn-primary btn-sm" ${status==='enviando'?'disabled':''} onclick="enviarEscalaParaBanco('${esc.id}')">${enviarTexto}</button>
       <button class="btn btn-danger btn-xs" onclick="excluirEscalaHistorico('${esc.id}')">🗑 Excluir</button>`;
     card.appendChild(btns);cont.appendChild(card);
   });
@@ -3182,22 +3247,209 @@ function carregarEscalaHistorico(id){
   const esc=(S.historicoEscalas||[]).find(e=>String(e.id)===String(id));
   if(!esc) return;
   S.escala=esc;
-  try{
-    const [d1,m1,a1]=esc.nome.split(' → ')[0].split('/');
-    const [d2,m2,a2]=esc.nome.split(' → ')[1].split('/');
-    periodoSel={ini:{dia:+d1,mes:+m1,ano:+a1,ds:`${a1}-${m1.padStart(2,'0')}-${d1.padStart(2,'0')}`},fim:{dia:+d2,mes:+m2,ano:+a2,ds:`${a2}-${m2.padStart(2,'0')}-${d2.padStart(2,'0')}`}};
-    S._periodoGlobalIni=periodoSel.ini.ds;S._periodoGlobalFim=periodoSel.fim.ds;
+  const ini=dataPeriodoDaEscala(esc.periodoIni);
+  const fim=dataPeriodoDaEscala(esc.periodoFim);
+  if(ini&&fim){
+    periodoSel={ini,fim};
+    S._periodoGlobalIni=ini.ds;S._periodoGlobalFim=fim.ds;
     S._periodoPorLocal=esc.periodoPorLocal||{};
-  }catch(e){}
+  }
+  document.getElementById('print-mes-titulo').textContent=esc.nome||esc.periodoNome||'Escala Riva';
+  document.getElementById('print-data-geracao').textContent='Gerado em: '+(esc.geradoEm||'—');
   renderEscalasVisu();renderRelatorio();irAba(4);
+  autoSave();
   showToast(`Escala "${esc.nome}" carregada!`,'success');
 }
 
+function renomearEscalaHistorico(id){
+  const esc=(S.historicoEscalas||[]).find(e=>String(e.id)===String(id));
+  if(!esc) return;
+  const novo=prompt('Digite o novo nome desta escala:',esc.nome||esc.periodoNome||'');
+  if(novo===null) return;
+  const nome=novo.trim();
+  if(!nome){showToast('O nome não pode ficar vazio.','warning');return;}
+  esc.nome=nome.slice(0,100);
+  if(esc.banco?.status==='salva') esc.banco.status='alterada';
+  if(S.escala&&String(S.escala.id)===String(id)) S.escala=esc;
+  autoSave();renderHistorico();
+  showToast('Nome da escala atualizado!','success');
+}
+
 function excluirEscalaHistorico(id){
-  if(!confirm('Excluir esta escala do histórico?')) return;
+  const esc=(S.historicoEscalas||[]).find(e=>String(e.id)===String(id));
+  if(!esc) return;
+  const complemento=esc.banco?.status==='salva'||esc.banco?.pdfUrl?'\n\nO PDF já enviado continuará preservado no banco e no Google Drive.':'';
+  if(!confirm(`Excluir "${esc.nome}" deste histórico?${complemento}`)) return;
   S.historicoEscalas=(S.historicoEscalas||[]).filter(e=>String(e.id)!==String(id));
   if(S.escala&&String(S.escala.id)===String(id)) S.escala=null;
-  autoSave();renderHistorico();showToast('Escala excluída!','info');
+  autoSave();renderHistorico();showToast('Escala excluída deste navegador.','info');
+}
+
+function abrirPlanilhaBanco(){
+  window.open(CLOUD_SPREADSHEET_URL,'_blank','noopener');
+}
+
+function abrirPdfBanco(id){
+  const esc=(S.historicoEscalas||[]).find(e=>String(e.id)===String(id));
+  if(esc?.banco?.pdfUrl) window.open(esc.banco.pdfUrl,'_blank','noopener');
+}
+
+function configurarBancoEscalas(){
+  const atual=localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'';
+  const informado=prompt('Cole aqui o endereço do Aplicativo da Web do Apps Script (deve terminar em /exec):',atual);
+  if(informado===null) return false;
+  const url=informado.trim();
+  if(!url){
+    localStorage.removeItem(CLOUD_WEBAPP_STORAGE_KEY);
+    showToast('Conexão com o banco removida deste navegador.','info');
+    return false;
+  }
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.*)?$/.test(url)){
+    showToast('Endereço inválido. Use o link do Apps Script que termina em /exec.','error',5000);
+    return false;
+  }
+  localStorage.setItem(CLOUD_WEBAPP_STORAGE_KEY,url);
+  showToast('Banco configurado neste navegador!','success');
+  return true;
+}
+
+function obterResponsavelBanco(){
+  let nome=(localStorage.getItem(CLOUD_RESPONSAVEL_STORAGE_KEY)||'').trim();
+  if(nome) return nome;
+  const informado=prompt('Digite o nome da pessoa responsável por este envio:','');
+  if(informado===null) return '';
+  nome=informado.trim().slice(0,100);
+  if(nome) localStorage.setItem(CLOUD_RESPONSAVEL_STORAGE_KEY,nome);
+  return nome;
+}
+
+function blobParaBase64(blob){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('Não foi possível preparar o PDF.'));
+    reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function gerarPdfEscalaBlob(esc){
+  if(!window.html2canvas||!window.jspdf?.jsPDF) throw new Error('O gerador de PDF não carregou. Verifique a internet e tente novamente.');
+  const aba=document.getElementById('aba-4');
+  if(!aba) throw new Error('A área da escala não foi encontrada.');
+  const escalaAnterior=S.escala;
+  const estiloAnterior=aba.getAttribute('style');
+  try{
+    S.escala=esc;
+    aba.style.cssText='display:block;position:fixed;left:-12000px;top:0;width:1120px;max-width:1120px;background:#fff;padding:14px;z-index:-1';
+    renderEscalasVisu();
+    if(document.fonts?.ready) await document.fonts.ready;
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const blocos=Array.from(aba.querySelectorAll('.escala-bloco'));
+    if(!blocos.length) throw new Error('Esta escala não possui locais para gerar o PDF.');
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
+    for(let i=0;i<blocos.length;i++){
+      const canvas=await window.html2canvas(blocos[i],{scale:1.45,useCORS:true,backgroundColor:'#FFFFFF',logging:false});
+      const img=canvas.toDataURL('image/jpeg',0.92);
+      if(i>0) pdf.addPage('a4','landscape');
+      const maxW=287,maxH=200;
+      const proporcao=Math.min(maxW/canvas.width,maxH/canvas.height);
+      const w=canvas.width*proporcao,h=canvas.height*proporcao;
+      pdf.addImage(img,'JPEG',(297-w)/2,(210-h)/2,w,h,undefined,'FAST');
+    }
+    return pdf.output('blob');
+  }finally{
+    S.escala=escalaAnterior;
+    if(estiloAnterior===null) aba.removeAttribute('style'); else aba.setAttribute('style',estiloAnterior);
+    if(escalaAnterior) renderEscalasVisu();
+  }
+}
+
+async function baixarPdfHistorico(id){
+  const esc=(S.historicoEscalas||[]).find(e=>String(e.id)===String(id));
+  if(!esc) return;
+  showToast(`Preparando "${esc.nome}"...`,'info',4000);
+  try{
+    const blob=await gerarPdfEscalaBlob(esc);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=nomeArquivoSeguro(esc.nome)+'.pdf';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    showToast('PDF salvo com o nome escolhido!','success');
+  }catch(e){
+    console.error(e);
+    showToast(e.message||'Não foi possível gerar o PDF.','error',6000);
+  }
+}
+
+function regionaisDaEscala(){
+  return [...new Set((S.gerentes||[]).filter(g=>!g.inativo).map(g=>g.regional).filter(Boolean))].join(' / ');
+}
+
+async function enviarEscalaParaBanco(id){
+  const esc=(S.historicoEscalas||[]).find(e=>String(e.id)===String(id));
+  if(!esc) return;
+  let webAppUrl=(localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'').trim();
+  if(!webAppUrl){
+    const configurou=configurarBancoEscalas();
+    if(!configurou) return;
+    webAppUrl=(localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'').trim();
+  }
+  const responsavel=obterResponsavelBanco();
+  if(!responsavel){showToast('Informe o responsável pelo envio.','warning');return;}
+  esc.banco={...(esc.banco||{}),status:'enviando'};
+  autoSave();renderHistorico();
+  try{
+    const pdfBlob=await gerarPdfEscalaBlob(esc);
+    if(pdfBlob.size>25*1024*1024) throw new Error('O PDF ficou maior que 25 MB. Gere uma escala com menos locais por arquivo.');
+    const pdfBase64=await blobParaBase64(pdfBlob);
+    const ini=dataPeriodoDaEscala(esc.periodoIni);
+    const fim=dataPeriodoDaEscala(esc.periodoFim);
+    if(!ini||!fim) throw new Error('O período desta escala está inválido.');
+    const pacoteJson={
+      versao:1,
+      exportadoEm:new Date().toISOString(),
+      escala:esc,
+      locais:S.locais,
+      gerentes:S.gerentes
+    };
+    const payload={
+      action:'salvarEscala',
+      id:String(esc.id),
+      nome:esc.nome||esc.periodoNome||`Escala ${MESES[ini.mes]} ${ini.ano}`,
+      ano:ini.ano,
+      mes:ini.mes,
+      mesNome:MESES[ini.mes].toUpperCase(),
+      dataInicial:esc.periodoIni,
+      dataFinal:esc.periodoFim,
+      regional:regionaisDaEscala(),
+      responsavel,
+      geradoEm:esc.geradoEm||new Date().toLocaleString('pt-BR'),
+      status:'ATIVA',
+      observacoes:'',
+      pdfBase64,
+      jsonConteudo:JSON.stringify(pacoteJson)
+    };
+    const resposta=await fetch(webAppUrl,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload),
+      redirect:'follow'
+    });
+    const texto=await resposta.text();
+    let retorno;
+    try{retorno=JSON.parse(texto);}catch(_){throw new Error('O Apps Script não respondeu corretamente. Confirme a implantação e a permissão de acesso.');}
+    if(!resposta.ok||!retorno.ok) throw new Error(retorno?.error||'O banco recusou o envio.');
+    esc.banco={status:'salva',pdfUrl:retorno.pdfUrl,jsonUrl:retorno.jsonUrl,enviadoEm:new Date().toISOString(),linha:retorno.row};
+    autoSave();renderHistorico();
+    showToast(`"${esc.nome}" foi salva no Google Drive e na planilha!`,'success',6000);
+  }catch(e){
+    console.error(e);
+    esc.banco={...(esc.banco||{}),status:'erro',erro:e.message||String(e)};
+    autoSave();renderHistorico();
+    showToast(e.message||'Falha ao enviar a escala ao banco.','error',7000);
+  }
 }
 
 // ─── RELATÓRIO COMPLETO ───────────────────────────────────────────────────────
