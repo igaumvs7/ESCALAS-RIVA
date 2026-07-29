@@ -1618,6 +1618,16 @@ function renderPainelRelatorioRapido(){
       const ds=toDS(d);
       const dd=agenda[loc.id]?.[ds];
       if(!dd||dd.fechado) return;
+      // Em Dia Todo, manhã e tarde representam um único plantão.
+      if(dd._diatodo){
+        const gDiaTodo=loc.turnos.flatMap(tr=>dd[tr]||[]).find(Boolean);
+        if(gDiaTodo){
+          contGlobal[gDiaTodo.id]=(contGlobal[gDiaTodo.id]||0)+1;
+          if(!contPorLocal[gDiaTodo.id]) contPorLocal[gDiaTodo.id]={};
+          contPorLocal[gDiaTodo.id][loc.nome]=(contPorLocal[gDiaTodo.id][loc.nome]||0)+1;
+        }
+        return;
+      }
       loc.turnos.forEach(tr=>{
         (dd[tr]||[]).forEach(g=>{
           if(g){
@@ -2555,8 +2565,9 @@ function gerarEscalasInterno(){
       emb.forEach((g,i)=>creditos[g.id]=base+(i<resto?1:0));
     } else {
       // ── POR VGV (com possível reserva de 10% para zerados) ────────────
-      const vagasZerados=zerados.length>0?Math.floor(totalVagasLoc*0.10):0;
-      const vagasRestantes=totalVagasLoc-vagasZerados;
+      // Dia Todo usa dias como unidade; locais normais usam vagas/turnos.
+      const vagasZerados=zerados.length>0?Math.floor(unidadeCredito*0.10):0;
+      const vagasRestantes=unidadeCredito-vagasZerados;
 
       if(zerados.length>0){
         const base=Math.floor(vagasZerados/zerados.length);
@@ -2566,7 +2577,7 @@ function gerarEscalasInterno(){
 
       const naoZerados=zerados.length>0?ger.filter(g=>!zerados.find(z=>z.id===g.id)):ger;
       const gerParaDist=naoZerados.length>0?naoZerados:ger;
-      const vagasParaDist=naoZerados.length>0?vagasRestantes:totalVagasLoc;
+      const vagasParaDist=naoZerados.length>0?vagasRestantes:unidadeCredito;
 
       const totalVGVAtivo=gerParaDist.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
       if(totalVGVAtivo>0){
@@ -2974,6 +2985,11 @@ function renderEscalasVisu(){
       const ds=toDS(d);
       const dayData=agenda[loc.id]?.[ds];
       if(!dayData||dayData.fechado) return;
+      if(dayData._diatodo){
+        const gDiaTodo=loc.turnos.flatMap(tr=>dayData[tr]||[]).find(Boolean);
+        if(gDiaTodo) cnt[gDiaTodo.nome]=(cnt[gDiaTodo.nome]||0)+1;
+        return;
+      }
       loc.turnos.forEach(tr=>{(dayData[tr]||[]).forEach(g=>{if(g)cnt[g.nome]=(cnt[g.nome]||0)+1;});});
     });
     const rod=document.createElement('div');rod.className='rodape-cnt no-print';
@@ -3477,6 +3493,14 @@ function renderRelatorio(){
     diasEntre(locIni,locFim).forEach(d=>{
       const ds=toDS(d);const dd=agenda[loc.id]?.[ds];
       if(!dd||dd.fechado) return;
+      // Em Dia Todo, manhã e tarde representam um único plantão.
+      if(dd._diatodo){
+        const gDiaTodo=loc.turnos.flatMap(tr=>dd[tr]||[]).find(Boolean);
+        if(gDiaTodo){contGlobal[gDiaTodo.id]=(contGlobal[gDiaTodo.id]||0)+1;
+          if(!contPorLocal[gDiaTodo.id])contPorLocal[gDiaTodo.id]={};
+          contPorLocal[gDiaTodo.id][loc.nome]=(contPorLocal[gDiaTodo.id][loc.nome]||0)+1;}
+        return;
+      }
       loc.turnos.forEach(tr=>{
         (dd[tr]||[]).forEach(g=>{
           if(g){contGlobal[g.id]=(contGlobal[g.id]||0)+1;
