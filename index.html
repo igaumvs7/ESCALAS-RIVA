@@ -224,6 +224,8 @@ tbody tr:hover td { background: #FAFBFF; }
 @media print { .print-only { display: flex !important; } }
 .cnt-item { background: #fff; border: 1px solid var(--cinza-borda); border-radius: 20px; padding: 4px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; box-shadow: var(--sombra); }
 .cnt-num { font-weight: 800; color: var(--azul-claro); font-size: 14px; }
+.cnt-total { margin-left: auto; background: var(--azul); border-color: var(--azul); color: #fff; }
+.cnt-total .cnt-num { color: #fff; font-size: 16px; }
 
 /* ─── MODAL ──────────────────────────────────────────────────── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(13,27,53,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); animation: fadeIn 0.15s ease; }
@@ -431,6 +433,12 @@ tbody tr:hover td { background: #FAFBFF; }
     padding: 2px 9px;
     color: #1B2B5B;
     white-space: nowrap;
+  }
+  .print-only .print-cnt-total {
+    margin-left: auto;
+    background: #1B2B5B;
+    border-color: #1B2B5B;
+    color: #fff;
   }
 
   /* ── Rodapé decorativo ──────────────────────────────────────────────── */
@@ -2992,12 +3000,16 @@ function renderEscalasVisu(){
       }
       loc.turnos.forEach(tr=>{(dayData[tr]||[]).forEach(g=>{if(g)cnt[g.nome]=(cnt[g.nome]||0)+1;});});
     });
+    const totalVagasLocal=Object.values(cnt).reduce((s,n)=>s+n,0);
     const rod=document.createElement('div');rod.className='rodape-cnt no-print';
     Object.entries(cnt).sort((a,b)=>b[1]-a[1]).forEach(([nome,n])=>{
       const it=document.createElement('div');it.className='cnt-item';
       it.innerHTML=`<span style="font-weight:600">${nome}</span><span class="cnt-num">${n}</span>`;
       rod.appendChild(it);
     });
+    const totalIt=document.createElement('div');totalIt.className='cnt-item cnt-total';
+    totalIt.innerHTML=`<span style="font-weight:800">TOTAL DE VAGAS</span><span class="cnt-num">${totalVagasLocal}</span>`;
+    rod.appendChild(totalIt);
     bloco.appendChild(rod);
 
     // Versão print do rodapé (aparece só na segunda metade / fim do local)
@@ -3009,6 +3021,8 @@ function renderEscalasVisu(){
       const sp=document.createElement('span');sp.className='print-cnt-item';
       sp.textContent=`${nome}  ${n}`;rodPrint.appendChild(sp);
     });
+    const spTotal=document.createElement('span');spTotal.className='print-cnt-item print-cnt-total';
+    spTotal.textContent=`TOTAL DE VAGAS  ${totalVagasLocal}`;rodPrint.appendChild(spTotal);
     bloco.appendChild(rodPrint);
 
     // Rodapé decorativo de impressão
