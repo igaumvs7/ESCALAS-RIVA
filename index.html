@@ -1,0 +1,3543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escalas Riva Vendas</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #0D2B5E;
+  --azul-medio: #1A4A9C;
+  --azul-claro: #2B6BE6;
+  --azul-fundo: #E8F0FD;
+  --vermelho: #C0272D;
+  --vermelho-claro: #FDEAEA;
+  --branco: #FFFFFF;
+  --cinza-fundo: #F4F6FA;
+  --cinza-borda: #D1D9E6;
+  --cinza-texto: #5A6880;
+  --texto: #0D1B35;
+  --verde: #1A7A42;
+  --verde-claro: #E8F8EF;
+  --amarelo: #F59E0B;
+  --amarelo-claro: #FFFBEB;
+  --sombra: 0 2px 12px rgba(13,43,94,0.10);
+  --sombra-lg: 0 8px 32px rgba(13,43,94,0.16);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--cinza-fundo);
+  color: var(--texto);
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+/* ─── HEADER ─────────────────────────────────────────────────── */
+#header {
+  background: var(--azul);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  box-shadow: 0 2px 16px rgba(13,43,94,0.25);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo-area { display: flex; align-items: center; gap: 14px; }
+.logo-icon {
+  width: 40px; height: 40px; background: var(--vermelho);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px;
+  color: #fff; letter-spacing: 1px; flex-shrink: 0;
+}
+.logo-text { display: flex; flex-direction: column; }
+.logo-nome { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; color: #fff; letter-spacing: 1px; line-height: 1.1; }
+.logo-sub { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 500; letter-spacing: 0.5px; }
+.header-center { display: flex; align-items: center; gap: 10px; }
+.header-mes-label { font-size: 13px; color: rgba(255,255,255,0.65); font-weight: 500; }
+.header-mes-val { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+
+/* ─── BOTÕES ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; transition: all 0.18s;
+  text-decoration: none; white-space: nowrap;
+}
+.btn-primary { background: var(--vermelho); color: #fff; box-shadow: 0 2px 8px rgba(192,39,45,0.30); }
+.btn-primary:hover { background: #a82025; transform: translateY(-1px); }
+.btn-secondary { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
+.btn-secondary:hover { background: rgba(255,255,255,0.22); }
+.btn-outline { background: #fff; color: var(--azul); border: 1.5px solid var(--cinza-borda); }
+.btn-outline:hover { border-color: var(--azul-claro); background: var(--azul-fundo); }
+.btn-danger { background: var(--vermelho-claro); color: var(--vermelho); border: 1px solid #f5c2c4; }
+.btn-danger:hover { background: #fbdcdc; }
+.btn-verde { background: var(--verde-claro); color: var(--verde); border: 1px solid #86EFAC; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-xs { padding: 3px 8px; font-size: 11px; }
+.btn-icon { width: 32px; height: 32px; padding: 0; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
+
+/* ─── TABS ───────────────────────────────────────────────────── */
+#tabs-bar {
+  background: var(--azul); padding: 0;
+  display: flex; gap: 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  overflow-x: auto;
+  justify-content: center;
+  position: sticky;
+  top: 64px;
+  z-index: 99;
+}
+.tab {
+  padding: 10px 18px; font-size: 13px; font-weight: 600;
+  color: rgba(255,255,255,0.55); cursor: pointer;
+  border-bottom: 3px solid transparent; transition: all 0.18s;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.tab:hover { color: rgba(255,255,255,0.85); }
+.tab.active { color: #fff; border-bottom-color: var(--vermelho); }
+.tab-icon { font-size: 15px; }
+
+/* ─── MAIN ───────────────────────────────────────────────────── */
+#main { max-width: 1400px; margin: 0 auto; padding: 28px 32px 80px; }
+
+/* ─── CARDS ──────────────────────────────────────────────────── */
+.card { background: #fff; border-radius: var(--radius); border: 1px solid var(--cinza-borda); padding: 20px; box-shadow: var(--sombra); }
+.card-title {
+  font-size: 11px; font-weight: 700; color: var(--cinza-texto);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.card-title::before { content: ''; display: inline-block; width: 3px; height: 14px; background: var(--vermelho); border-radius: 2px; }
+
+/* ─── KPI CARDS ──────────────────────────────────────────────── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
+.kpi-card {
+  background: #fff; border-radius: var(--radius); border: 1px solid var(--cinza-borda);
+  padding: 18px 20px; box-shadow: var(--sombra); position: relative; overflow: hidden;
+}
+.kpi-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--azul-claro);
+}
+.kpi-card:nth-child(2)::after { background: var(--vermelho); }
+.kpi-card:nth-child(3)::after { background: #27AE60; }
+.kpi-card:nth-child(4)::after { background: var(--amarelo); }
+.kpi-label { font-size: 11px; font-weight: 600; color: var(--cinza-texto); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.kpi-value { font-family: 'Barlow Condensed', sans-serif; font-size: 36px; font-weight: 800; color: var(--azul); line-height: 1; }
+.kpi-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 32px; opacity: 0.10; }
+
+/* ─── INPUTS ─────────────────────────────────────────────────── */
+input[type=text], input[type=number], input[type=date], select, textarea {
+  padding: 8px 12px; border: 1.5px solid var(--cinza-borda); border-radius: var(--radius-sm);
+  background: #fff; color: var(--texto); font-size: 13px; font-family: 'Barlow', sans-serif;
+  transition: border-color 0.15s; outline: none;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+  border-color: var(--azul-claro); box-shadow: 0 0 0 3px rgba(43,107,230,0.10);
+}
+
+/* ─── BADGES ─────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; padding: 2px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+}
+.badge-azul { background: var(--azul-fundo); color: var(--azul-medio); }
+.badge-verde { background: #E8F8EF; color: #1A7A42; }
+.badge-vermelho { background: var(--vermelho-claro); color: var(--vermelho); }
+.badge-cinza { background: #ECEEF2; color: #4A5568; }
+.badge-roxo { background: #F0EEFF; color: #5A3FC0; }
+.badge-amarelo { background: #FEF3C7; color: #92400E; }
+
+/* ─── TABELA ─────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: var(--cinza-fundo); padding: 9px 12px; text-align: left;
+  font-weight: 700; font-size: 11px; color: var(--cinza-texto);
+  text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 2px solid var(--cinza-borda);
+}
+tbody td { padding: 9px 12px; border-bottom: 1px solid #EEF1F7; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #FAFBFF; }
+
+/* ─── SEPARADOR ──────────────────────────────────────────────── */
+.sep { height: 1px; background: var(--cinza-borda); margin: 14px 0; }
+
+/* ─── INFO / WARN ────────────────────────────────────────────── */
+.info-box { background: var(--azul-fundo); color: var(--azul-medio); border-left: 3px solid var(--azul-claro); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+.warn-box { background: #FFF8E8; color: #7A5A00; border-left: 3px solid #F0B429; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+.success-box { background: var(--verde-claro); color: var(--verde); border-left: 3px solid #86EFAC; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; }
+
+/* ─── PROGRESS BAR ───────────────────────────────────────────── */
+.prog-bar { height: 6px; background: var(--cinza-borda); border-radius: 4px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--azul-claro), var(--azul-medio)); transition: width 0.4s ease; }
+
+/* ─── ESCALA VISUAL ──────────────────────────────────────────── */
+.escala-bloco { margin-bottom: 32px; }
+.escala-hdr {
+  padding: 12px 18px; border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px;
+}
+.cal-wrap { overflow-x: auto; border: 1px solid var(--cinza-borda); border-top: none; border-radius: 0 0 var(--radius) var(--radius); }
+.cal-wrap-segunda { margin-top: 0; }
+.cal-wrap-segunda .cal-wrap { border-radius: 0 0 var(--radius) var(--radius); border-top: none; }
+.cal-table { border-collapse: collapse; font-size: 12px; min-width: 100%; }
+.cal-table th { padding: 7px 6px; text-align: center; border: 1px solid #EEF1F7; font-size: 11px; font-weight: 700; color: var(--cinza-texto); white-space: nowrap; min-width: 52px; background: var(--cinza-fundo); }
+.cal-table td { border: 1px solid #EEF1F7; padding: 3px 4px; text-align: center; vertical-align: top; min-width: 52px; }
+.cal-table .t-lbl {
+  text-align: center;
+  font-size: 11px; font-weight: 700; color: var(--cinza-texto);
+  border: none; border-right: 1px solid #EEF1F7;
+  padding: 3px 6px;
+  white-space: nowrap;
+  min-width: 52px;
+  width: 52px;
+  vertical-align: middle;
+  background: #FAFBFF;
+}
+
+/* Chips */
+.chip { display: block; padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; border: none; width: 100%; text-align: center; transition: opacity 0.15s, transform 0.1s; }
+.chip:hover { opacity: 0.82; transform: scale(1.03); }
+.chip-m { background: #DBEAFE; color: #1E3A8A; }
+.chip-t { background: #FEF3C7; color: #92400E; }
+.chip-n { background: #EDE9FE; color: #4C1D95; }
+.chip-add { background: var(--cinza-fundo); color: var(--cinza-texto); font-size: 10px; }
+.chip-fechado { background: var(--vermelho-claro); color: var(--vermelho); font-weight: 700; font-size: 10px; }
+
+/* Rodapé contador */
+.rodape-cnt { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.print-only { display: none; }
+@media print { .print-only { display: flex !important; } }
+.cnt-item { background: #fff; border: 1px solid var(--cinza-borda); border-radius: 20px; padding: 4px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; box-shadow: var(--sombra); }
+.cnt-num { font-weight: 800; color: var(--azul-claro); font-size: 14px; }
+
+/* ─── MODAL ──────────────────────────────────────────────────── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(13,27,53,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); animation: fadeIn 0.15s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-box { background: #fff; border-radius: 14px; padding: 24px; min-width: 300px; max-width: 400px; width: 92%; box-shadow: var(--sombra-lg); animation: slideUp 0.2s ease; }
+.modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; color: var(--azul); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.modal-title::before { content: ''; display: inline-block; width: 4px; height: 20px; background: var(--vermelho); border-radius: 2px; }
+
+/* ─── TOAST ──────────────────────────────────────────────────── */
+#toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: var(--azul); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--sombra-lg); display: flex; align-items: center; gap: 10px; animation: toastIn 0.3s cubic-bezier(.2,.8,.3,1.2); max-width: 320px; }
+.toast.success { background: #1A7A42; }
+.toast.error { background: var(--vermelho); }
+.toast.warning { background: #B45309; }
+@keyframes toastIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(60px); opacity: 0; } }
+
+/* ─── PROGRESS MODAL ─────────────────────────────────────────── */
+#progress-modal { position: fixed; inset: 0; background: rgba(13,27,53,0.85); display: flex; align-items: center; justify-content: center; z-index: 1500; backdrop-filter: blur(6px); }
+.progress-box { background: #fff; border-radius: 20px; padding: 40px 48px; text-align: center; min-width: 360px; box-shadow: var(--sombra-lg); animation: slideUp 0.25s ease; }
+.progress-box h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; color: var(--azul); margin-bottom: 6px; }
+.progress-box p { color: var(--cinza-texto); font-size: 13px; margin-bottom: 22px; }
+.progress-bar-lg { height: 10px; background: var(--cinza-borda); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--azul-claro), var(--vermelho)); border-radius: 6px; transition: width 0.25s ease; }
+.progress-pct { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 800; color: var(--azul); }
+@keyframes iconPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+
+/* ─── CALENDÁRIO DE VAGAS ────────────────────────────────────── */
+.cal-vagas-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 16px; }
+.cal-dia-header { text-align: center; font-size: 11px; font-weight: 700; color: var(--cinza-texto); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 0; }
+.cal-dia { border: 1.5px solid var(--cinza-borda); border-radius: var(--radius-sm); padding: 6px; min-height: 80px; cursor: pointer; transition: all 0.15s; background: #fff; position: relative; }
+.cal-dia:hover { border-color: var(--azul-claro); box-shadow: 0 0 0 3px rgba(43,107,230,0.10); }
+.cal-dia.vazio { background: transparent; border-color: transparent; cursor: default; }
+.cal-dia.fechado { background: #FFF5F5; border-color: #FCC; }
+.cal-dia.tem-override { border-color: var(--azul-claro); background: var(--azul-fundo); }
+.cal-dia-num { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; color: var(--azul); line-height: 1; margin-bottom: 4px; }
+.cal-dia-dsem { font-size: 10px; color: var(--cinza-texto); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+.cal-dia-vagas { display: flex; flex-direction: column; gap: 2px; }
+.vaga-pill { font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 3px; display: flex; justify-content: space-between; }
+.vaga-m { background: #DBEAFE; color: #1E3A8A; }
+.vaga-t { background: #FEF3C7; color: #92400E; }
+.vaga-n { background: #EDE9FE; color: #4C1D95; }
+.cal-local-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.cal-local-tab { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--cinza-borda); background: #fff; color: var(--cinza-texto); transition: all 0.15s; }
+.cal-local-tab.active { background: var(--azul); color: #fff; border-color: var(--azul); }
+
+/* ─── MODAL EDIÇÃO DE DIA ────────────────────────────────────── */
+.vagas-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.vagas-input-label { font-size: 13px; font-weight: 600; min-width: 60px; }
+.turno-badge-m { color: #1E3A8A; background: #DBEAFE; }
+.turno-badge-t { color: #92400E; background: #FEF3C7; }
+.turno-badge-n { color: #4C1D95; background: #EDE9FE; }
+
+/* ─── GRID ───────────────────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ─── PRINT ──────────────────────────────────────────────────── */
+@media print {
+  @page { size: A4 landscape; margin: 5mm 5mm 7mm; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .no-print { display: none !important; }
+  #header, #tabs-bar, #toast-container { display: none !important; }
+  body { background: #fff; font-size: 10px; }
+  #main { padding: 0; max-width: 100%; }
+
+  /* ── Cada local = 1 página ───────────────────────────────────────────── */
+  .escala-bloco {
+    page-break-before: always;
+    page-break-inside: avoid;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .escala-bloco:first-child { page-break-before: auto; }
+
+  /* ── Cabeçalho de impressão elegante ────────────────────────────────── */
+  .print-bloco-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px 7px;
+    margin-bottom: 0;
+    background: #fff;
+    position: relative;
+  }
+  .print-bloco-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3.5px;
+    background: linear-gradient(90deg, #1B2B5B 0%, #1B2B5B 55%, #E63946 100%);
+  }
+  .print-bloco-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1.5px;
+    background: linear-gradient(90deg, #1B2B5B 0%, #3B82F6 50%, #E63946 100%);
+    opacity: 0.3;
+  }
+
+  /* ── Segunda metade: sem page-break ─────────────────────────────────── */
+  .cal-wrap-segunda {
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    margin-top: 3px;
+  }
+  .cal-wrap-segunda .print-bloco-header { display: none !important; }
+
+  /* Separador de período entre as 2 metades */
+  .print-sep-periodo {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 6px;
+    margin: 3px 0;
+    background: #EEF3FB;
+    border-left: none;
+  }
+  .print-sep-periodo span {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: #1B2B5B;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+
+  /* ── Cabeçalho colorido do local ────────────────────────────────────── */
+  .escala-hdr { padding: 5px 10px !important; font-size: 12px !important; }
+  .horarios-faixa { padding: 4px 10px !important; gap: 10px !important; font-size: 10px !important; }
+  .horarios-faixa .chip { font-size: 8px !important; padding: 2px 6px !important; }
+
+  /* ── Tabelas ─────────────────────────────────────────────────────────── */
+  .cal-wrap { overflow: visible !important; width: 100% !important; border: none !important; }
+  .cal-table {
+    font-size: 9px !important;
+    width: 100% !important;
+    table-layout: fixed;
+    border-collapse: collapse !important;
+  }
+  .cal-table th {
+    padding: 4px 2px !important;
+    font-size: 8.5px !important;
+    min-width: 0 !important;
+    background: #F1F5FB !important;
+    border: 0.5px solid #C8D3E8 !important;
+    line-height: 1.3 !important;
+  }
+  .cal-table td {
+    padding: 3px 2px !important;
+    min-width: 0 !important;
+    border: 0.5px solid #DDE3F0 !important;
+    height: 22px !important;
+  }
+  .cal-table .t-lbl {
+    min-width: 44px !important;
+    width: 44px !important;
+    font-size: 8px !important;
+    padding: 3px 4px !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    background: #F4F7FD !important;
+    font-weight: 700 !important;
+  }
+  .chip {
+    font-size: 8px !important;
+    padding: 2px 3px !important;
+    border-radius: 3px !important;
+    line-height: 1.2 !important;
+  }
+  .chip-fechado { font-size: 7px !important; }
+
+  /* ── Rodapé de contagem ─────────────────────────────────────────────── */
+  .rodape-cnt { display: none !important; }
+  .print-only {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px;
+    background: #F4F7FD;
+    border-top: 1.5px solid #C8D3E8;
+    margin-top: 3px;
+    border-radius: 0 0 4px 4px;
+  }
+  .print-only .print-cnt-label {
+    font-size: 8px;
+    font-weight: 800;
+    color: #1B2B5B;
+    margin-right: 4px;
+    white-space: nowrap;
+    align-self: center;
+  }
+  .print-only .print-cnt-item {
+    font-size: 8.5px;
+    font-weight: 700;
+    background: #fff;
+    border: 0.75px solid #C8D3E8;
+    border-radius: 12px;
+    padding: 2px 9px;
+    color: #1B2B5B;
+    white-space: nowrap;
+  }
+
+  /* ── Rodapé decorativo ──────────────────────────────────────────────── */
+  .print-rodape-deco {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 3px;
+    padding: 2px 8px;
+    border-top: 1px solid #EEF1F7;
+    font-size: 7.5px;
+    color: #aaa;
+    letter-spacing: 0.4px;
+  }
+  .print-rodape-deco .deco-dot-azul {
+    width: 24px; height: 3.5px;
+    background: #1B2B5B;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .print-rodape-deco .deco-dot-verm {
+    width: 24px; height: 3.5px;
+    background: #E63946;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  .escala-bloco.print-oculto { display: none !important; }
+}
+
+.print-bloco-header { display: none; }
+.print-rodape-deco { display: none; }
+.print-sep-periodo { display: none; }
+
+#print-header {
+  display: none; text-align: center; margin-bottom: 24px; padding-bottom: 16px;
+  border-bottom: 3px solid var(--azul);
+}
+.print-logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.print-logo-icon { width: 48px; height: 48px; background: var(--vermelho); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px; color: #fff; }
+
+/* ─── GERENTE INATIVO ────────────────────────────────────────── */
+.gerente-inativo-row { opacity: 0.45; filter: grayscale(0.6); background: #F9FAFB; border-radius: 8px; }
+
+/* ─── RODAPÉ GLOBAL ──────────────────────────────────────────── */
+#rodape-global {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 36px;
+  background: var(--azul);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 500;
+  z-index: 90;
+  border-top: 1px solid rgba(255,255,255,0.10);
+}
+#rodape-global strong { color: rgba(255,255,255,0.85); }
+#rodape-global a { color: rgba(255,255,255,0.7); text-decoration: none; }
+#rodape-global a:hover { color: #fff; }
+#rodape-global .sep-rod { opacity: 0.3; }
+
+/* ─── ROW UTIL ───────────────────────────────────────────────── */
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row-between { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+/* ─── SECTION TITLE ──────────────────────────────────────────── */
+.section-heading { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; color: var(--azul); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+.section-heading span { color: var(--vermelho); }
+
+/* ─── PAINEL DASHBOARD ───────────────────────────────────────── */
+.painel-section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; color: var(--azul); margin: 22px 0 12px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.painel-section-title::before { content: ''; width: 4px; height: 18px; background: var(--vermelho); border-radius: 2px; display: inline-block; }
+.stat-mini { background: var(--cinza-fundo); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; }
+.stat-mini-label { font-size: 10px; font-weight: 700; color: var(--cinza-texto); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-mini-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; color: var(--azul); line-height: 1; }
+
+/* ─── RESPONSIVO MOBILE ──────────────────────────────────────── */
+@media (max-width: 900px) {
+  #header { padding: 0 16px; height: auto; min-height: 56px; flex-wrap: wrap; gap: 6px; padding-top: 8px; padding-bottom: 8px; }
+  #tabs-bar { top: auto; position: sticky; top: 0; }
+  #main { padding: 14px 10px 80px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 12px; }
+  .header-center { display: none; }
+  .header-actions { flex-wrap: wrap; gap: 4px; }
+  .modal-box { padding: 14px; max-width: 96vw; }
+  .tab { padding: 8px 10px; font-size: 11px; }
+  .tab-icon { font-size: 13px; }
+  .card { padding: 14px; }
+  .kpi-value { font-size: 28px; }
+  .section-heading { font-size: 18px; }
+  .btn { font-size: 12px; padding: 7px 12px; }
+  .btn-sm { font-size: 11px; padding: 5px 9px; }
+  table { font-size: 12px; }
+  thead th { font-size: 10px; padding: 7px 8px; }
+  tbody td { padding: 7px 8px; }
+}
+
+@media (max-width: 480px) {
+  #header { padding: 8px 12px; gap: 6px; }
+  .logo-nome { font-size: 17px; }
+  .logo-sub { display: none; }
+  #tabs-bar { padding: 0; justify-content: flex-start; }
+  .tab { padding: 8px 9px; font-size: 10px; gap: 3px; }
+  #main { padding: 10px 8px 80px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-card { padding: 12px 14px; }
+  .kpi-value { font-size: 26px; }
+  .kpi-icon { font-size: 24px; }
+  .modal-box { padding: 12px; border-radius: 10px; }
+  .modal-title { font-size: 17px; }
+  .card { padding: 12px; }
+  .btn { font-size: 12px; padding: 7px 10px; }
+  .header-actions .btn-secondary { display: none; }
+  /* Escala no celular: scroll horizontal */
+  .cal-wrap { -webkit-overflow-scrolling: touch; }
+  /* Calendário de vagas: grid menor */
+  .cal-vagas-grid { gap: 3px; }
+  .cal-dia { min-height: 58px; padding: 4px; }
+  .cal-dia-num { font-size: 14px; }
+  /* Rodapé global menor */
+  #rodape-global { font-size: 11px; gap: 8px; height: 32px; }
+  /* Ocultar texto longo nas tabs no mobile muito pequeno */
+  .tab span:not(.tab-icon) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─────────────────────────────────────────────── -->
+<div id="header" class="no-print">
+  <div class="logo-area">
+    <div class="logo-icon">RV</div>
+    <div class="logo-text">
+      <div class="logo-nome">RIVA VENDAS</div>
+      <div class="logo-sub">Sistema de Escalas</div>
+    </div>
+  </div>
+  <div class="header-center">
+    <span class="header-mes-label">Período:</span>
+    <span class="header-mes-val" id="hdr-mes-val">—</span>
+  </div>
+  <div class="header-actions">
+    <span id="save-indicator" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.45);min-width:80px;text-align:right">—</span>
+    <button class="btn btn-secondary btn-sm" onclick="abrirModalImprimir()">🖨️ Imprimir / PDF</button>
+    <button class="btn btn-primary" onclick="confirmarGerarEscalas()">⚡ Gerar Escalas</button>
+  </div>
+</div>
+
+<!-- ─── TABS ───────────────────────────────────────────────── -->
+<div id="tabs-bar" class="no-print">
+  <div class="tab active" onclick="irAba(0)"><span class="tab-icon">📊</span> Painel</div>
+  <div class="tab" onclick="irAba(1)"><span class="tab-icon">📍</span> Locais &amp; Padrões</div>
+  <div class="tab" onclick="irAba(2)"><span class="tab-icon">📅</span> Calendário de Vagas</div>
+  <div class="tab" onclick="irAba(3)"><span class="tab-icon">👥</span> Gerentes &amp; VGV</div>
+  <div class="tab" onclick="irAba(4)"><span class="tab-icon">🗓️</span> Escalas Geradas</div>
+  <div class="tab" onclick="irAba(5)"><span class="tab-icon">📈</span> Relatório</div>
+  <div class="tab" id="tab-fila-dom" onclick="irAbaFilaDomingos()"><span class="tab-icon">🌅</span> Fila Domingos</div>
+  <div class="tab" id="tab-historico" onclick="irAbaHistorico()"><span class="tab-icon">🗂️</span> Histórico</div>
+  <div class="tab" id="tab-ajuda" onclick="irAbaAjuda()"><span class="tab-icon">ℹ️</span> Ajuda</div>
+</div>
+
+<!-- ─── PRINT HEADER (global, aparece só na impressão) ─────── -->
+<div id="print-header">
+  <div class="print-logo">
+    <div class="print-logo-icon">RV</div>
+    <div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
+      <div style="font-size:13px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>
+    </div>
+  </div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--vermelho);margin-top:6px" id="print-mes-titulo">—</div>
+  <div style="font-size:11px;color:var(--cinza-texto);margin-top:2px" id="print-data-geracao">—</div>
+</div>
+
+<!-- ─── MAIN CONTENT ───────────────────────────────────────── -->
+<div id="main">
+
+  <!-- ABA 0: PAINEL COMPLETO -->
+  <div id="aba-0">
+    <!-- Configuração de mês -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">⚙️ Configuração do Período</div>
+      <div class="row" style="gap:16px;flex-wrap:wrap">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--cinza-texto);display:block;margin-bottom:5px">Mês</label>
+          <select id="sel-mes" onchange="mudarMes()" style="min-width:160px">
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+            <option value="4" selected>Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+            <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--cinza-texto);display:block;margin-bottom:5px">Ano</label>
+          <input type="number" id="inp-ano" value="2026" min="2024" max="2035" style="width:100px" onchange="mudarMes()">
+        </div>
+        <div style="align-self:flex-end">
+          <button class="btn btn-outline btn-sm" onclick="mudarMes()">✓ Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Vagas / Mês</div>
+        <div class="kpi-value" id="m-vagas">—</div>
+        <div class="kpi-icon">📋</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Gerentes Ativos</div>
+        <div class="kpi-value" id="m-ger">—</div>
+        <div class="kpi-icon">👥</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Locais Ativos</div>
+        <div class="kpi-value" id="m-loc">—</div>
+        <div class="kpi-icon">📍</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">VGV Total</div>
+        <div class="kpi-value" id="m-vgv-total">—</div>
+        <div class="kpi-icon">💰</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="card-title">Modo de Distribuição por Local</div>
+        <div id="painel-modos"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Resumo de Vagas por Local</div>
+        <div id="painel-chart"></div>
+      </div>
+    </div>
+
+    <!-- Painel de Relatório Rápido (se houver escala gerada) -->
+    <div id="painel-relatorio-rapido"></div>
+  </div>
+
+  <!-- ABA 1: LOCAIS -->
+  <div id="aba-1" style="display:none">
+    <div class="info-box"><strong>Configure o padrão de vagas por dia da semana</strong> para cada local. Após gerar a escala, você pode ajustar dias específicos na aba <strong>Calendário de Vagas</strong>.</div>
+    <div id="lista-locais"></div>
+    <button class="btn btn-outline" onclick="addLocal()" style="margin-top:4px">+ Novo Local</button>
+  </div>
+
+  <!-- ABA 2: CALENDÁRIO DE VAGAS -->
+  <div id="aba-2" style="display:none">
+    <div class="section-heading">📅 Calendário de <span>Vagas por Data</span></div>
+    <div class="info-box"><strong>Aqui você define vagas específicas para datas individuais.</strong> Clique em qualquer dia para sobrescrever o padrão daquele local naquela data. Os dias com override aparecem em azul.</div>
+    <div class="card">
+      <div class="card-title">Selecionar Local</div>
+      <div class="cal-local-tabs" id="cal-local-tabs"></div>
+      <div id="cal-vagas-container"></div>
+    </div>
+  </div>
+
+  <!-- ABA 3: GERENTES -->
+  <div id="aba-3" style="display:none">
+    <div class="grid-2">
+      <div class="card">
+        <div class="row-between" style="margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">Gerentes</div>
+          <button class="btn btn-outline btn-sm" onclick="addGerente()">+ Gerente</button>
+        </div>
+        <div id="lista-gerentes"></div>
+      </div>
+      <div class="card">
+        <div class="card-title" id="lbl-vgv">VGV de Referência</div>
+        <div class="info-box">VGV total de cada gerente no mês anterior. Usado para distribuição proporcional e para o BLIP (por VGV).</div>
+        <div id="tabela-vgv"></div>
+        <div class="sep"></div>
+        <div class="row">
+          <span style="font-size:14px;font-weight:700;color:var(--azul)">Total VGV:</span>
+          <span id="total-vgv" style="font-size:20px;font-weight:800;color:var(--azul-claro);font-family:'Barlow Condensed',sans-serif">R$ 0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VAGAS MANUAIS POR GERENTE -->
+    <div class="card" style="margin-top:18px">
+      <div class="card-title">🪑 Vagas Manuais por Gerente (opcional)</div>
+      <div class="info-box" style="margin-bottom:14px">Defina manualmente quantas vagas cada gerente deve receber. O sistema usará esse valor como meta de créditos na distribuição. Deixe 0 para distribuição automática igualitária.</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;padding:12px;background:var(--azul-fundo);border-radius:var(--radius-sm)">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Total de Vagas</div>
+          <input type="number" id="vagas-manual-total" min="0" placeholder="ex: 100" style="width:110px;font-size:16px;font-weight:800;color:var(--azul)" oninput="atualizarVagasManual()">
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Distribuídas</div>
+          <div id="vagas-manual-dist" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul-claro)">0</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Faltam</div>
+          <div id="vagas-manual-faltam" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--vermelho)">—</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="limparVagasManuais()">🗑 Limpar tudo</button>
+        <button class="btn btn-verde btn-sm" onclick="distribuirIgualitarioManual()">⚖️ Distribuir igualitário</button>
+      </div>
+      <div id="lista-vagas-manuais"></div>
+    </div>
+
+    <!-- CONFIG 10% ATIVO POR LOCAL -->
+    <div class="card" style="margin-top:18px">
+      <div class="card-title">⚡ Configurar 10% Ativo — Por Local</div>
+      <div class="info-box" style="margin-bottom:14px">Escolha quais locais participam do bônus de 10% para gerentes com bônus ativo (zerados/novatos). Locais desmarcados distribuem igualmente entre todos.</div>
+      <div id="config-10pct-lista"></div>
+    </div>
+  </div>
+
+  <!-- ABA 4: ESCALAS -->
+  <div id="aba-4" style="display:none">
+    <div id="escalas-cont">
+      <div class="warn-box">⚡ Clique em <strong>"Gerar Escalas"</strong> no topo para montar o mês.</div>
+    </div>
+  </div>
+
+  <!-- ABA 5: RELATÓRIO -->
+  <div id="aba-5" style="display:none">
+    <div id="relatorio-cont">
+      <div class="warn-box">📊 Gere as escalas primeiro para ver o relatório.</div>
+    </div>
+  </div>
+
+  <!-- ABA HISTÓRICO (dinâmica) -->
+  <div id="aba-historico" style="display:none">
+    <div id="historico-cont"></div>
+  </div>
+
+  <!-- ABA FILA DOMINGOS -->
+  <div id="aba-fila-dom" style="display:none">
+    <div id="fila-dom-cont"></div>
+  </div>
+
+  <!-- ABA AJUDA -->
+  <div id="aba-ajuda" style="display:none">
+    <div style="max-width:860px;margin:0 auto">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul);margin-bottom:6px">ℹ️ Central de Ajuda</div>
+      <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:24px">Guia completo do Sistema de Escalas Riva Vendas — clique em um tópico para expandir.</div>
+
+      <div class="card" style="margin-bottom:12px"><details><summary style="cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul);list-style:none;display:flex;align-items:center;gap:10px"><span style="background:var(--vermelho);color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">1</span>📊 Painel — Visão Geral<span style="margin-left:auto;font-size:12px;color:var(--cinza-texto);font-family:Barlow;font-weight:400">▾ expandir</span></summary>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cinza-borda);font-size:13px;line-height:1.8">
+        <p style="margin-bottom:8px">O <strong>Painel</strong> é a tela inicial. Configure o mês e acompanhe tudo em tempo real.</p>
+        <ul style="margin-left:18px">
+          <li><strong>Mês / Ano:</strong> define o período de referência. Mudar o mês limpa a escala atual.</li>
+          <li><strong>KPIs (cards numerados):</strong> Total de vagas, Gerentes ativos, Locais e VGV total.</li>
+          <li><strong>Modo de Distribuição por Local:</strong> <em>Igualitário</em> = sorteia aleatório entre todos; <em>Por VGV</em> = sorteia ponderado pelo VGV de cada um. O BLIP é sempre por VGV.</li>
+          <li><strong>Resumo da Escala:</strong> aparece após gerar escalas, com distribuição por regional, plantões por gerente e VGV.</li>
+        </ul>
+      </div></details></div>
+
+      <div class="card" style="margin-bottom:12px"><details><summary style="cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul);list-style:none;display:flex;align-items:center;gap:10px"><span style="background:var(--vermelho);color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">2</span>📍 Locais &amp; Padrões — Configuração<span style="margin-left:auto;font-size:12px;color:var(--cinza-texto);font-family:Barlow;font-weight:400">▾ expandir</span></summary>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cinza-borda);font-size:13px;line-height:1.8">
+        <ul style="margin-left:18px">
+          <li><strong>Nome do local:</strong> edite diretamente no campo de texto.</li>
+          <li><strong>Turno Noite:</strong> ative para habilitar um 3º turno (noturno) neste local.</li>
+          <li><strong>🕐 Horários dos Turnos:</strong> campo livre para informar o horário de cada turno (ex: "09:00 – 13:00"). Aparece na escala impressa.</li>
+          <li><strong>🌅 Dia Todo:</strong> o mesmo gerente sorteado para a Manhã fica também na Tarde (ideal para Lumina).</li>
+          <li><strong>Padrão por dia da semana:</strong> quantas vagas por turno em cada dia. 0 = sem plantão nesse dia.</li>
+          <li><strong>Dias Fechados:</strong> datas no formato AAAA-MM-DD separadas por vírgula. Ex: 2026-04-21, 2026-12-25.</li>
+          <li><strong>+ Novo Local / ✕ Remover:</strong> adiciona ou exclui locais.</li>
+        </ul>
+      </div></details></div>
+
+      <div class="card" style="margin-bottom:12px"><details><summary style="cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul);list-style:none;display:flex;align-items:center;gap:10px"><span style="background:var(--vermelho);color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">3</span>📅 Calendário de Vagas — Ajustes por Data<span style="margin-left:auto;font-size:12px;color:var(--cinza-texto);font-family:Barlow;font-weight:400">▾ expandir</span></summary>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cinza-borda);font-size:13px;line-height:1.8">
+        <p style="margin-bottom:8px">Sobrescreva o padrão de um local em datas específicas sem alterar a configuração geral.</p>
+        <ul style="margin-left:18px">
+          <li><strong>Selecionar Local:</strong> clique na aba do local para ver seu calendário do mês.</li>
+          <li><strong>Clicar em um dia:</strong> abre o modal onde você pode marcar como FECHADO, ativar Dia Todo (escolhendo um gerente fixo) ou alterar o número de vagas por turno.</li>
+          <li><strong>Dias em azul:</strong> têm configuração personalizada (override). <strong>Dias em vermelho:</strong> fechados.</li>
+          <li><strong>🗑 Resetar ao Padrão:</strong> remove o override e volta ao padrão do local.</li>
+        </ul>
+        <div class="warn-box" style="margin-top:10px">💡 Configure o calendário <em>antes</em> de gerar as escalas.</div>
+      </div></details></div>
+
+      <div class="card" style="margin-bottom:12px"><details><summary style="cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul);list-style:none;display:flex;align-items:center;gap:10px"><span style="background:var(--vermelho);color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">4</span>👥 Gerentes &amp; VGV — Cadastro<span style="margin-left:auto;font-size:12px;color:var(--cinza-texto);font-family:Barlow;font-weight:400">▾ expandir</span></summary>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cinza-borda);font-size:13px;line-height:1.8">
+        <ul style="margin-left:18px">
+          <li><strong>Regional:</strong> René ou Cahú — o relatório agrupa e totaliza por regional.</li>
+          <li><strong>🌟 Novato:</strong> gerente novo que recebe automaticamente 10% das vagas do BLIP, divididas igualmente entre todos os novatos. Ex: 2 novatos = 5% cada.</li>
+          <li><strong>🚫 Inativo:</strong> exclui o gerente de todas as escalas temporariamente. Fica visível na lista mas esmaecido e não participa de nenhum sorteio.</li>
+          <li><strong>VGV de Referência:</strong> valor de vendas do mês anterior. Determina o peso do gerente na distribuição por VGV e no BLIP.</li>
+          <li><strong>+ Gerente / ✕:</strong> adiciona ou remove gerentes.</li>
+        </ul>
+      </div></details></div>
+
+      <div class="card" style="margin-bottom:12px"><details><summary style="cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul);list-style:none;display:flex;align-items:center;gap:10px"><span style="background:var(--vermelho);color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">5</span>⚡ Gerar Escalas — Como Funciona<span style="margin-left:auto;font-size:12px;color:var(--cinza-texto);font-family:Barlow;font-weight:400">▾ expandir</span></summary>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cinza-borda);font-size:13px;line-height:1.8">
+        <ul style="margin-left:18px">
+          <li><strong>Período Global:</strong> 1º clique no calendário = início; 2º clique = fim. Pode cruzar meses.</li>
+          <li><strong>Período por Local:</strong> opcional — preencha se um local tiver período diferente do global.</li>
+          <li><strong>Locais a Gerar:</strong> marque quais locais entram nesta geração.</li>
+          <li><strong>Sorteio:</strong> 100% aleatório com Math.random() por vaga. Anti-consecutivo: a mesma pessoa não cai 3× seguidas na mesma posição.</li>
+          <li><strong>BLIP:</strong> distribuído por VGV — quem vendeu mais recebe mais vagas. 10% são reservados para novatos.</li>
+          <li><strong>Lumina (Dia Todo):</strong> um gerente é sorteado para a manhã e o mesmo fica na tarde.</li>
+          <li><strong>Após gerar:</strong> clique em qualquer chip (nome do gerente) na tabela para editar individualmente.</li>
+        </ul>
+      </div></details></div>
+
+      <div class="card" style="margin-bottom:12px"><details><summary style="cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul);list-style:none;display:flex;align-items:center;gap:10px"><span style="background:var(--vermelho);color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">6</span>🖨️ Imprimir / PDF<span style="margin-left:auto;font-size:12px;color:var(--cinza-texto);font-family:Barlow;font-weight:400">▾ expandir</span></summary>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cinza-borda);font-size:13px;line-height:1.8">
+        <ul style="margin-left:18px">
+          <li>Clique em <strong>🖨️ Imprimir / PDF</strong> no topo ou na aba Escalas Geradas.</li>
+          <li>Selecione quais locais incluir — pode ser apenas um (ex: só o Lumina para enviar no grupo).</li>
+          <li>Cada local sai em uma <strong>página separada</strong>, formato <strong>paisagem A4</strong>, com cabeçalho (logo Riva, nome do local, período).</li>
+          <li>Para salvar como <strong>PDF</strong>: no diálogo de impressão, escolha <em>"Salvar como PDF"</em> como destino.</li>
+        </ul>
+      </div></details></div>
+
+      <div class="card" style="margin-bottom:12px"><details><summary style="cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul);list-style:none;display:flex;align-items:center;gap:10px"><span style="background:var(--vermelho);color:#fff;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">7</span>💾 Salvamento e Histórico<span style="margin-left:auto;font-size:12px;color:var(--cinza-texto);font-family:Barlow;font-weight:400">▾ expandir</span></summary>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--cinza-borda);font-size:13px;line-height:1.8">
+        <ul style="margin-left:18px">
+          <li><strong>💾 Salvo</strong> — indicador no topo. Fica laranja quando há mudanças não salvas. O sistema salva automaticamente após cada ação.</li>
+          <li>Os dados ficam no <strong>armazenamento local do navegador</strong> — persistem ao fechar e reabrir o arquivo no mesmo navegador.</li>
+          <li><strong>🗂️ Histórico:</strong> guarda até 20 escalas geradas. Clique em <em>"📂 Abrir"</em> para visualizar ou imprimir uma escala antiga.</li>
+          <li><strong>Atenção:</strong> limpar o cache do navegador apaga os dados. Use o histórico como backup e exporte PDFs regularmente.</li>
+        </ul>
+      </div></details></div>
+
+      <div style="text-align:center;margin-top:28px;padding:20px;background:var(--azul);border-radius:var(--radius);color:#fff">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px">🚀 Bora Riva!</div>
+        <div style="font-size:13px;opacity:0.75">Sistema de Escalas Riva Vendas — cada plantão bem distribuído é uma venda a mais.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── MODAL IMPRESSÃO POR LOCAL ──────────────────────────── -->
+<div class="modal-overlay" id="modal-imprimir" style="display:none" onclick="fecharModalImprimir(event)">
+  <div class="modal-box" style="max-width:420px" onclick="event.stopPropagation()">
+    <div class="modal-title">🖨️ Imprimir / Gerar PDF</div>
+    <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:14px">Escolha quais locais deseja incluir na impressão:</div>
+    <div id="print-locais-list"></div>
+    <div style="margin-top:10px;display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn btn-xs btn-outline" onclick="togglePrintLocais(true)">Todos</button>
+      <button class="btn btn-xs btn-outline" onclick="togglePrintLocais(false)">Nenhum</button>
+    </div>
+    <div class="info-box" style="font-size:12px;margin-bottom:16px">
+      💡 Cada local será impresso em uma <strong>página separada</strong>, com cabeçalho completo (Riva Vendas, período, nome do local). Selecione só os locais desejados.
+    </div>
+    <div class="row" style="justify-content:flex-end;gap:8px">
+      <button class="btn btn-outline" onclick="fecharModalImprimir()">Cancelar</button>
+      <button class="btn btn-primary" onclick="executarImpressao()">🖨️ Imprimir / PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL EDIÇÃO DE CÉLULA ─────────────────────────────── -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="fecharModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title">Editar Plantão</div>
+    <div id="modal-body"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:18px;gap:8px">
+      <button class="btn btn-outline" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarModal()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL EDIÇÃO DIA (CALENDÁRIO) ─────────────────────── -->
+<div class="modal-overlay" id="modal-dia" style="display:none" onclick="fecharModalDia(event)">
+  <div class="modal-box" style="max-width:380px" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-dia-title">Editar Vagas do Dia</div>
+    <div id="modal-dia-body"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:18px;gap:8px">
+      <button class="btn btn-danger btn-sm" onclick="removerOverrideDia()">🗑 Resetar ao Padrão</button>
+      <button class="btn btn-outline" onclick="fecharModalDia()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarModalDia()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONFIRMAÇÃO GERAR ────────────────────────────── -->
+<div class="modal-overlay" id="modal-confirmar" style="display:none" onclick="fecharModalConfirmar(event)">
+  <div class="modal-box" style="max-width:540px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div style="text-align:center;font-size:36px;margin-bottom:6px">⚡</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--azul);margin-bottom:4px;text-align:center">Gerar Escalas</div>
+    <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:14px;text-align:center" id="confirmar-desc">—</div>
+
+    <div style="background:var(--azul-fundo);border-radius:var(--radius);padding:14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--azul);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">📅 Período da Escala</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <button class="btn btn-xs btn-outline" onclick="navCalPeriodo(-1)">◀</button>
+        <span id="cal-periodo-titulo" style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--azul)"></span>
+        <button class="btn btn-xs btn-outline" onclick="navCalPeriodo(1)">▶</button>
+      </div>
+      <div id="cal-periodo-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:8px"></div>
+      <div id="periodo-selecionado-preview" style="text-align:center;font-size:13px;font-weight:600;color:var(--azul);padding:8px;background:#fff;border-radius:var(--radius-sm);border:1.5px solid var(--azul-claro)">
+        Clique para selecionar início e fim
+      </div>
+      <div style="font-size:11px;color:var(--cinza-texto);margin-top:6px;text-align:center">1º clique = início &nbsp;·&nbsp; 2º clique = fim</div>
+    </div>
+
+    <div style="background:#F8F9FC;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--azul);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">
+        📍 Período por Local <span style="font-size:10px;font-weight:400;color:var(--cinza-texto);text-transform:none">(opcional)</span>
+      </div>
+      <div id="periodo-por-local"></div>
+    </div>
+
+    <!-- BLIP: painel de horários e vagas totais -->
+    <div id="blip-vagas-painel" style="background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;display:none">
+      <div style="font-size:12px;font-weight:700;color:#92400E;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">⚡ BLIP — Distribuição por VGV</div>
+      <div id="blip-horarios-info" style="font-size:12px;color:#7A5A00;margin-bottom:10px;line-height:1.7"></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label style="font-size:12px;font-weight:700;color:#7A5A00;white-space:nowrap">Total de vagas a distribuir:</label>
+        <input type="number" id="blip-vagas-total" min="1" max="9999" style="width:90px;font-size:13px;font-weight:700;border-color:#F59E0B" placeholder="auto">
+        <span style="font-size:11px;color:#92400E">Se vazio, usa a contagem real do período (horários × dias)</span>
+      </div>
+      <div id="blip-preview-dist" style="margin-top:10px;font-size:12px;color:#7A5A00"></div>
+    </div>
+
+    <div style="background:#F8F9FC;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--azul);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">✅ Locais a Gerar</div>
+      <div id="locais-check-list"></div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn btn-xs btn-outline" onclick="toggleTodosLocais(true)">Todos</button>
+        <button class="btn btn-xs btn-outline" onclick="toggleTodosLocais(false)">Nenhum</button>
+      </div>
+    </div>
+
+    <div class="row" style="justify-content:flex-end;gap:10px">
+      <button class="btn btn-outline" onclick="fecharModalConfirmar()">Cancelar</button>
+      <button class="btn btn-primary" onclick="executarGerarEscalas()">⚡ Confirmar e Gerar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PROGRESS MODAL ─────────────────────────────────────── -->
+<div id="progress-modal" style="display:none">
+  <div class="progress-box">
+    <div style="font-size:48px;margin-bottom:12px;display:inline-block;animation:iconPulse 1s infinite">⚡</div>
+    <h3>Gerando Escalas...</h3>
+    <p id="progress-desc">Distribuindo plantões automaticamente</p>
+    <div class="progress-bar-lg">
+      <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-pct" id="prog-pct">0%</div>
+  </div>
+</div>
+
+<!-- ─── RODAPÉ GLOBAL ───────────────────────────────────────── -->
+<div id="rodape-global" class="no-print">
+  <span>Feito por <strong>Igor Vivas</strong></span>
+  <span class="sep-rod">·</span>
+  <span>📞 <a href="tel:5585992620981">(85) 99262-0981</a></span>
+</div>
+
+<!-- ─── TOAST CONTAINER ────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<script>
+// ─── CONSTANTES ──────────────────────────────────────────────────────────────
+const MESES = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DSEM = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const TURNOS_LABEL = {m:'Manhã', t:'Tarde', n:'Noite'};
+const TURNOS_CLASS = {m:'chip-m', t:'chip-t', n:'chip-n'};
+const LOC_CORES = [
+  {bg:'#1A4A9C',tx:'#fff'}, {bg:'#C0272D',tx:'#fff'},
+  {bg:'#1A7A42',tx:'#fff'}, {bg:'#5A3FC0',tx:'#fff'},
+  {bg:'#B45309',tx:'#fff'}, {bg:'#0D7490',tx:'#fff'}
+];
+
+// ─── ESTADO ───────────────────────────────────────────────────────────────────
+let S = {
+  mes: 4, ano: 2026,
+  locais: [
+    {id:1, nome:'Shopping Parangaba', turnos:['m','t'], diatodo:false,
+     padrao:{0:{m:2,t:2},1:{m:2,t:2},2:{m:2,t:2},3:{m:2,t:2},4:{m:2,t:2},5:{m:2,t:2},6:{m:2,t:2}},
+     fechados:[], modo:'igual',
+     horarios:{m:'10:00 – 16:00', t:'16:00 – 22:00', n:''}},
+    {id:2, nome:'Única (obra)', turnos:['m','t'], diatodo:false,
+     padrao:{0:{m:0,t:0},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
+     fechados:[], modo:'igual',
+     horarios:{m:'08:00 – 13:00', t:'13:00 – 18:00', n:''}},
+    {id:3, nome:'Lumina', turnos:['m','t'], diatodo:true,
+     padrao:{0:{m:1,t:1},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
+     fechados:[], modo:'igual',
+     horarios:{m:'', t:'', n:''}},
+    {id:4, nome:'Estande da Riva', turnos:['m','t'], diatodo:false,
+     padrao:{0:{m:2,t:2},1:{m:2,t:2},2:{m:2,t:2},3:{m:2,t:2},4:{m:2,t:2},5:{m:2,t:2},6:{m:2,t:2}},
+     fechados:[], modo:'igual',
+     horarios:{m:'', t:'', n:''}},
+    {id:5, nome:'Blip', turnos:['m','t','n'], diatodo:false,
+     padrao:{0:{m:2,t:2,n:2},1:{m:2,t:2,n:2},2:{m:2,t:2,n:2},3:{m:2,t:2,n:2},4:{m:2,t:2,n:2},5:{m:2,t:2,n:2},6:{m:2,t:2,n:2}},
+     fechados:[], modo:'vgv',
+     horarios:{m:'09:00 – 13:00', t:'13:00 – 17:00', n:'17:00 – 21:00'},
+     horarios_fds:{m:'09:00 – 12:00', t:'12:00 – 15:00', n:'15:00 – 18:00'}},
+    {id:6, nome:'Passaré', turnos:['m','t'], diatodo:false,
+     padrao:{0:{m:1,t:1},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
+     fechados:[], modo:'igual', diaSim:true, diaSimInicio:'',
+     horarios:{m:'09:00 – 13:30', t:'13:30 – 18:00', n:''}}
+  ],
+  gerentes: [
+    {id:1,nome:'André',regional:'René',novato:false,inativo:false},
+    {id:2,nome:'Beatriz',regional:'René',novato:false,inativo:false},
+    {id:3,nome:'Carlos',regional:'René',novato:false,inativo:false},
+    {id:4,nome:'Diana',regional:'René',novato:false,inativo:false},
+    {id:5,nome:'Eduardo',regional:'Cahú',novato:false,inativo:false},
+    {id:6,nome:'Fernanda',regional:'Cahú',novato:false,inativo:false},
+    {id:7,nome:'Gabriel',regional:'Cahú',novato:false,inativo:false},
+    {id:8,nome:'Helena',regional:'Cahú',novato:false,inativo:false},
+    {id:9,nome:'Igor',regional:'Cahú',novato:false,inativo:false}
+  ],
+  vgv: {},
+  escala: null,
+  ajustes: {},
+  historicoEscalas: [],
+  filaDomingos: [], // [{gid, nome}] — ordem da fila de domingos da LOJA
+  vagasManual: {}, // {gid: qtd} — vagas manuais por gerente
+  vagasManualTotal: 0,
+  locais10pct: null // null = todos; array de ids = locais com 10% ativo
+};
+
+let abaAtual = 0;
+let modalCtx = null;
+let modalDiaCtx = null;
+let calLocalAtivo = null;
+let calPeriodoMes = null;
+let periodoSel = {ini: null, fim: null};
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function diasDoMes(a,m){const d=new Date(a,m-1,1),r=[];while(d.getMonth()===m-1){r.push(new Date(d));d.setDate(d.getDate()+1);}return r;}
+function toDS(d){return d.toISOString().split('T')[0];}
+function fmtR(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR');}
+function gerentesAtivos(){return S.gerentes.filter(g=>!g.inativo);}
+
+function vagasDia(loc,dia){
+  const ds=toDS(dia);
+  if((loc.fechados||[]).includes(ds)) return null;
+  // Dia sim / dia não
+  if(loc.diaSim&&loc.diaSimInicio){
+    const ini=new Date(loc.diaSimInicio+'T12:00');
+    const cur=new Date(ds+'T12:00');
+    const diffDias=Math.round((cur-ini)/(1000*60*60*24));
+    if(diffDias<0||diffDias%2!==0) return null; // dia não
+  }
+  const override=S.ajustes['pad_'+loc.id+'_'+ds];
+  if(override) return override;
+  return loc.padrao[dia.getDay()]||{m:0,t:0,n:0};
+}
+
+function totalVagasMes(loc){
+  let t=0;
+  diasDoMes(S.ano,S.mes).forEach(d=>{
+    const v=vagasDia(loc,d);
+    if(v) loc.turnos.forEach(tr=>t+=v[tr]||0);
+  });
+  return t;
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg,tipo='success',duracao=3000){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  t.className='toast '+tipo;
+  const icons={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+  t.innerHTML=`<span>${icons[tipo]||'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.animation='toastOut 0.3s ease forwards';setTimeout(()=>t.remove(),300);},duracao);
+}
+
+// ─── NAVEGAÇÃO ────────────────────────────────────────────────────────────────
+function irAba(n){
+  abaAtual=n;
+  const staticTabs=Array.from(document.querySelectorAll('#tabs-bar .tab')).filter(t=>t.id!=='tab-historico'&&t.id!=='tab-ajuda');
+  staticTabs.forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.getElementById('tab-historico')?.classList.remove('active');
+  document.getElementById('tab-ajuda')?.classList.remove('active');
+  for(let i=0;i<6;i++){const el=document.getElementById('aba-'+i);if(el)el.style.display=i===n?'':'none';}
+  document.getElementById('aba-historico').style.display='none';
+  document.getElementById('aba-ajuda').style.display='none';
+  document.getElementById('aba-fila-dom').style.display='none';
+  if(n===0) renderPainel();
+  if(n===1) renderLocais();
+  if(n===2) renderCalendarioVagas();
+  if(n===3) renderGerentesVGV();
+  if(n===5) renderRelatorio();
+}
+
+function irAbaHistorico(){
+  abaAtual=-1;
+  const staticTabs=Array.from(document.querySelectorAll('#tabs-bar .tab')).filter(t=>!['tab-historico','tab-ajuda','tab-fila-dom'].includes(t.id));
+  staticTabs.forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-historico')?.classList.add('active');
+  document.getElementById('tab-ajuda')?.classList.remove('active');
+  document.getElementById('tab-fila-dom')?.classList.remove('active');
+  for(let i=0;i<6;i++){const el=document.getElementById('aba-'+i);if(el)el.style.display='none';}
+  document.getElementById('aba-historico').style.display='';
+  document.getElementById('aba-ajuda').style.display='none';
+  document.getElementById('aba-fila-dom').style.display='none';
+  renderHistorico();
+}
+
+function irAbaAjuda(){
+  abaAtual=-2;
+  const staticTabs=Array.from(document.querySelectorAll('#tabs-bar .tab')).filter(t=>!['tab-historico','tab-ajuda','tab-fila-dom'].includes(t.id));
+  staticTabs.forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-historico')?.classList.remove('active');
+  document.getElementById('tab-ajuda')?.classList.add('active');
+  document.getElementById('tab-fila-dom')?.classList.remove('active');
+  for(let i=0;i<6;i++){const el=document.getElementById('aba-'+i);if(el)el.style.display='none';}
+  document.getElementById('aba-historico').style.display='none';
+  document.getElementById('aba-fila-dom').style.display='none';
+  document.getElementById('aba-ajuda').style.display='';
+}
+
+function irAbaFilaDomingos(){
+  abaAtual=-3;
+  const staticTabs=Array.from(document.querySelectorAll('#tabs-bar .tab')).filter(t=>!['tab-historico','tab-ajuda','tab-fila-dom'].includes(t.id));
+  staticTabs.forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-historico')?.classList.remove('active');
+  document.getElementById('tab-ajuda')?.classList.remove('active');
+  document.getElementById('tab-fila-dom')?.classList.add('active');
+  for(let i=0;i<6;i++){const el=document.getElementById('aba-'+i);if(el)el.style.display='none';}
+  document.getElementById('aba-historico').style.display='none';
+  document.getElementById('aba-ajuda').style.display='none';
+  document.getElementById('aba-fila-dom').style.display='';
+  renderFilaDomingos();
+}
+
+
+// ─── FILA DOMINGOS (LOJA) ──────────────────────────────────────────────────────
+function getLocLoja(){
+  // Encontra o local LOJA (busca por nome contendo "loja" case-insensitive)
+  return S.locais.find(l=>l.nome.toLowerCase().includes('loja'))||null;
+}
+
+function inicializarFilaDomingos(){
+  // Sincroniza fila com gerentes ativos: adiciona novos ao fim, remove inativos
+  const ger=gerentesAtivos();
+  const gerIds=new Set(ger.map(g=>g.id));
+  // Remove quem não existe mais ou está inativo
+  S.filaDomingos=S.filaDomingos.filter(item=>gerIds.has(item.gid));
+  // Adiciona novos gerentes ao fim da fila
+  const filaIds=new Set(S.filaDomingos.map(item=>item.gid));
+  ger.forEach(g=>{if(!filaIds.has(g.id)) S.filaDomingos.push({gid:g.id,nome:g.nome});});
+  // Atualiza nomes (podem ter mudado)
+  S.filaDomingos.forEach(item=>{const g=ger.find(x=>x.id===item.gid);if(g)item.nome=g.nome;});
+}
+
+function renderFilaDomingos(){
+  inicializarFilaDomingos();
+  const locLoja=getLocLoja();
+  const cont=document.getElementById('fila-dom-cont');
+  if(!cont) return;
+
+  // Calcular domingos do mês atual
+  const diasMes=diasDoMes(S.ano,S.mes);
+  const domingos=diasMes.filter(d=>d.getDay()===0);
+
+  // Quantos domingos cada um pegou na escala atual (se gerada)
+  const domPorGer={};
+  if(S.escala&&locLoja&&S.escala.agenda[locLoja.id]){
+    domingos.forEach(d=>{
+      const ds=toDS(d);
+      const day=S.escala.agenda[locLoja.id][ds];
+      if(!day||day.fechado) return;
+      locLoja.turnos.forEach(tr=>{
+        (day[tr]||[]).forEach(g=>{if(g)domPorGer[g.id]=(domPorGer[g.id]||0)+1;});
+      });
+    });
+  }
+
+  const nDom=domingos.length;
+  const locNome=locLoja?locLoja.nome:'LOJA';
+
+  cont.innerHTML=`
+    <div style="max-width:680px;margin:0 auto">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--azul);margin-bottom:4px">🌅 Fila de Domingos</div>
+      <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:20px">${locNome} · ${MESES[S.mes]} ${S.ano} · <strong>${nDom} domingo${nDom!==1?'s':''}</strong> no mês</div>
+
+      <div class="info-box" style="margin-bottom:16px">
+        <strong>Como funciona:</strong> cada gerente pega <strong>1 domingo</strong> por vez, seguindo a ordem da fila abaixo.
+        Quem não conseguiu domingo esse mês <strong>fica na frente</strong> no próximo.
+        Arraste para reordenar manualmente.
+      </div>
+
+      ${!locLoja?'<div class="warn-box">⚠️ Nenhum local com nome "LOJA" encontrado. Renomeie o local na aba Locais &amp; Padrões.</div>':''}
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Ordem da Fila — ${MESES[S.mes]} ${S.ano}</div>
+        <div id="fila-dom-lista" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="avancarFilaAposMes()">⏭ Avançar fila (fim do mês)</button>
+          <button class="btn btn-xs btn-danger" onclick="resetarFila()">🔄 Resetar ordem</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Domingos de ${MESES[S.mes]}</div>
+        <div style="display:flex;flex-direction:column;gap:6px" id="fila-dom-preview"></div>
+      </div>
+    </div>`;
+
+  renderFilaLista(domPorGer, domingos, locLoja);
+  renderFilaPreview(domPorGer, domingos, locLoja);
+}
+
+function renderFilaLista(domPorGer, domingos, locLoja){
+  const lista=document.getElementById('fila-dom-lista');
+  if(!lista) return;
+  lista.innerHTML='';
+  let dragSrc=null;
+
+  S.filaDomingos.forEach((item,idx)=>{
+    const pegou=(domPorGer[item.gid]||0)>0;
+    const row=document.createElement('div');
+    row.draggable=true;
+    row.dataset.idx=idx;
+    row.style.cssText=`display:flex;align-items:center;gap:10px;padding:10px 14px;background:${pegou?'var(--verde-claro)':'#fff'};border:1.5px solid ${pegou?'#86EFAC':'var(--cinza-borda)'};border-radius:8px;cursor:grab;transition:all 0.15s;user-select:none`;
+
+    row.innerHTML=`
+      <span style="font-size:18px;color:var(--cinza-texto);cursor:grab">⠿</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--cinza-texto);min-width:28px;text-align:center">${idx+1}</span>
+      <span style="flex:1;font-size:14px;font-weight:700;color:var(--texto)">${item.nome}</span>
+      ${pegou?`<span class="badge badge-verde">✓ Pegou ${domPorGer[item.gid]} domingo${domPorGer[item.gid]>1?'s':''}</span>`:'<span class="badge badge-cinza">Aguardando</span>'}
+      <button class="btn btn-xs btn-outline" onclick="moverFilaUp(${idx})" ${idx===0?'disabled':''} style="padding:3px 7px">↑</button>
+      <button class="btn btn-xs btn-outline" onclick="moverFilaDown(${idx})" ${idx===S.filaDomingos.length-1?'disabled':''} style="padding:3px 7px">↓</button>`;
+
+    // Drag & drop
+    row.addEventListener('dragstart',e=>{dragSrc=idx;row.style.opacity='0.4';e.dataTransfer.effectAllowed='move';});
+    row.addEventListener('dragend',()=>{row.style.opacity='1';});
+    row.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';row.style.background=pegou?'#c6f6d5':'var(--azul-fundo)';});
+    row.addEventListener('dragleave',()=>{row.style.background=pegou?'var(--verde-claro)':'#fff';});
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(dragSrc===null||dragSrc===idx) return;
+      const arr=S.filaDomingos;
+      const [moved]=arr.splice(dragSrc,1);
+      arr.splice(idx,0,moved);
+      autoSave();
+      renderFilaDomingos();
+    });
+
+    lista.appendChild(row);
+  });
+}
+
+function renderFilaPreview(domPorGer, domingos, locLoja){
+  const prev=document.getElementById('fila-dom-preview');
+  if(!prev) return;
+  prev.innerHTML='';
+  // Simula atribuição seguindo a fila
+  const atrib=calcularAtribuicaoDomingos(domingos);
+  domingos.forEach((d,i)=>{
+    const ds=toDS(d);
+    const gerAtrib=atrib[ds];
+    // Verifica se tem ajuste manual na escala gerada
+    let gerReal=null;
+    if(S.escala&&locLoja&&S.escala.agenda[locLoja.id]){
+      const day=S.escala.agenda[locLoja.id][ds];
+      if(day&&!day.fechado){
+        const slots=day[locLoja.turnos[0]]||[];
+        gerReal=slots[0]||null;
+      }
+    }
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fff;border:1px solid var(--cinza-borda);border-radius:6px';
+    const dLabel=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+    const gerNome=gerAtrib?gerAtrib.nome:'—';
+    const gerRealNome=gerReal?gerReal.nome:null;
+    const match=gerReal&&gerAtrib&&gerReal.id===gerAtrib.id;
+    row.innerHTML=`
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--vermelho);min-width:70px">DOM ${dLabel}</span>
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--texto)">📋 Fila: <strong>${gerNome}</strong></span>
+      ${gerReal?`<span style="font-size:12px;font-weight:700;color:${match?'var(--verde)':'var(--vermelho)'}">
+        ${match?'✓':'⚡'} Escala: ${gerRealNome}${!match?' (editado)':''}
+      </span>`:'<span style="font-size:11px;color:var(--cinza-texto)">Escala não gerada</span>'}`;
+    prev.appendChild(row);
+  });
+}
+
+function calcularAtribuicaoDomingos(domingos){
+  // Distribui domingos em ordem de fila, 1 por pessoa
+  const atrib={};
+  const fila=[...S.filaDomingos];
+  let filaIdx=0;
+  domingos.forEach(d=>{
+    if(fila.length===0) return;
+    const item=fila[filaIdx%fila.length];
+    const ger=gerentesAtivos().find(g=>g.id===item.gid);
+    atrib[toDS(d)]=ger||null;
+    filaIdx++;
+  });
+  return atrib;
+}
+
+function moverFilaUp(idx){
+  if(idx===0) return;
+  [S.filaDomingos[idx-1],S.filaDomingos[idx]]=[S.filaDomingos[idx],S.filaDomingos[idx-1]];
+  autoSave(); renderFilaDomingos();
+}
+function moverFilaDown(idx){
+  if(idx>=S.filaDomingos.length-1) return;
+  [S.filaDomingos[idx],S.filaDomingos[idx+1]]=[S.filaDomingos[idx+1],S.filaDomingos[idx]];
+  autoSave(); renderFilaDomingos();
+}
+
+function avancarFilaAposMes(){
+  // Move para o fim quem pegou domingo(s) este mês; quem não pegou sobe
+  const diasMes=diasDoMes(S.ano,S.mes);
+  const domingos=diasMes.filter(d=>d.getDay()===0);
+  const locLoja=getLocLoja();
+  const domPorGer={};
+  if(S.escala&&locLoja&&S.escala.agenda[locLoja.id]){
+    domingos.forEach(d=>{
+      const ds=toDS(d);
+      const day=S.escala.agenda[locLoja.id][ds];
+      if(!day||day.fechado) return;
+      locLoja.turnos.forEach(tr=>{(day[tr]||[]).forEach(g=>{if(g)domPorGer[g.id]=(domPorGer[g.id]||0)+1;});});
+    });
+  }
+  // Quem não pegou fica na frente; quem pegou vai pro fim
+  const nPegou=S.filaDomingos.filter(x=>(domPorGer[x.gid]||0)===0);
+  const pegou=S.filaDomingos.filter(x=>(domPorGer[x.gid]||0)>0);
+  S.filaDomingos=[...nPegou,...pegou];
+  autoSave();
+  renderFilaDomingos();
+  showToast('Fila avançada! Quem não pegou domingo subiu.','success');
+}
+
+function resetarFila(){
+  if(!confirm('Resetar a ordem da fila para a ordem atual dos gerentes?')) return;
+  S.filaDomingos=gerentesAtivos().map(g=>({gid:g.id,nome:g.nome}));
+  autoSave(); renderFilaDomingos();
+}
+
+function renderAjuda(){
+  const cont=document.getElementById('ajuda-cont');
+  if(!cont) return;
+  cont.innerHTML=`
+  <div style="max-width:860px;margin:0 auto">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul);margin-bottom:6px">ℹ️ Guia do Sistema de Escalas</div>
+    <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:24px">Tudo que você precisa saber para usar o sistema corretamente.</div>
+
+    ${ajudaTopico('📊 Aba — Painel',`
+      <p>É a tela inicial e o <strong>centro de controle</strong> do sistema.</p>
+      <ul>
+        <li><strong>KPIs no topo:</strong> mostram total de vagas do mês, gerentes ativos, locais e VGV total. Atualizam automaticamente.</li>
+        <li><strong>Modo de Distribuição por Local:</strong> para cada local você escolhe como as vagas serão divididas:
+          <ul>
+            <li><em>Igualitário</em> — sorteio aleatório puro entre todos os gerentes ativos.</li>
+            <li><em>Por VGV</em> — quem vendeu mais tem mais chances de cair. A proporção é calculada pelo VGV de cada um.</li>
+          </ul>
+          O <strong>BLIP</strong> sempre usa "Por VGV" (fixo) com 10% reservado para novatos.
+        </li>
+        <li><strong>Resumo de Vagas:</strong> gráfico de barras mostrando o volume de vagas por local no mês.</li>
+        <li>Após gerar a escala, o painel mostra um <strong>relatório rápido por regional</strong> com plantões e VGV de cada gerente.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('📍 Aba — Locais & Padrões',`
+      <p>Aqui você configura cada <strong>local de plantão</strong>.</p>
+      <ul>
+        <li><strong>Nome do local:</strong> edite diretamente no campo de texto.</li>
+        <li><strong>Turno Noite:</strong> ative o checkbox para habilitar o turno noturno naquele local.</li>
+        <li><strong>Horários dos Turnos:</strong> campo de texto livre — coloque os horários de cada turno (ex: 09:00 – 13:00). Esses horários aparecem na escala impressa.</li>
+        <li><strong>Dia Todo:</strong> ative para que o mesmo gerente sorteado de manhã também fique à tarde (ex: Lumina).</li>
+        <li><strong>Padrão por dia da semana:</strong> número de vagas de manhã, tarde e noite em cada dia. Coloque 0 para dias fechados.</li>
+        <li><strong>Dias Fechados (Feriados):</strong> insira as datas no formato AAAA-MM-DD separadas por vírgula. Nesses dias nenhum gerente será escalado.</li>
+        <li>Clique em <strong>"+ Novo Local"</strong> para adicionar um local. Clique em <strong>"✕ Remover"</strong> para excluir.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('📅 Aba — Calendário de Vagas',`
+      <p>Permite <strong>customizar vagas em dias específicos</strong>, sobrescrevendo o padrão da semana.</p>
+      <ul>
+        <li>Selecione um local nas abas coloridas no topo.</li>
+        <li>Clique em qualquer dia do calendário para abrir o editor.</li>
+        <li>No editor você pode: <strong>Fechar o dia</strong> (ninguém escala), ativar <strong>Dia Todo</strong> escolhendo um gerente específico, ou alterar o número de vagas de cada turno.</li>
+        <li>Dias com customização aparecem em <strong>azul</strong>. Dias fechados em <strong>vermelho claro</strong>.</li>
+        <li>Clique em <strong>"🗑 Resetar ao Padrão"</strong> para desfazer qualquer customização do dia.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('👥 Aba — Gerentes & VGV',`
+      <p>Gerencie a equipe e os dados de VGV para distribuição proporcional.</p>
+      <ul>
+        <li><strong>Adicionar gerente:</strong> clique em "+ Gerente". Preencha o nome e a regional (René ou Cahú).</li>
+        <li><strong>🌟 Novato:</strong> marque para reservar 10% das vagas do BLIP para esse gerente. Se houver 2 novatos, cada um recebe 5%.</li>
+        <li><strong>🚫 Inativo:</strong> marque para que o gerente <em>não apareça em nenhuma escala</em>. Ele continua cadastrado mas é ignorado na geração. Ideal para gerentes que entrarão no grupo futuramente.</li>
+        <li><strong>VGV de Referência:</strong> preencha o valor total de vendas de cada gerente no mês anterior. Usado para calcular a distribuição proporcional no BLIP e em locais "Por VGV".</li>
+        <li>O <strong>Total VGV</strong> e as porcentagens atualizam automaticamente ao digitar.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('⚡ Botão — Gerar Escalas',`
+      <p>Abre o modal de configuração e inicia a geração.</p>
+      <ul>
+        <li><strong>Período global:</strong> use o calendário visual para clicar no dia de início e no dia de fim da escala. Pode cruzar meses.</li>
+        <li><strong>Período por Local (opcional):</strong> se quiser que um local específico tenha um período diferente, preencha as datas individuais. Deixe em branco para usar o período global.</li>
+        <li><strong>Locais a Gerar:</strong> marque apenas os locais que deseja incluir nessa geração.</li>
+        <li>Clique em <strong>"⚡ Confirmar e Gerar"</strong>. Em cerca de 2 segundos a escala estará pronta.</li>
+        <li><strong>Sorteio:</strong> cada vaga é sorteada individualmente com Math.random(). A mesma pessoa não cai 3x consecutivas na mesma posição para garantir distribuição razoável.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('🗓️ Aba — Escalas Geradas',`
+      <p>Visualização completa da escala gerada, por local.</p>
+      <ul>
+        <li>Cada local aparece em um bloco com cabeçalho colorido mostrando o período e o modo de distribuição.</li>
+        <li>Clique em qualquer nome de gerente (chip colorido) para <strong>editar manualmente</strong> aquela vaga — trocar o gerente ou alterar o número de vagas naquele dia.</li>
+        <li>A linha <strong>★ DIA TODO</strong> indica que o mesmo gerente está em todos os turnos daquele dia (ex: Lumina).</li>
+        <li>No rodapé de cada local aparece o <strong>contador de vagas por gerente</strong>.</li>
+        <li>Use o botão <strong>"🖨️ Selecionar e Imprimir"</strong> para escolher quais locais incluir no PDF.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('📈 Aba — Relatório',`
+      <p>Relatório completo de distribuição por regional e por local.</p>
+      <ul>
+        <li><strong>Resumo Geral:</strong> total de plantões, gerentes, locais e VGV — com breakdown por local.</li>
+        <li><strong>Reserva Novatos BLIP:</strong> mostra quantas vagas foram reservadas e quantas cada novato realmente recebeu na escala.</li>
+        <li><strong>Por Regional:</strong> tabela de cada gerente com plantões, % do total, VGV, % de VGV e vagas por local. A última linha é o total da regional.</li>
+        <li>O relatório atualiza automaticamente toda vez que você acessa a aba ou gera uma nova escala.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('🗂️ Aba — Histórico',`
+      <ul>
+        <li>Cada escala gerada é salva automaticamente no histórico (limite: 20 escalas).</li>
+        <li>Clique em <strong>"📂 Abrir"</strong> para carregar uma escala anterior e ver sua visualização e relatório.</li>
+        <li>Clique em <strong>"🗑 Excluir"</strong> para remover uma entrada do histórico.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('🖨️ Imprimir / Gerar PDF',`
+      <ul>
+        <li>Clique em <strong>"🖨️ Imprimir / PDF"</strong> no cabeçalho ou no botão da aba de escalas.</li>
+        <li>Selecione apenas os locais que quer imprimir. Cada local sai em uma <strong>página separada</strong> em formato paisagem.</li>
+        <li>Cada página tem cabeçalho com logo Riva Vendas, nome do local, período e data de geração.</li>
+        <li>O PDF tem detalhes decorativos em azul (canto superior esquerdo) e vermelho (canto inferior direito).</li>
+        <li>Dica: para enviar só o Lumina no grupo, selecione apenas "Lumina" e imprima.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('💾 Salvamento Automático',`
+      <ul>
+        <li>Todos os dados são salvos automaticamente no navegador (<em>localStorage</em>) a cada alteração. Você nunca precisa apertar "salvar".</li>
+        <li>O indicador <strong>"💾 Salvo"</strong> no cabeçalho confirma que os dados estão salvos.</li>
+        <li>Os dados persistem mesmo após fechar e reabrir o navegador, <strong>desde que seja o mesmo navegador e dispositivo</strong>.</li>
+        <li>⚠️ Limpar o cache/histórico do navegador pode apagar os dados. Faça backups pelo botão de exportação se disponível.</li>
+      </ul>
+    `)}
+
+    ${ajudaTopico('🔑 Atalhos de Teclado',`
+      <ul>
+        <li><strong>ESC</strong> — Fecha qualquer modal aberto.</li>
+      </ul>
+    `)}
+
+    <!-- Rodapé de crédito -->
+    <div style="margin-top:32px;padding:18px 20px;background:var(--azul);border-radius:var(--radius);color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;background:var(--vermelho);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px">RV</div>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.5px">Sistema de Escalas · Riva Vendas</div>
+          <div style="font-size:11px;opacity:0.65;margin-top:2px">Desenvolvido especialmente para a equipe de vendas</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:700;opacity:0.9">Feito por <strong>Igor Vivas</strong></div>
+        <div style="font-size:12px;opacity:0.65;margin-top:2px">📞 <a href="tel:5585992620981" style="color:rgba(255,255,255,0.75);text-decoration:none">(85) 99262-0981</a></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function ajudaTopico(titulo, conteudo){
+  return `<div class="card" style="margin-bottom:16px">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul);margin-bottom:12px;display:flex;align-items:center;gap:8px;border-bottom:1.5px solid var(--cinza-borda);padding-bottom:10px">${titulo}</div>
+    <div style="font-size:13px;line-height:1.75;color:var(--texto)">${conteudo.replace(/<ul>/g,'<ul style="margin:8px 0 8px 18px">').replace(/<li>/g,'<li style="margin-bottom:4px">').replace(/<p>/g,'<p style="margin-bottom:8px">')}</div>
+  </div>`;
+}
+
+function mudarMes(){
+  const m=+document.getElementById('sel-mes').value;
+  const a=+document.getElementById('inp-ano').value;
+  if(!a||a<2024||a>2035){showToast('Ano inválido (2024-2035)','error');return;}
+  S.mes=m; S.ano=a;
+  const mesNome=MESES[S.mes]+' '+S.ano;
+  document.getElementById('hdr-mes-val').textContent=mesNome;
+  document.getElementById('print-mes-titulo').textContent='Escala de Plantões — '+mesNome;
+  const mesAnt=S.mes===1?12:S.mes-1;
+  const anoAnt=S.mes===1?S.ano-1:S.ano;
+  const lblVgv=document.getElementById('lbl-vgv');
+  if(lblVgv) lblVgv.textContent='VGV de Referência — '+MESES[mesAnt]+' '+anoAnt;
+  S.escala=null; S.ajustes={};
+  autoSave();
+  if(abaAtual===0) renderPainel();
+  if(abaAtual===2) renderCalendarioVagas();
+  if(abaAtual===3) renderGerentesVGV();
+}
+
+// ─── PAINEL COMPLETO ─────────────────────────────────────────────────────────
+function renderPainel(){
+  document.getElementById('hdr-mes-val').textContent=MESES[S.mes]+' '+S.ano;
+  const ativos=gerentesAtivos();
+  let totalV=0;
+  S.locais.forEach(l=>totalV+=totalVagasMes(l));
+  document.getElementById('m-vagas').textContent=totalV;
+  document.getElementById('m-ger').textContent=ativos.length;
+  document.getElementById('m-loc').textContent=S.locais.length;
+  const totalVGVAll=S.gerentes.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+  document.getElementById('m-vgv-total').textContent=totalVGVAll>0?fmtR(totalVGVAll):'—';
+
+  // Modos de distribuição
+  const pm=document.getElementById('painel-modos');
+  pm.innerHTML='';
+  S.locais.forEach(l=>{
+    const isBlip=l.nome.toLowerCase().includes('blip');
+    const r=document.createElement('div');
+    r.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px;background:var(--cinza-fundo);border-radius:var(--radius-sm)';
+    r.innerHTML=`<span style="flex:1;font-size:13px;font-weight:600">${l.nome}</span>
+      ${isBlip?`<span class="badge badge-amarelo" style="font-size:10px">Por VGV (fixo)</span>`:`
+      <select style="width:auto;font-size:12px" onchange="S.locais.find(x=>x.id===${l.id}).modo=this.value;autoSave();renderPainel()">
+        <option value="igual"${l.modo==='igual'?' selected':''}>Igualitário</option>
+        <option value="vgv"${l.modo==='vgv'?' selected':''}>Por VGV</option>
+      </select>`}`;
+    pm.appendChild(r);
+  });
+
+  // Gráfico de vagas
+  const pc=document.getElementById('painel-chart');
+  pc.innerHTML='';
+  const maxV=Math.max(...S.locais.map(l=>totalVagasMes(l)),1);
+  S.locais.forEach(l=>{
+    const v=totalVagasMes(l);
+    const pct=Math.round(v/maxV*100);
+    const d=document.createElement('div');
+    d.style.marginBottom='10px';
+    d.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+      <span style="font-weight:600">${l.nome}</span>
+      <span style="color:var(--cinza-texto)">${v} vagas</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>`;
+    pc.appendChild(d);
+  });
+
+  // Relatório rápido no painel
+  renderPainelRelatorioRapido();
+}
+
+function renderPainelRelatorioRapido(){
+  const cont=document.getElementById('painel-relatorio-rapido');
+  if(!S.escala){
+    cont.innerHTML=`<div class="warn-box" style="margin-top:0">📊 <strong>Nenhuma escala gerada ainda.</strong> Clique em "⚡ Gerar Escalas" para criar a distribuição do mês.</div>`;
+    return;
+  }
+
+  const {agenda,periodoIni,periodoFim,periodoPorLocal}=S.escala;
+  const fmtDS=ds=>{const p=ds.split('-');return `${p[2]}/${p[1]}/${p[0]}`;};
+  const ativos=gerentesAtivos();
+
+  // Contagem por gerente
+  const contGlobal={};
+  const contPorLocal={};
+  ativos.forEach(g=>{contGlobal[g.id]=0;contPorLocal[g.id]={};});
+
+  S.locais.forEach(loc=>{
+    const pLoc=periodoPorLocal?.[loc.id];
+    const locIni=pLoc?.ini||periodoIni;
+    const locFim=pLoc?.fim||periodoFim;
+    diasEntre(locIni,locFim).forEach(d=>{
+      const ds=toDS(d);
+      const dd=agenda[loc.id]?.[ds];
+      if(!dd||dd.fechado) return;
+      loc.turnos.forEach(tr=>{
+        (dd[tr]||[]).forEach(g=>{
+          if(g){
+            contGlobal[g.id]=(contGlobal[g.id]||0)+1;
+            if(!contPorLocal[g.id]) contPorLocal[g.id]={};
+            contPorLocal[g.id][loc.nome]=(contPorLocal[g.id][loc.nome]||0)+1;
+          }
+        });
+      });
+    });
+  });
+
+  const totalPlantoes=Object.values(contGlobal).reduce((s,v)=>s+v,0);
+  const totalVGV=ativos.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+
+  cont.innerHTML=`
+    <div class="painel-section-title">📊 Resumo da Escala — ${fmtDS(periodoIni)} → ${fmtDS(periodoFim)}</div>
+    <div class="success-box">✅ Escala gerada com <strong>${totalPlantoes} plantões</strong> distribuídos entre <strong>${ativos.length} gerentes</strong> em <strong>${S.locais.length} locais</strong>.</div>
+  `;
+
+  // Cards regionais rápidos
+  ['René','Cahú'].forEach(reg=>{
+    const gReg=ativos.filter(g=>g.regional===reg);
+    if(!gReg.length) return;
+    const div=document.createElement('div');
+    div.className='card';
+    div.style.cssText='margin-bottom:16px';
+    const totalReg=gReg.reduce((s,g)=>s+(contGlobal[g.id]||0),0);
+    const vgvReg=gReg.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+    const pctVGVReg=totalVGV>0?((vgvReg/totalVGV)*100).toFixed(1):0;
+    let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:0">Regional ${reg}</div>
+      <div style="display:flex;gap:14px">
+        <div class="stat-mini"><div class="stat-mini-label">Plantões</div><div class="stat-mini-val">${totalReg}</div></div>
+        <div class="stat-mini"><div class="stat-mini-label">Gerentes</div><div class="stat-mini-val">${gReg.length}</div></div>
+        ${vgvReg>0?`<div class="stat-mini"><div class="stat-mini-label">VGV</div><div class="stat-mini-val" style="font-size:14px">${fmtR(vgvReg)}</div></div>
+        <div class="stat-mini"><div class="stat-mini-label">% do VGV Total</div><div class="stat-mini-val" style="color:var(--azul-claro)">${pctVGVReg}%</div></div>`:''}
+      </div>
+    </div>
+    <table><thead><tr><th>Gerente</th><th>Plantões</th><th>VGV</th>${S.locais.map(l=>`<th>${l.nome}</th>`).join('')}</tr></thead><tbody>`;
+
+    const maxP=Math.max(...gReg.map(g=>contGlobal[g.id]||0),1);
+    gReg.forEach(g=>{
+      const cnt=contGlobal[g.id]||0;
+      const pct=Math.round(cnt/maxP*100);
+      const vgv=S.vgv[g.id]||0;
+      const pctVGV=totalVGV>0?Math.round(vgv/totalVGV*100):0;
+      html+=`<tr>
+        <td style="font-weight:700">${g.nome}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}${g.inativo?` <span class="badge badge-cinza" style="font-size:9px">Inativo</span>`:''}</td>
+        <td><strong style="font-size:16px;font-family:'Barlow Condensed',sans-serif;color:var(--azul)">${cnt}</strong></td>
+        <td style="font-size:12px;color:var(--cinza-texto)">${vgv>0?fmtR(vgv)+' ('+pctVGV+'%)':'—'}</td>
+        ${S.locais.map(l=>`<td style="text-align:center;font-size:13px;font-weight:600">${contPorLocal[g.id]?.[l.nome]||0}</td>`).join('')}
+      </tr>`;
+    });
+    html+='</tbody></table>';
+    div.innerHTML=html;
+    cont.appendChild(div);
+  });
+}
+
+// ─── LOCAIS ──────────────────────────────────────────────────────────────────
+function renderLocais(){
+  const cont=document.getElementById('lista-locais');
+  cont.innerHTML='';
+  S.locais.forEach(l=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.style.marginBottom='14px';
+    const temNoite=l.turnos.includes('n');
+    let padRows='';
+    DSEM.forEach((dn,i)=>{
+      const p=l.padrao[i]||{m:0,t:0,n:0};
+      padRows+=`<tr>
+        <td style="font-size:12px;font-weight:600;color:var(--cinza-texto);padding:5px 10px">${dn}</td>
+        <td style="padding:5px 8px"><input type="number" value="${p.m||0}" min="0" max="8" style="width:52px" onchange="setPadrao(${l.id},${i},'m',+this.value)"></td>
+        <td style="padding:5px 8px"><input type="number" value="${p.t||0}" min="0" max="8" style="width:52px" onchange="setPadrao(${l.id},${i},'t',+this.value)"></td>
+        ${temNoite?`<td style="padding:5px 8px"><input type="number" value="${p.n||0}" min="0" max="8" style="width:52px" onchange="setPadrao(${l.id},${i},'n',+this.value)"></td>`:''}
+      </tr>`;
+    });
+    card.innerHTML=`
+      <div class="row-between" style="margin-bottom:12px">
+        <input type="text" value="${l.nome}" style="flex:1;font-weight:700;font-size:15px;max-width:280px" onchange="S.locais.find(x=>x.id===${l.id}).nome=this.value;autoSave()">
+        <div class="row">
+          <label style="font-size:12px;font-weight:600;color:var(--cinza-texto)">
+            <input type="checkbox" ${temNoite?'checked':''} onchange="toggleNoite(${l.id},this.checked)"> Turno Noite
+          </label>
+          <button class="btn btn-danger btn-xs" onclick="removerLocal(${l.id})">✕ Remover</button>
+        </div>
+      </div>
+      <!-- HORÁRIOS POR TURNO -->
+      <div style="background:#F0F4FF;border:1.5px solid var(--azul-fundo);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--azul);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">🕐 Horários dos Turnos</div>
+        <div style="font-size:11px;font-weight:600;color:var(--cinza-texto);margin-bottom:6px">Seg – Sex</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+          <div style="flex:1;min-width:150px">
+            <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">☀️ Manhã</label>
+            <input type="text" placeholder="ex: 09:00 – 13:00" value="${l.horarios?.m||''}" style="width:100%;font-size:12px" onchange="setHorario(${l.id},'m',this.value)">
+          </div>
+          <div style="flex:1;min-width:150px">
+            <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">🌤 Tarde</label>
+            <input type="text" placeholder="ex: 13:00 – 18:00" value="${l.horarios?.t||''}" style="width:100%;font-size:12px" onchange="setHorario(${l.id},'t',this.value)">
+          </div>
+          ${temNoite?`<div style="flex:1;min-width:150px">
+            <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">🌙 Noite</label>
+            <input type="text" placeholder="ex: 18:00 – 22:00" value="${l.horarios?.n||''}" style="width:100%;font-size:12px" onchange="setHorario(${l.id},'n',this.value)">
+          </div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${l.horarios_fds?'8px':'0'}">
+          <input type="checkbox" id="fds-ck-${l.id}" ${l.horarios_fds?'checked':''} style="width:14px;height:14px" onchange="toggleHorarioFds(${l.id},this.checked)">
+          <label for="fds-ck-${l.id}" style="font-size:11px;font-weight:700;color:var(--cinza-texto);cursor:pointer">Sáb / Dom / Feriados têm horários diferentes</label>
+        </div>
+        ${l.horarios_fds?`
+        <div style="background:#fff;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:8px 10px">
+          <div style="font-size:11px;font-weight:600;color:var(--cinza-texto);margin-bottom:6px">Sáb – Dom – Feriados</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div style="flex:1;min-width:150px">
+              <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">☀️ Manhã</label>
+              <input type="text" placeholder="ex: 09:00 – 12:00" value="${l.horarios_fds?.m||''}" style="width:100%;font-size:12px" onchange="setHorarioFds(${l.id},'m',this.value)">
+            </div>
+            <div style="flex:1;min-width:150px">
+              <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">🌤 Tarde</label>
+              <input type="text" placeholder="ex: 12:00 – 15:00" value="${l.horarios_fds?.t||''}" style="width:100%;font-size:12px" onchange="setHorarioFds(${l.id},'t',this.value)">
+            </div>
+            ${temNoite?`<div style="flex:1;min-width:150px">
+              <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">🌙 Noite</label>
+              <input type="text" placeholder="ex: 15:00 – 18:00" value="${l.horarios_fds?.n||''}" style="width:100%;font-size:12px" onchange="setHorarioFds(${l.id},'n',this.value)">
+            </div>`:''}
+          </div>
+        </div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:${l.diatodo?'#F0FFF4':'var(--cinza-fundo)'};border:1.5px solid ${l.diatodo?'#86EFAC':'var(--cinza-borda)'};border-radius:var(--radius-sm)">
+        <input type="checkbox" id="diatodo-loc-${l.id}" ${l.diatodo?'checked':''} style="width:16px;height:16px" onchange="toggleDiaTodoLocal(${l.id},this.checked)">
+        <div>
+          <label for="diatodo-loc-${l.id}" style="font-size:13px;font-weight:700;color:#166534;cursor:pointer">🌅 Local com DIA TODO</label>
+          <div style="font-size:11px;color:var(--cinza-texto);margin-top:2px">Quando ativado, o mesmo gerente sorteado para a Manhã ficará também na Tarde (ex: Lumina).</div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--cinza-texto);margin-bottom:8px">Padrão por dia da semana <span style="font-weight:400">(0 = fechado neste dia)</span>:</div>
+      <div style="overflow-x:auto">
+        <table style="font-size:13px;margin-bottom:12px">
+          <thead><tr>
+            <th style="padding:5px 10px">Dia</th>
+            <th style="padding:5px 8px">☀️ Manhã</th>
+            <th style="padding:5px 8px">🌤 Tarde</th>
+            ${temNoite?'<th style="padding:5px 8px">🌙 Noite</th>':''}
+          </tr></thead>
+          <tbody>${padRows}</tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:6px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:600;color:var(--cinza-texto)">Dias Fechados (Feriados):</span>
+        <input type="text" placeholder="Ex: 2026-04-21, 2026-04-18" value="${(l.fechados||[]).join(', ')}" style="flex:1;min-width:200px" onchange="editFechados(${l.id},this.value)">
+        <span style="font-size:11px;color:var(--cinza-texto)">formato: AAAA-MM-DD</span>
+      </div>
+      <!-- DIA SIM / DIA NÃO -->
+      <div style="margin-top:12px;padding:10px 14px;background:${l.diaSim?'#F0FFF4':'var(--cinza-fundo)'};border:1.5px solid ${l.diaSim?'#86EFAC':'var(--cinza-borda)'};border-radius:var(--radius-sm)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${l.diaSim?'10px':'0'}">
+          <input type="checkbox" id="diasim-${l.id}" ${l.diaSim?'checked':''} style="width:15px;height:15px" onchange="toggleDiaSim(${l.id},this.checked)">
+          <label for="diasim-${l.id}" style="font-size:13px;font-weight:700;color:#166534;cursor:pointer">🔁 Dia Sim / Dia Não</label>
+          <span style="font-size:11px;color:var(--cinza-texto);font-weight:400">— alterna plantão a cada dia</span>
+        </div>
+        ${l.diaSim?`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:600;color:var(--cinza-texto)">Primeiro dia COM plantão:</span>
+          <input type="date" value="${l.diaSimInicio||''}" style="font-size:13px;font-weight:600;border-color:#86EFAC" onchange="setDiaSimInicio(${l.id},this.value)">
+          <span style="font-size:11px;color:var(--cinza-texto)">O padrão semanal define as <strong>vagas</strong> do dia com plantão.</span>
+        </div>`:''}
+      </div>`;
+    cont.appendChild(card);
+  });
+}
+
+function setPadrao(lid,dia,turno,val){
+  const l=S.locais.find(x=>x.id===lid);
+  if(l){if(!l.padrao[dia])l.padrao[dia]={m:0,t:0,n:0};l.padrao[dia][turno]=val;autoSave();}
+}
+function setHorario(lid,turno,val){
+  const l=S.locais.find(x=>x.id===lid);
+  if(l){if(!l.horarios)l.horarios={m:'',t:'',n:''};l.horarios[turno]=val;autoSave();}
+}
+function setHorarioFds(lid,turno,val){
+  const l=S.locais.find(x=>x.id===lid);
+  if(l){
+    if(!l.horarios_fds) l.horarios_fds={m:'',t:'',n:''};
+    l.horarios_fds[turno]=val;
+    // Se todos vazios, limpa o objeto
+    if(!l.horarios_fds.m&&!l.horarios_fds.t&&!l.horarios_fds.n) l.horarios_fds=null;
+    autoSave();
+  }
+}
+function toggleHorarioFds(lid, ativo){
+  const l=S.locais.find(x=>x.id===lid);
+  if(!l) return;
+  if(ativo && !l.horarios_fds) l.horarios_fds={m:'',t:'',n:''};
+  else if(!ativo) l.horarios_fds=null;
+  autoSave();
+  renderLocais();
+}
+function toggleDiaTodoLocal(lid,checked){
+  const l=S.locais.find(x=>x.id===lid);
+  if(l){l.diatodo=checked;renderLocais();autoSave();}
+}
+function toggleNoite(lid,checked){
+  const l=S.locais.find(x=>x.id===lid);
+  if(!l) return;
+  if(checked&&!l.turnos.includes('n')) l.turnos.push('n');
+  else if(!checked) l.turnos=l.turnos.filter(t=>t!=='n');
+  renderLocais();autoSave();
+}
+function editFechados(lid,val){
+  const l=S.locais.find(x=>x.id===lid);
+  if(l){l.fechados=val.split(',').map(s=>s.trim()).filter(s=>/^\d{4}-\d{2}-\d{2}$/.test(s));autoSave();}
+}
+function toggleDiaSim(lid,checked){
+  const l=S.locais.find(x=>x.id===lid);
+  if(!l) return;
+  l.diaSim=checked;
+  if(!checked) delete l.diaSimInicio;
+  renderLocais();autoSave();
+}
+function setDiaSimInicio(lid,val){
+  const l=S.locais.find(x=>x.id===lid);
+  if(l){l.diaSimInicio=val;autoSave();showToast('Data de início salva!','success');}
+}
+function removerLocal(id){
+  if(confirm('Remover este local?')){S.locais=S.locais.filter(x=>x.id!==id);renderLocais();autoSave();}
+}
+function addLocal(){
+  const pad={};
+  for(let i=0;i<7;i++) pad[i]={m:1,t:1,n:0};
+  S.locais.push({id:Date.now(),nome:'Novo Local',turnos:['m','t'],padrao:pad,fechados:[],modo:'igual',horarios:{m:'',t:'',n:''},horarios_fds:null});
+  renderLocais();autoSave();showToast('Novo local adicionado!','success');
+}
+
+// ─── CALENDÁRIO DE VAGAS ──────────────────────────────────────────────────────
+function renderCalendarioVagas(){
+  const tabs=document.getElementById('cal-local-tabs');
+  tabs.innerHTML='';
+  if(!calLocalAtivo||!S.locais.find(x=>x.id===calLocalAtivo)){
+    calLocalAtivo=S.locais[0]?.id||null;
+  }
+  S.locais.forEach(l=>{
+    const t=document.createElement('div');
+    t.className='cal-local-tab'+(l.id===calLocalAtivo?' active':'');
+    t.textContent=l.nome;
+    t.onclick=()=>{calLocalAtivo=l.id;renderCalendarioVagas();};
+    tabs.appendChild(t);
+  });
+  renderCalMes();
+}
+
+function renderCalMes(){
+  const cont=document.getElementById('cal-vagas-container');
+  cont.innerHTML='';
+  if(!calLocalAtivo) return;
+  const loc=S.locais.find(x=>x.id===calLocalAtivo);
+  if(!loc) return;
+  const dias=diasDoMes(S.ano,S.mes);
+  const primeiroDia=dias[0].getDay();
+
+  const mesHdr=document.createElement('div');
+  mesHdr.style.cssText='font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:800;color:var(--azul);margin-bottom:12px;display:flex;align-items:center;gap:8px';
+  mesHdr.innerHTML=`${MESES[S.mes]} ${S.ano} <span style="font-size:13px;color:var(--cinza-texto);font-family:Barlow;font-weight:600">— ${loc.nome}</span>`;
+  cont.appendChild(mesHdr);
+
+  const grid=document.createElement('div');
+  grid.className='cal-vagas-grid';
+  DSEM.forEach(d=>{
+    const h=document.createElement('div');
+    h.className='cal-dia-header';
+    h.textContent=d;
+    grid.appendChild(h);
+  });
+  for(let i=0;i<primeiroDia;i++){
+    const v=document.createElement('div');v.className='cal-dia vazio';grid.appendChild(v);
+  }
+  dias.forEach(d=>{
+    const ds=toDS(d);
+    const fechado=(loc.fechados||[]).includes(ds);
+    const override=S.ajustes['pad_'+loc.id+'_'+ds];
+    const vagas=vagasDia(loc,d);
+    const cell=document.createElement('div');
+    cell.className='cal-dia'+(fechado?' fechado':'')+(override?' tem-override':'');
+    cell.onclick=()=>abrirModalDia(loc.id,ds,d.getDate(),d.getDay());
+    const num=document.createElement('div');num.className='cal-dia-num';num.textContent=d.getDate();cell.appendChild(num);
+    const dsem=document.createElement('div');dsem.className='cal-dia-dsem';dsem.textContent=DSEM[d.getDay()];cell.appendChild(dsem);
+    if(fechado){
+      const fch=document.createElement('div');fch.style.cssText='font-size:10px;color:var(--vermelho);font-weight:700;margin-top:2px';fch.textContent='FECHADO';cell.appendChild(fch);
+    } else if(vagas){
+      const vDiv=document.createElement('div');vDiv.className='cal-dia-vagas';
+      loc.turnos.forEach(tr=>{
+        const p=document.createElement('div');p.className='vaga-pill vaga-'+tr;
+        p.innerHTML=`<span>${TURNOS_LABEL[tr]}</span><strong>${vagas[tr]||0}</strong>`;
+        vDiv.appendChild(p);
+      });
+      cell.appendChild(vDiv);
+    }
+    if(override){
+      const ov=document.createElement('div');ov.style.cssText='font-size:9px;color:var(--azul-claro);font-weight:700;margin-top:2px;text-align:right';ov.textContent='✏️ override';cell.appendChild(ov);
+    }
+    grid.appendChild(cell);
+  });
+  cont.appendChild(grid);
+}
+
+// ─── MODAL DIA ─────────────────────────────────────────────────────────────
+function abrirModalDia(lid,ds,diaNum,diaWeek){
+  const loc=S.locais.find(x=>x.id===lid);
+  if(!loc) return;
+  modalDiaCtx={lid,ds,diaNum};
+  document.getElementById('modal-dia-title').innerHTML=`Vagas — <span style="color:var(--vermelho)">${diaNum} de ${MESES[S.mes]} (${DSEM[diaWeek]})</span>`;
+  const body=document.getElementById('modal-dia-body');
+  body.innerHTML='';
+  const override=S.ajustes['pad_'+lid+'_'+ds];
+  const diatodoKey='diatodo_'+lid+'_'+ds;
+  const diatodoGid=S.ajustes[diatodoKey]||null;
+  const padraoBase=loc.padrao[diaWeek]||{m:0,t:0,n:0};
+  const atual=override||padraoBase;
+  const fechado=(loc.fechados||[]).includes(ds);
+  body.innerHTML=`<div style="font-size:13px;color:var(--cinza-texto);margin-bottom:12px">Local: <strong>${loc.nome}</strong></div>`;
+  const chkFech=document.createElement('div');
+  chkFech.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px;background:var(--vermelho-claro);border-radius:var(--radius-sm)';
+  chkFech.innerHTML=`<input type="checkbox" id="dia-fechado" ${fechado?'checked':''} style="width:16px;height:16px"><label for="dia-fechado" style="font-size:13px;font-weight:600;color:var(--vermelho);cursor:pointer">Marcar este dia como FECHADO</label>`;
+  body.appendChild(chkFech);
+  const secDiaTodo=document.createElement('div');
+  secDiaTodo.style.cssText='background:#F0FFF4;border:1.5px solid #86EFAC;border-radius:var(--radius-sm);padding:12px;margin-bottom:12px';
+  secDiaTodo.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <input type="checkbox" id="chk-diatodo" ${diatodoGid?'checked':''} style="width:16px;height:16px" onchange="toggleDiaTodoSelect(this.checked)">
+    <label for="chk-diatodo" style="font-size:13px;font-weight:700;color:#166534;cursor:pointer">🌅 Dia todo — mesmo gerente em todos os turnos</label>
+  </div>
+  <div id="diatodo-select-wrap" style="display:${diatodoGid?'block':'none'}">
+    <label style="font-size:12px;font-weight:600;color:var(--cinza-texto);display:block;margin-bottom:5px">Gerente do dia todo:</label>
+    <select id="sel-diatodo" style="width:100%">
+      <option value="">— Escolha o gerente —</option>
+      ${gerentesAtivos().map(g=>`<option value="${g.id}"${g.id===diatodoGid?' selected':''}>${g.nome} (${g.regional})</option>`).join('')}
+    </select>
+  </div>`;
+  body.appendChild(secDiaTodo);
+  body.appendChild(Object.assign(document.createElement('div'),{className:'sep'}));
+  const secVagas=document.createElement('div');
+  secVagas.id='sec-vagas-manual';
+  secVagas.style.display=diatodoGid?'none':'block';
+  secVagas.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--cinza-texto);margin-bottom:8px">Número de vagas neste dia: <span style="font-weight:400;font-size:11px">(Padrão: M=${padraoBase.m||0}, T=${padraoBase.t||0}${loc.turnos.includes('n')?', N='+(padraoBase.n||0):''}</span>)</div>`;
+  loc.turnos.forEach(tr=>{
+    const classes={m:'turno-badge-m',t:'turno-badge-t',n:'turno-badge-n'};
+    const row=document.createElement('div');row.className='vagas-input-row';
+    row.innerHTML=`<span class="badge ${classes[tr]} vagas-input-label">${TURNOS_LABEL[tr]}</span><input type="number" id="vd2-${tr}" value="${atual[tr]||0}" min="0" max="10" style="width:70px"><span style="font-size:11px;color:var(--cinza-texto)">vagas</span>`;
+    secVagas.appendChild(row);
+  });
+  body.appendChild(secVagas);
+  document.getElementById('modal-dia').style.display='flex';
+}
+
+function toggleDiaTodoSelect(checked){
+  document.getElementById('diatodo-select-wrap').style.display=checked?'block':'none';
+  document.getElementById('sec-vagas-manual').style.display=checked?'none':'block';
+}
+function fecharModalDia(e){if(!e||e.target===document.getElementById('modal-dia'))document.getElementById('modal-dia').style.display='none';}
+
+function removerOverrideDia(){
+  if(!modalDiaCtx) return;
+  const {lid,ds}=modalDiaCtx;
+  delete S.ajustes['pad_'+lid+'_'+ds];
+  delete S.ajustes['diatodo_'+lid+'_'+ds];
+  const loc=S.locais.find(x=>x.id===lid);
+  if(loc) loc.fechados=(loc.fechados||[]).filter(x=>x!==ds);
+  document.getElementById('modal-dia').style.display='none';
+  renderCalMes();autoSave();showToast('Dia resetado ao padrão!','info');
+}
+
+function salvarModalDia(){
+  if(!modalDiaCtx) return;
+  const {lid,ds}=modalDiaCtx;
+  const loc=S.locais.find(x=>x.id===lid);
+  if(!loc) return;
+  const fechado=document.getElementById('dia-fechado').checked;
+  const diatodo=document.getElementById('chk-diatodo')?.checked;
+  const selDiatodo=document.getElementById('sel-diatodo');
+  const gidDiatodo=selDiatodo?(+selDiatodo.value||null):null;
+  const diatodoKey='diatodo_'+lid+'_'+ds;
+  if(fechado){
+    if(!loc.fechados.includes(ds)) loc.fechados.push(ds);
+    delete S.ajustes['pad_'+lid+'_'+ds];
+    delete S.ajustes[diatodoKey];
+  } else {
+    loc.fechados=(loc.fechados||[]).filter(x=>x!==ds);
+    if(diatodo&&gidDiatodo){
+      S.ajustes[diatodoKey]=gidDiatodo;
+      delete S.ajustes['pad_'+lid+'_'+ds];
+    } else {
+      delete S.ajustes[diatodoKey];
+      const novoPad={};
+      loc.turnos.forEach(t=>{const el=document.getElementById('vd2-'+t);if(el)novoPad[t]=+el.value;});
+      S.ajustes['pad_'+lid+'_'+ds]=novoPad;
+    }
+  }
+  document.getElementById('modal-dia').style.display='none';
+  renderCalMes();autoSave();showToast('Configuração do dia salva! ✅','success');
+}
+
+// ─── GERENTES & VGV ──────────────────────────────────────────────────────────
+function renderGerentesVGV(){
+  const lg=document.getElementById('lista-gerentes');
+  lg.innerHTML='';
+  const novatos=S.gerentes.filter(g=>g.novato&&!g.inativo);
+  if(novatos.length>0){
+    const locBlip=S.locais.find(l=>l.nome.toLowerCase().includes('blip'));
+    let infoHtml=`<div class="info-box" style="margin-bottom:12px">🌟 <strong>${novatos.length} gerente${novatos.length>1?'s':''} novato${novatos.length>1?'s':''} este mês:</strong> `;
+    if(locBlip){
+      const totalBlip=totalVagasMes(locBlip);
+      const vagasNovato=Math.floor(totalBlip*0.10);
+      const porNovato=novatos.length>0?Math.floor(vagasNovato/novatos.length):0;
+      infoHtml+=novatos.map(g=>`<strong>${g.nome}</strong>`).join(', ');
+      infoHtml+=` — Cada um receberá <strong>${porNovato} vagas no BLIP</strong> (${(10/novatos.length).toFixed(1)}% cada).`;
+    }
+    infoHtml+='</div>';
+    lg.insertAdjacentHTML('beforeend',infoHtml);
+  }
+
+  S.gerentes.forEach(g=>{
+    const d=document.createElement('div');
+    d.style.cssText=`display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;border-radius:8px;border:1.5px solid ${g.inativo?'var(--cinza-borda)':'transparent'};background:${g.inativo?'#F9FAFB':'transparent'}`;
+    if(g.inativo) d.style.opacity='0.5';
+    d.innerHTML=`
+      <input type="text" value="${g.nome}" style="flex:1;font-weight:600${g.inativo?';color:var(--cinza-texto)':''}" onchange="S.gerentes.find(x=>x.id===${g.id}).nome=this.value;renderGerentesVGV();autoSave()">
+      <select style="width:auto" onchange="S.gerentes.find(x=>x.id===${g.id}).regional=this.value;autoSave()">
+        <option${g.regional==='René'?' selected':''}>René</option>
+        <option${g.regional==='Cahú'?' selected':''}>Cahú</option>
+      </select>
+      <label title="Gerente Novato — recebe 10% das vagas do BLIP" style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;padding:4px 8px;border-radius:var(--radius-sm);background:${g.novato?'#FEF9C3':'var(--cinza-fundo)'};border:1.5px solid ${g.novato?'#F59E0B':'var(--cinza-borda)'};color:${g.novato?'#92400E':'var(--cinza-texto)'}">
+        <input type="checkbox" ${g.novato?'checked':''} onchange="S.gerentes.find(x=>x.id===${g.id}).novato=this.checked;renderGerentesVGV();autoSave()" style="width:13px;height:13px;margin:0">
+        🌟 Novato
+      </label>
+      <label title="Gerente Inativo — não aparece em nenhuma escala" style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;padding:4px 8px;border-radius:var(--radius-sm);background:${g.inativo?'#ECEEF2':'var(--cinza-fundo)'};border:1.5px solid ${g.inativo?'#9CA3AF':'var(--cinza-borda)'};color:${g.inativo?'#374151':'var(--cinza-texto)'}">
+        <input type="checkbox" ${g.inativo?'checked':''} onchange="S.gerentes.find(x=>x.id===${g.id}).inativo=this.checked;renderGerentesVGV();autoSave()" style="width:13px;height:13px;margin:0">
+        🚫 Inativo
+      </label>
+      <button class="btn btn-danger btn-xs" onclick="removerGerente(${g.id})">✕</button>`;
+    lg.appendChild(d);
+  });
+
+  const tv=document.getElementById('tabela-vgv');
+  tv.innerHTML='';
+  const t=document.createElement('table');
+  t.innerHTML='<thead><tr><th>Gerente</th><th>Regional</th><th>VGV (R$)</th><th>%</th><th>Status</th></tr></thead>';
+  const tb=document.createElement('tbody');
+  const totalVGV=S.gerentes.filter(g=>!g.inativo).reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+  S.gerentes.forEach(g=>{
+    const v=S.vgv[g.id]||0;
+    const pct=totalVGV>0?Math.round(v/totalVGV*100):0;
+    const tr=document.createElement('tr');
+    if(g.inativo) tr.style.opacity='0.45';
+    tr.innerHTML=`<td style="font-weight:600">${g.nome}</td>
+      <td><span class="badge ${g.regional==='René'?'badge-azul':'badge-verde'}">${g.regional}</span></td>
+      <td><input type="number" value="${v}" min="0" style="width:130px" onchange="setVGV(${g.id},+this.value)" ${g.inativo?'disabled':''}></td>
+      <td style="font-size:12px;min-width:36px;font-weight:600">${g.inativo?'—':pct+'%'}</td>
+      <td>${g.inativo?'<span class="badge badge-cinza">Inativo</span>':g.novato?'<span class="badge badge-amarelo">Novato</span>':'<span class="badge badge-verde">Ativo</span>'}</td>`;
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);tv.appendChild(t);
+  document.getElementById('total-vgv').textContent=fmtR(totalVGV);
+  renderVagasManuais();
+  renderConfig10pct();
+}
+
+function setVGV(id,val){S.vgv[id]=val;renderGerentesVGV();autoSave();}
+function removerGerente(id){if(confirm('Remover gerente?')){S.gerentes=S.gerentes.filter(x=>x.id!==id);renderGerentesVGV();autoSave();}}
+function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regional:'René',novato:false,inativo:false});renderGerentesVGV();autoSave();showToast('Gerente adicionado!','success');}
+
+// ─── CALENDÁRIO VISUAL DE PERÍODO ────────────────────────────────────────────
+function confirmarGerarEscalas(){
+  calPeriodoMes={mes:S.mes,ano:S.ano};
+  periodoSel={ini:null,fim:null};
+  const lista=document.getElementById('locais-check-list');
+  lista.innerHTML='';
+  S.locais.forEach(l=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
+    row.innerHTML=`<input type="checkbox" id="loc-ck-${l.id}" checked style="width:15px;height:15px"><label for="loc-ck-${l.id}" style="font-size:13px;font-weight:600;cursor:pointer">${l.nome}</label>`;
+    lista.appendChild(row);
+  });
+  const ppl=document.getElementById('periodo-por-local');
+  ppl.innerHTML='';
+  S.locais.forEach(l=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap';
+    row.innerHTML=`<span style="font-size:12px;font-weight:600;min-width:120px">${l.nome}</span>
+      <span style="font-size:11px;color:var(--cinza-texto)">De</span>
+      <input type="date" id="loc-ini-${l.id}" style="font-size:12px;padding:4px 6px">
+      <span style="font-size:11px;color:var(--cinza-texto)">até</span>
+      <input type="date" id="loc-fim-${l.id}" style="font-size:12px;padding:4px 6px">
+      <span style="font-size:10px;color:var(--cinza-texto)">(vazio = usa período global)</span>`;
+    ppl.appendChild(row);
+  });
+  const overrides=Object.keys(S.ajustes).filter(k=>k.startsWith('pad_')||k.startsWith('diatodo_')).length;
+  document.getElementById('confirmar-desc').innerHTML=`Gerentes ativos: <strong>${gerentesAtivos().length}</strong> &nbsp;|&nbsp; Locais: <strong>${S.locais.length}</strong>${overrides>0?`<br><span style="color:var(--azul-claro)">📅 ${overrides} configurações de calendário salvas</span>`:''}`;
+  renderCalPeriodo();
+  document.getElementById('modal-confirmar').style.display='flex';
+  // Inicializar painel BLIP
+  const blipCampo=document.getElementById('blip-vagas-total');
+  if(blipCampo) blipCampo.value='';
+  // Listener para atualizar preview quando usuário digitar total de vagas
+  if(blipCampo){
+    blipCampo.oninput=()=>atualizarBlipPainel();
+  }
+  atualizarBlipPainel();
+}
+
+function renderCalPeriodo(){
+  const {mes,ano}=calPeriodoMes;
+  document.getElementById('cal-periodo-titulo').textContent=MESES[mes]+' '+ano;
+  const grid=document.getElementById('cal-periodo-grid');
+  grid.innerHTML='';
+  DSEM.forEach(d=>{
+    const h=document.createElement('div');
+    h.style.cssText='text-align:center;font-size:10px;font-weight:700;color:var(--cinza-texto);padding:2px;text-transform:uppercase';
+    h.textContent=d.slice(0,1);grid.appendChild(h);
+  });
+  const dias=diasDoMes(ano,mes);
+  const primeiroDia=dias[0].getDay();
+  for(let i=0;i<primeiroDia;i++) grid.appendChild(document.createElement('div'));
+  dias.forEach(d=>{
+    const cell=document.createElement('div');
+    const ds=toDS(d);
+    const dObj={ano,mes,dia:d.getDate(),ds};
+    let estado='normal';
+    if(periodoSel.ini&&periodoSel.fim){
+      if(ds===periodoSel.ini.ds) estado='inicio';
+      else if(ds===periodoSel.fim.ds) estado='fim';
+      else if(ds>periodoSel.ini.ds&&ds<periodoSel.fim.ds) estado='entre';
+    } else if(periodoSel.ini&&ds===periodoSel.ini.ds) estado='inicio';
+    const cores={normal:'background:#fff;color:var(--texto);border:1px solid var(--cinza-borda)',inicio:'background:var(--azul);color:#fff;border:1px solid var(--azul);font-weight:800',fim:'background:var(--vermelho);color:#fff;border:1px solid var(--vermelho);font-weight:800',entre:'background:var(--azul-fundo);color:var(--azul);border:1px solid var(--azul-fundo)'};
+    const isWeekend=d.getDay()===0||d.getDay()===6;
+    cell.style.cssText=`${cores[estado]};text-align:center;padding:4px 2px;border-radius:4px;font-size:12px;cursor:pointer;transition:all 0.1s;${isWeekend&&estado==='normal'?'color:var(--vermelho)':''}`;
+    cell.textContent=d.getDate();
+    cell.onclick=()=>clicarDiaPeriodo(dObj);
+    cell.onmouseover=()=>{if(estado==='normal')cell.style.background='var(--azul-fundo)';};
+    cell.onmouseout=()=>{if(estado==='normal')cell.style.background='#fff';};
+    grid.appendChild(cell);
+  });
+  atualizarPreviewPeriodo();
+}
+
+function clicarDiaPeriodo(dObj){
+  if(!periodoSel.ini||(periodoSel.ini&&periodoSel.fim)){periodoSel={ini:dObj,fim:null};}
+  else{if(dObj.ds<periodoSel.ini.ds)periodoSel={ini:dObj,fim:null};else periodoSel.fim=dObj;}
+  renderCalPeriodo();
+}
+function navCalPeriodo(dir){
+  let {mes,ano}=calPeriodoMes;mes+=dir;
+  if(mes>12){mes=1;ano++;}if(mes<1){mes=12;ano--;}
+  calPeriodoMes={mes,ano};renderCalPeriodo();
+}
+function atualizarBlipPainel(){
+  const locBlip=S.locais.find(l=>l.nome.toLowerCase().includes('blip'));
+  const painel=document.getElementById('blip-vagas-painel');
+  if(!painel) return;
+  if(!locBlip){painel.style.display='none';return;}
+
+  painel.style.display='';
+
+  // Calcular horários do período selecionado
+  const dsIni=periodoSel.ini?.ds;
+  const dsFim=(periodoSel.fim||periodoSel.ini)?.ds;
+  if(!dsIni){
+    document.getElementById('blip-horarios-info').innerHTML='<em>Selecione o período para ver a contagem de horários.</em>';
+    document.getElementById('blip-preview-dist').innerHTML='';
+    return;
+  }
+
+  const dias=diasEntre(dsIni,dsFim);
+  let totalHorarios=0;
+  const contPorTurno={m:0,t:0,n:0};
+  dias.forEach(d=>{
+    const v=vagasDia(locBlip,d);
+    if(!v) return;
+    locBlip.turnos.forEach(tr=>{
+      const n=v[tr]||0;
+      totalHorarios+=n;
+      contPorTurno[tr]=(contPorTurno[tr]||0)+n;
+    });
+  });
+
+  const tLbl=TURNOS_LABEL;
+  const turnosInfo=locBlip.turnos.filter(tr=>contPorTurno[tr]>0)
+    .map(tr=>`<strong>${contPorTurno[tr]}</strong> de ${tLbl[tr]}`).join(' · ');
+
+  document.getElementById('blip-horarios-info').innerHTML=
+    `📅 <strong>${dias.length} dias</strong> no período &nbsp;|&nbsp; Total de horários: <strong style="color:#92400E;font-size:14px">${totalHorarios}</strong><br>
+     ${turnosInfo}`;
+
+  // Preview da distribuição
+  const campoTotal=document.getElementById('blip-vagas-total');
+  const vagasUsadas=campoTotal&&campoTotal.value?+campoTotal.value:totalHorarios;
+  const ger=gerentesAtivos();
+  const totalVGVGer=ger.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+  const novatos=ger.filter(g=>g.novato);
+  const vendedores=ger.filter(g=>!g.novato&&(S.vgv[g.id]||0)>0);
+
+  let previewHtml='';
+  if(totalVGVGer>0&&vagasUsadas>0){
+    const vagasNovatos=novatos.length>0?Math.floor(vagasUsadas*0.10):0;
+    const vagasVend=vagasUsadas-vagasNovatos;
+    previewHtml+=`<div style="background:#fff;border-radius:6px;padding:8px 10px;border:1px solid #F59E0B;margin-top:6px">
+      <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:6px">📊 Distribuição prevista — ${vagasUsadas} vagas totais:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    if(novatos.length>0){
+      const porNovato=Math.floor(vagasNovatos/novatos.length);
+      novatos.forEach(g=>{
+        previewHtml+=`<span style="background:#FEF3C7;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">🌟 ${g.nome}: ${porNovato} (novato)</span>`;
+      });
+    }
+    const totalVGVVend=vendedores.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+    vendedores.forEach(g=>{
+      const vgv=S.vgv[g.id]||0;
+      const qtd=totalVGVVend>0?Math.round(vgv/totalVGVVend*vagasVend):0;
+      const pct=totalVGVGer>0?Math.round(vgv/totalVGVGer*100):0;
+      previewHtml+=`<span style="background:#E0F2FE;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${g.nome}: ${qtd} (${pct}% VGV)</span>`;
+    });
+    if(ger.filter(g=>!g.novato&&!(S.vgv[g.id]||0)>0).length>0&&vendedores.length===0){
+      const semVGV=ger.filter(g=>!g.novato);
+      const base=semVGV.length>0?Math.floor(vagasVend/semVGV.length):0;
+      semVGV.forEach(g=>{previewHtml+=`<span style="background:#F1F5F9;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700">${g.nome}: ${base} (igualitário)</span>`;});
+    }
+    previewHtml+=`</div></div>`;
+  } else if(vagasUsadas>0){
+    previewHtml=`<div style="font-size:11px;color:#7A5A00;margin-top:4px">⚠️ Sem VGV cadastrado — distribuição será igualitária entre ${ger.length} gerentes ativos.</div>`;
+  }
+  document.getElementById('blip-preview-dist').innerHTML=previewHtml;
+}
+
+function atualizarPreviewPeriodo(){
+  const el=document.getElementById('periodo-selecionado-preview');if(!el) return;
+  if(!periodoSel.ini){el.textContent='Clique em um dia para definir o início';el.style.color='var(--cinza-texto)';}
+  else if(!periodoSel.fim){el.innerHTML=`Início: <strong>${periodoSel.ini.dia}/${periodoSel.ini.mes}/${periodoSel.ini.ano}</strong> — Clique no dia final`;el.style.color='var(--azul)';}
+  else{el.innerHTML=`<strong>${periodoSel.ini.dia}/${periodoSel.ini.mes}/${periodoSel.ini.ano}</strong> → <strong>${periodoSel.fim.dia}/${periodoSel.fim.mes}/${periodoSel.fim.ano}</strong>`;el.style.color='var(--azul)';}
+  atualizarBlipPainel();
+}
+function toggleTodosLocais(val){S.locais.forEach(l=>{const ck=document.getElementById('loc-ck-'+l.id);if(ck)ck.checked=val;});}
+function fecharModalConfirmar(e){if(!e||e.target===document.getElementById('modal-confirmar'))document.getElementById('modal-confirmar').style.display='none';}
+
+// ─── GERAR ESCALAS ────────────────────────────────────────────────────────────
+function executarGerarEscalas(){
+  if(!periodoSel.ini){showToast('Selecione o período no calendário!','warning');return;}
+  if(!periodoSel.fim) periodoSel.fim=periodoSel.ini;
+  const dsIni=periodoSel.ini.ds;
+  const dsFim=periodoSel.fim.ds;
+  const periodoPorLocal={};
+  S.locais.forEach(l=>{
+    const iniEl=document.getElementById('loc-ini-'+l.id);
+    const fimEl=document.getElementById('loc-fim-'+l.id);
+    if(iniEl?.value||fimEl?.value){
+      periodoPorLocal[l.id]={ini:iniEl?.value||dsIni,fim:fimEl?.value||dsFim};
+    }
+  });
+  const locaisSel=S.locais.filter(l=>{const ck=document.getElementById('loc-ck-'+l.id);return ck?ck.checked:true;}).map(l=>l.id);
+  // Capturar vagas totais BLIP definidas pelo usuário
+  const blipVagasCampo=document.getElementById('blip-vagas-total');
+  S._blipVagasTotal=blipVagasCampo&&blipVagasCampo.value?+blipVagasCampo.value:null;
+  S._periodoGlobalIni=dsIni;S._periodoGlobalFim=dsFim;S._periodoPorLocal=periodoPorLocal;S._locaisSel=locaisSel;
+  document.getElementById('modal-confirmar').style.display='none';
+
+  const pm = document.getElementById('progress-modal');
+  pm.style.display = 'flex';
+
+  // 2 segundos — 8 etapas de 240ms
+  const etapas=[
+    [15,'Calculando vagas por local...'],
+    [30,'Analisando VGV dos gerentes...'],
+    [45,'Calculando reserva de novatos (BLIP)...'],
+    [60,'Distribuindo plantões...'],
+    [72,'Aplicando Dia Todo (Lumina)...'],
+    [84,'Aplicando overrides manuais...'],
+    [94,'Montando visualização...'],
+    [100,'Pronto! ✅']
+  ];
+  let idx=0;
+  function avancar(){
+    if(idx>=etapas.length){
+      setTimeout(()=>{
+        pm.style.display='none';
+        gerarEscalasInterno();
+        const ini=periodoSel.ini,fim=periodoSel.fim;
+        showToast(`✅ Escalas geradas: ${ini.dia}/${ini.mes}/${ini.ano} → ${fim.dia}/${fim.mes}/${fim.ano}`,'success',5000);
+        autoSave();
+      },200);
+      return;
+    }
+    const [pct,msg]=etapas[idx++];
+    document.getElementById('prog-fill').style.width=pct+'%';
+    document.getElementById('prog-pct').textContent=pct+'%';
+    document.getElementById('progress-desc').textContent=msg;
+    setTimeout(avancar, 240);
+  }
+  avancar();
+}
+
+function diasEntre(dsIni,dsFim){
+  const dias=[];
+  const d=new Date(dsIni+'T12:00');
+  const fim=new Date(dsFim+'T12:00');
+  while(d<=fim){dias.push(new Date(d));d.setDate(d.getDate()+1);}
+  return dias;
+}
+
+// ─── ALGORITMO DE DISTRIBUIÇÃO ───────────────────────────────────────────────
+// Sorteia totalmente aleatório (Math.random), sem pool.
+// Regra anti-consecutivos: a mesma pessoa não pode cair 3x seguidas na mesma vaga/turno.
+function gerarEscalasInterno(){
+  const dsIni=S._periodoGlobalIni;
+  const dsFim=S._periodoGlobalFim;
+  const periodoPorLocal=S._periodoPorLocal||{};
+  const locaisSel=S._locaisSel||S.locais.map(l=>l.id);
+  const ger=gerentesAtivos();
+
+  if(ger.length===0){showToast('Nenhum gerente ativo!','error');return;}
+
+  // ── Calcular VGV total dos ativos ──────────────────────────────────────────
+  const totalVGV=ger.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+
+  // ── Reserva de novatos para BLIP ──────────────────────────────────────────
+  const novatos=ger.filter(g=>g.novato);
+  const locBlip=S.locais.find(l=>l.nome.toLowerCase().includes('blip'));
+
+  // ── Calcular créditos VGV para o BLIP ─────────────────────────────────────
+  // Gerentes que venderam: têm VGV > 0. Os novatos têm reserva de 10%.
+  // Cada gerente não-novato com VGV recebe vagas proporcionais ao seu VGV.
+  function calcularVagasVGV(listaGer, totalVagas){
+    const totalVGVLista=listaGer.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+    if(totalVGVLista===0){
+      const base=Math.floor(totalVagas/listaGer.length);
+      const resto=totalVagas%listaGer.length;
+      const result={};
+      listaGer.forEach((g,i)=>result[g.id]=base+(i<resto?1:0));
+      return result;
+    }
+    // Largest Remainder Method - garante que soma = totalVagas e respeita decimais
+    const exatos=listaGer.map(g=>{
+      const exato=(S.vgv[g.id]||0)/totalVGVLista*totalVagas;
+      return{id:g.id,floor:Math.floor(exato),decimal:exato-Math.floor(exato)};
+    });
+    const result={};
+    exatos.forEach(e=>result[e.id]=e.floor);
+    let faltam=totalVagas-exatos.reduce((s,e)=>s+e.floor,0);
+    exatos.sort((a,b)=>b.decimal-a.decimal);
+    for(let i=0;i<faltam;i++) result[exatos[i].id]++;
+    return result;
+  }
+
+  // ── Função sorteia 1 de um array, evitando 3x consecutivos ───────────────
+  function sortearAntiConsec(arr, ultimosDois){
+    if(!arr||arr.length===0) return null;
+    if(arr.length===1) return arr[0]; // sem escolha
+    // Exclui quem apareceu nas últimas 2 posições iguais (anti-trinca)
+    const [u1,u2]=ultimosDois||[null,null];
+    let elegiv=arr;
+    if(u1!==null&&u2!==null&&u1===u2){
+      elegiv=arr.filter(g=>g.id!==u1);
+      if(elegiv.length===0) elegiv=arr; // fallback
+    }
+    return elegiv[Math.floor(Math.random()*elegiv.length)];
+  }
+
+  const agenda={};
+  S._zeradosPorLocal={};
+  let _domPorGerLoja={};
+
+  S.locais.forEach(loc=>{
+    if(!locaisSel.includes(loc.id)) return;
+    const isBlip=locBlip&&loc.id===locBlip.id;
+    const pLoc=periodoPorLocal[loc.id];
+    const locIni=pLoc?.ini||dsIni;
+    const locFim=pLoc?.fim||dsFim;
+    const dias=diasEntre(locIni,locFim);
+
+    agenda[loc.id]={};
+
+    // ── BLIP: distribuição por VGV ─────────────────────────────────────────
+    if(isBlip){
+      // Calcular total de vagas do BLIP no período
+      let totalVagasBlipReal=0;
+      dias.forEach(d=>{
+        const v=vagasDia(loc,d);
+        if(v) loc.turnos.forEach(tr=>totalVagasBlipReal+=v[tr]||0);
+      });
+
+      // Usar total definido pelo usuário ou o real do período
+      const totalVagasBlip=S._blipVagasTotal&&S._blipVagasTotal>0?S._blipVagasTotal:totalVagasBlipReal;
+
+      // 10% para novatos, 90% para quem vendeu (tem VGV > 0)
+      const blip10pativ=!S.locais10pct||S.locais10pct.includes(loc.id);
+      const novatosBlip=blip10pativ?novatos:[];
+      const vagasNovatos=novatosBlip.length>0?Math.floor(totalVagasBlip*0.10):0;
+      const vagasVendedores=totalVagasBlip-vagasNovatos;
+      const vendedores=blip10pativ?ger.filter(g=>!g.novato&&(S.vgv[g.id]||0)>0):ger.filter(g=>(S.vgv[g.id]||0)>0);
+
+      // Créditos por gerente
+      const creditosBlip={};
+      // Novatos: dividem 10%
+      if(novatosBlip.length>0){
+        const porNovato=Math.floor(vagasNovatos/novatosBlip.length);
+        novatosBlip.forEach((g,i)=>{
+          creditosBlip[g.id]=porNovato+(i<vagasNovatos%novatosBlip.length?1:0);
+        });
+      }
+      // Vendedores: distribuição por VGV
+      if(vendedores.length>0){
+        const distVGV=calcularVagasVGV(vendedores,vagasVendedores);
+        vendedores.forEach(g=>{creditosBlip[g.id]=(creditosBlip[g.id]||0)+(distVGV[g.id]||0);});
+      } else if(ger.length>0){
+        // Ninguém vendeu ainda: distribuição igualitária para não-novatos
+        const todos=ger.filter(g=>!g.novato);
+        if(todos.length>0){
+          const base=Math.floor(vagasVendedores/todos.length);
+          todos.forEach(g=>{creditosBlip[g.id]=(creditosBlip[g.id]||0)+base;});
+        }
+      }
+
+      // Montar fila ordenada por créditos (maior → menor), embaralhar empates
+      function montarFilaBlip(){
+        const comCredito=ger.filter(g=>(creditosBlip[g.id]||0)>0);
+        // Embaralha antes de ordenar para desempate aleatório
+        for(let i=comCredito.length-1;i>0;i--){
+          const j=Math.floor(Math.random()*(i+1));
+          [comCredito[i],comCredito[j]]=[comCredito[j],comCredito[i]];
+        }
+        comCredito.sort((a,b)=>(creditosBlip[b.id]||0)-(creditosBlip[a.id]||0));
+        return comCredito;
+      }
+
+      // Índice para round-robin fallback (quando todos os créditos se esgotam)
+      let blipFallbackIdx=0;
+
+      // Distribuir vagas dia a dia usando fila de créditos + anti-consecutivos
+      const ultimosBlip={}; // {locId_turno: [gid, gid]}
+      dias.forEach(dia=>{
+        const ds=toDS(dia);
+        const diatodoKey='diatodo_'+loc.id+'_'+ds;
+        const gidDiaTodoManual=S.ajustes[diatodoKey]||null;
+        const v=vagasDia(loc,dia);
+        if(!v){agenda[loc.id][ds]={fechado:true};return;}
+        const daySlots={_diatodo:null};
+        loc.turnos.forEach(tr=>{
+          const n=v[tr]||0;
+          daySlots[tr]=[];
+          for(let s=0;s<n;s++){
+            const aKey=loc.id+'_'+ds+'_'+tr+'_'+s;
+            if(S.ajustes[aKey]!==undefined){
+              daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);
+            } else {
+              const chave=loc.id+'_'+tr+'_'+s;
+              const ultimos=ultimosBlip[chave]||[null,null];
+              const fila=montarFilaBlip();
+              let escolhido;
+              if(fila.length>0){
+                escolhido=sortearAntiConsec(fila,ultimos.map(id=>ger.find(g=>g.id===id)||{id:id}));
+                if(escolhido){
+                  creditosBlip[escolhido.id]=Math.max(0,(creditosBlip[escolhido.id]||0)-1);
+                  ultimosBlip[chave]=[ultimos[1],escolhido.id];
+                }
+              } else {
+                // Créditos esgotados: round-robin entre todos os gerentes ativos (garante sem vaga vazia)
+                const [uid1,uid2]=ultimos;
+                let candidatos=ger;
+                if(uid1!==null&&uid2!==null&&uid1===uid2){
+                  const sem=ger.filter(g=>g.id!==uid1);
+                  if(sem.length>0) candidatos=sem;
+                }
+                escolhido=candidatos[blipFallbackIdx%candidatos.length];
+                blipFallbackIdx++;
+                if(escolhido) ultimosBlip[chave]=[ultimos[1],escolhido.id];
+              }
+              daySlots[tr].push(escolhido||null);
+            }
+          }
+        });
+        agenda[loc.id][ds]=daySlots;
+      });
+      return;
+    }
+
+    // ── IGUALITÁRIO ou POR VGV (outros locais) ────────────────────────────
+    const modoVGV=loc.modo==='vgv'&&totalVGV>0;
+    // Verificar se 10% está ativo para este local (só relevante no modo VGV)
+    const dez10ativo=modoVGV&&(!S.locais10pct||S.locais10pct.includes(loc.id));
+
+    // ── Calcular total de vagas deste local no período ────────────────────
+    let totalVagasLoc=0;
+    dias.forEach(d=>{
+      const v=vagasDia(loc,d);
+      if(v) loc.turnos.forEach(tr=>totalVagasLoc+=v[tr]||0);
+    });
+
+    // ── Verificar se há vagas manuais definidas ───────────────────────────
+    const temVagasManuais=S.vagasManual&&ger.some(g=>(S.vagasManual[g.id]||0)>0);
+
+    // ── Zerados só existem no modo VGV com 10% ativo ─────────────────────
+    const zerados=dez10ativo?ger.filter(g=>!(S.vgv[g.id]||0)>0):[];
+    if(zerados.length>0) S._zeradosPorLocal[loc.id]=zerados.map(g=>g.nome);
+
+    // ── Montar créditos por gerente ───────────────────────────────────────
+    const creditos={};
+
+    // Para modo diatodo: contar total de DIAS abertos (não slots) para garantir equilíbrio
+    const totalDiasAbertos=dias.filter(d=>!!vagasDia(loc,d)).length;
+    const unidadeCredito=loc.diatodo?totalDiasAbertos:totalVagasLoc;
+
+    if(temVagasManuais){
+      const totalManual=ger.reduce((s,g)=>s+(S.vagasManual[g.id]||0),0);
+      if(totalManual>0){
+        ger.forEach(g=>{
+          const prop=(S.vagasManual[g.id]||0)/totalManual;
+          creditos[g.id]=Math.round(prop*unidadeCredito);
+        });
+        const soma=Object.values(creditos).reduce((a,b)=>a+b,0);
+        let diff=unidadeCredito-soma;
+        const ordem=[...ger].sort((a,b)=>(S.vagasManual[b.id]||0)-(S.vagasManual[a.id]||0));
+        let i=0;
+        while(diff>0){creditos[ordem[i%ordem.length].id]++;diff--;i++;}
+        while(diff<0){const idx=i%ordem.length;if(creditos[ordem[idx].id]>0){creditos[ordem[idx].id]--;diff++;}i++;}
+      } else {
+        const base=Math.floor(unidadeCredito/ger.length);
+        const resto=unidadeCredito%ger.length;
+        const emb=[...ger].sort(()=>Math.random()-0.5);
+        emb.forEach((g,i)=>creditos[g.id]=base+(i<resto?1:0));
+      }
+    } else if(!modoVGV){
+      // ── IGUALITÁRIO PURO: floor + resto máximo +1, sem aleatoriedade acumulada ──
+      const base=Math.floor(unidadeCredito/ger.length);
+      const resto=unidadeCredito%ger.length;
+      const emb=[...ger].sort(()=>Math.random()-0.5);
+      emb.forEach((g,i)=>creditos[g.id]=base+(i<resto?1:0));
+    } else {
+      // ── POR VGV (com possível reserva de 10% para zerados) ────────────
+      const vagasZerados=zerados.length>0?Math.floor(totalVagasLoc*0.10):0;
+      const vagasRestantes=totalVagasLoc-vagasZerados;
+
+      if(zerados.length>0){
+        const base=Math.floor(vagasZerados/zerados.length);
+        const restoZ=vagasZerados%zerados.length;
+        zerados.forEach((g,i)=>creditos[g.id]=(base+(i<restoZ?1:0)));
+      }
+
+      const naoZerados=zerados.length>0?ger.filter(g=>!zerados.find(z=>z.id===g.id)):ger;
+      const gerParaDist=naoZerados.length>0?naoZerados:ger;
+      const vagasParaDist=naoZerados.length>0?vagasRestantes:totalVagasLoc;
+
+      const totalVGVAtivo=gerParaDist.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+      if(totalVGVAtivo>0){
+        const dist=calcularVagasVGV(gerParaDist, vagasParaDist);
+        gerParaDist.forEach(g=>creditos[g.id]=(creditos[g.id]||0)+(dist[g.id]||0));
+      } else {
+        // VGV zerado para todos: cai no igualitário
+        const base=Math.floor(vagasParaDist/gerParaDist.length);
+        const resto=vagasParaDist%gerParaDist.length;
+        const emb=[...gerParaDist].sort(()=>Math.random()-0.5);
+        emb.forEach((g,i)=>creditos[g.id]=(creditos[g.id]||0)+base+(i<resto?1:0));
+      }
+    }
+
+    // ── Função: sorteia da fila de créditos com anti-consecutivo ──────────
+    // Sempre escolhe entre os que têm MAIS créditos (desempate aleatório).
+    // Anti-consecutivo nunca sacrifica equilíbrio: se só restar 1 elegível com crédito, usa ele mesmo que seja consecutivo.
+    function sortearCredito(ultimosDoisIds){
+      const comCredito=ger.filter(g=>(creditos[g.id]||0)>0);
+      if(comCredito.length===0) return null;
+
+      // Anti-consecutivo: se as últimas 2 são iguais, tenta excluir
+      const [u1,u2]=ultimosDoisIds||[null,null];
+      let elegiv=comCredito;
+      if(u1!==null&&u2!==null&&u1===u2){
+        const semUltimo=comCredito.filter(g=>g.id!==u1);
+        if(semUltimo.length>0) elegiv=semUltimo;
+        // se semUltimo.length===0, usa comCredito (equilíbrio tem prioridade)
+      }
+
+      // Escolhe sempre quem tem MAIS créditos — garante equilíbrio estrito
+      const maxCred=Math.max(...elegiv.map(g=>creditos[g.id]||0));
+      const prioritarios=elegiv.filter(g=>(creditos[g.id]||0)===maxCred);
+      // Desempate aleatório entre os que têm o mesmo máximo
+      const escolhido=prioritarios[Math.floor(Math.random()*prioritarios.length)];
+      if(escolhido) creditos[escolhido.id]=Math.max(0,(creditos[escolhido.id]||0)-1);
+      return escolhido||null;
+    }
+
+    const ultimosLoc={};
+    const isLojaLocal=loc.nome.toLowerCase().includes('loja');
+
+    // PRÉ-ALOCAÇÃO para locais normais (não diatodo):
+    // Garante que cada gerente recebe EXATAMENTE seus créditos
+    if(!loc.diatodo){
+      // 1) Atribuir domingos da fila primeiro (todos os slots do dia = 1 gerente)
+      const atrib={};
+      if(isLojaLocal){
+        inicializarFilaDomingos();
+        if(!_domPorGerLoja) _domPorGerLoja={};
+        dias.forEach(dia=>{
+          if(dia.getDay()!==0) return;
+          const ds=toDS(dia);
+          const v=vagasDia(loc,dia);if(!v) return;
+          const temManual=loc.turnos.some(tr=>{
+            const n=v[tr]||0;
+            for(let s=0;s<n;s++){if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined)return true;}
+            return false;
+          });
+          if(temManual) return;
+          let domGer=null;
+          for(let fi=0;fi<S.filaDomingos.length;fi++){
+            const g=ger.find(x=>x.id===S.filaDomingos[fi].gid);if(!g) continue;
+            const min=Math.min(...S.filaDomingos.map(x=>_domPorGerLoja[x.gid]||0));
+            if((_domPorGerLoja[g.id]||0)===min){domGer=g;break;}
+          }
+          if(!domGer) return;
+          _domPorGerLoja[domGer.id]=(_domPorGerLoja[domGer.id]||0)+1;
+          // Todos os slots do domingo = domGer, debitar créditos
+          loc.turnos.forEach(tr=>{
+            const n=v[tr]||0;
+            for(let s=0;s<n;s++){
+              if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
+              atrib[ds+'_'+tr+'_'+s]=domGer;
+              creditos[domGer.id]=Math.max(0,(creditos[domGer.id]||0)-1);
+            }
+          });
+        });
+      }
+
+      // 2) Coletar slots restantes e distribuir com pool
+      const slotsRest=[];
+      dias.forEach(dia=>{
+        const ds=toDS(dia);const v=vagasDia(loc,dia);if(!v) return;
+        loc.turnos.forEach(tr=>{
+          const n=v[tr]||0;
+          for(let s=0;s<n;s++){
+            if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
+            if(atrib[ds+'_'+tr+'_'+s]!==undefined) continue;
+            slotsRest.push({ds,dia,tr,seat:s});
+          }
+        });
+      });
+      // Pool = fichas dos créditos restantes
+      const pool=[];
+      ger.forEach(g=>{for(let i=0;i<(creditos[g.id]||0);i++) pool.push(g);});
+      for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+      const ultDiaTr={};
+      slotsRest.forEach((slot,i)=>{
+        if(i>=pool.length){atrib[slot.ds+'_'+slot.tr+'_'+slot.seat]=null;return;}
+        const ch=slot.ds+'_'+slot.tr;const ult=ultDiaTr[ch];
+        if(ult&&pool[i]&&pool[i].id===ult.id){
+          for(let t=i+1;t<Math.min(pool.length,i+ger.length*2);t++){
+            if(pool[t].id!==ult.id){[pool[i],pool[t]]=[pool[t],pool[i]];break;}
+          }
+        }
+        atrib[slot.ds+'_'+slot.tr+'_'+slot.seat]=pool[i]||null;
+        ultDiaTr[ch]=pool[i]||null;
+      });
+
+      // 3) Montar agenda com atrib
+      dias.forEach(dia=>{
+        const ds=toDS(dia);
+        const diatodoKey='diatodo_'+loc.id+'_'+ds;
+        const gidDiaTodoManual=S.ajustes[diatodoKey]||null;
+        const v=vagasDia(loc,dia);
+        if(!v){agenda[loc.id][ds]={fechado:true};return;}
+        const daySlots={_diatodo:null};
+        loc.turnos.forEach(tr=>{
+          const n=v[tr]||0;daySlots[tr]=[];
+          for(let s=0;s<n;s++){
+            const aKey=loc.id+'_'+ds+'_'+tr+'_'+s;
+            if(S.ajustes[aKey]!==undefined){daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);}
+            else{daySlots[tr].push(atrib[ds+'_'+tr+'_'+s]||null);}
+          }
+        });
+        agenda[loc.id][ds]=daySlots;
+      });
+      return; // próximo local
+    }
+
+    // DIA TODO (Lumina e similares)
+    dias.forEach(dia=>{
+      const ds=toDS(dia);
+      const diatodoKey='diatodo_'+loc.id+'_'+ds;
+      const gidDiaTodoManual=S.ajustes[diatodoKey]||null;
+      const v=vagasDia(loc,dia);
+      if(!v){agenda[loc.id][ds]={fechado:true};return;}
+      if(loc.diatodo||gidDiaTodoManual){
+        let gDT;
+        if(gidDiaTodoManual){gDT=ger.find(x=>x.id===gidDiaTodoManual)||null;}
+        else{
+          const chave=loc.id+'_diatodo';
+          const ultimos=ultimosLoc[chave]||[null,null];
+          gDT=sortearCredito(ultimos);
+          if(gDT) ultimosLoc[chave]=[ultimos[1],gDT.id];
+        }
+        const daySlots={_diatodo:gDT?.id||null};
+        loc.turnos.forEach(tr=>{daySlots[tr]=Array(v[tr]||0).fill(gDT);});
+        agenda[loc.id][ds]=daySlots;
+      }
+    });
+  });
+
+  S.escala={id:Date.now(),nome:`${periodoSel.ini.dia}/${periodoSel.ini.mes}/${periodoSel.ini.ano} → ${periodoSel.fim.dia}/${periodoSel.fim.mes}/${periodoSel.fim.ano}`,geradoEm:new Date().toLocaleString('pt-BR'),agenda,periodoIni:dsIni,periodoFim:dsFim,periodoPorLocal,zeradosPorLocal:S._zeradosPorLocal||{}};delete S._zeradosPorLocal;
+
+  if(!S.historicoEscalas) S.historicoEscalas=[];
+  S.historicoEscalas=S.historicoEscalas.filter(e=>e.id!==S.escala.id);
+  S.historicoEscalas.unshift({...S.escala});
+  if(S.historicoEscalas.length>20) S.historicoEscalas=S.historicoEscalas.slice(0,20);
+
+  document.getElementById('print-mes-titulo').textContent=`Escala de Plantões — ${periodoSel.ini.dia}/${periodoSel.ini.mes}/${periodoSel.ini.ano} a ${periodoSel.fim.dia}/${periodoSel.fim.mes}/${periodoSel.fim.ano}`;
+  document.getElementById('print-data-geracao').textContent='Gerado em: '+new Date().toLocaleString('pt-BR');
+  renderEscalasVisu();
+  renderRelatorio();
+  if(abaAtual===0) renderPainel();
+  irAba(4);
+}
+
+// ─── RENDER ESCALAS ──────────────────────────────────────────────────────────
+function renderEscalasVisu(){
+  if(!S.escala) return;
+  const {agenda,periodoIni,periodoFim,periodoPorLocal}=S.escala;
+  const cont=document.getElementById('escalas-cont');
+  cont.innerHTML='';
+  const fmtDS=ds=>{const p=ds.split('-');return `${p[2]}/${p[1]}/${p[0]}`;};
+
+  const cabHdr=document.createElement('div');
+  cabHdr.className='row-between no-print';
+  cabHdr.style.marginBottom='20px';
+  cabHdr.innerHTML=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--azul)">
+    Escalas &nbsp;<span style="font-size:18px;color:var(--vermelho)">${fmtDS(periodoIni)} → ${fmtDS(periodoFim)}</span>
+  </div>
+  <button class="btn btn-primary btn-sm no-print" onclick="abrirModalImprimir()">🖨️ Selecionar e Imprimir</button>`;
+  cont.appendChild(cabHdr);
+
+  S.locais.forEach((loc,li)=>{
+    if(!agenda[loc.id]||Object.keys(agenda[loc.id]).length===0) return;
+    const pLoc=periodoPorLocal?.[loc.id];
+    const locIni=pLoc?.ini||periodoIni;
+    const locFim=pLoc?.fim||periodoFim;
+    const dias=diasEntre(locIni,locFim);
+    const cor=LOC_CORES[li%LOC_CORES.length];
+
+    const bloco=document.createElement('div');
+    bloco.className='escala-bloco';
+    bloco.dataset.locId=loc.id;
+
+    // Cabeçalho para impressão individual por bloco
+    const printHdr=document.createElement('div');
+    printHdr.className='print-bloco-header';
+    printHdr.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">RV</div>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
+          <div style="font-size:9px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:${cor.bg}">📍 ${loc.nome}</div>
+        <div style="font-size:10px;color:var(--cinza-texto)">${fmtDS(locIni)} → ${fmtDS(locFim)}</div>
+        ${(()=>{
+          const turnos=loc.turnos.filter(tr=>loc.horarios?.[tr]);
+          if(!turnos.length) return '';
+          const temFds=loc.horarios_fds&&turnos.some(tr=>loc.horarios_fds[tr]);
+          const linhas=turnos.map(tr=>{
+            const hs=loc.horarios?.[tr]||'';
+            const hf=loc.horarios_fds?.[tr]||'';
+            if(temFds&&hf&&hs!==hf) return `${TURNOS_LABEL[tr]}: ${hs} (seg-sex) / ${hf} (sáb-dom)`;
+            return hs?`${TURNOS_LABEL[tr]}: ${hs}`:'';
+          }).filter(Boolean);
+          return linhas.length?`<div style="font-size:8px;color:var(--cinza-texto);margin-top:3px">${linhas.join(' · ')}</div>`:'';
+        })()}
+      </div>
+      <div style="text-align:right;font-size:9px;color:var(--cinza-texto)">
+        Gerado em: ${S.escala.geradoEm}
+      </div>`;
+    bloco.appendChild(printHdr);
+
+    const hdr=document.createElement('div');
+    hdr.className='escala-hdr';
+    hdr.style.cssText=`background:${cor.bg};color:${cor.tx}`;
+    const zeradosNomes=(S.escala.zeradosPorLocal||{})[loc.id];
+    const zeradosBadge=zeradosNomes&&zeradosNomes.length>0&&loc.modo==='vgv'
+      ? `<span style="font-size:11px;font-weight:700;background:rgba(255,255,255,0.25);padding:2px 10px;border-radius:20px;white-space:nowrap">🔄 Bônus 10% zerados: ${zeradosNomes.join(', ')}</span>`
+      : '';
+    hdr.innerHTML=`<span>📍 ${loc.nome}</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${zeradosBadge}
+        <span style="font-size:12px;font-weight:600;opacity:.85">${fmtDS(locIni)} → ${fmtDS(locFim)} · ${loc.modo==='vgv'?'Por VGV':'Igualitário'}${loc.diatodo?' · Dia Todo':''}</span>
+      </div>`;
+    bloco.appendChild(hdr);
+
+    // ── Faixa de horários (abaixo do cabeçalho, antes da tabela) ─
+    const temAlgumHorario=loc.turnos.some(tr=>loc.horarios?.[tr]);
+    if(temAlgumHorario){
+      const faixaHor=document.createElement('div');
+      faixaHor.className='horarios-faixa';
+      faixaHor.style.cssText=`background:${cor.bg}18;border-left:3px solid ${cor.bg};border-bottom:1px solid ${cor.bg}30;padding:6px 14px;display:flex;flex-wrap:wrap;gap:14px;align-items:center`;
+      const temFdsGlobal=loc.horarios_fds&&loc.turnos.some(tr=>loc.horarios_fds?.[tr]);
+      loc.turnos.forEach(tr=>{
+        const hs=loc.horarios?.[tr]||'';
+        const hf=temFdsGlobal?(loc.horarios_fds?.[tr]||''):'';
+        if(!hs&&!hf) return;
+        const pill=document.createElement('div');
+        pill.style.cssText='display:flex;align-items:center;gap:7px';
+        // Badge do turno
+        const badge=document.createElement('span');
+        badge.className=`chip ${TURNOS_CLASS[tr]}`;
+        badge.style.cssText='display:inline-block;width:auto;padding:2px 9px;font-size:11px;font-weight:800;white-space:nowrap';
+        badge.textContent=TURNOS_LABEL[tr];
+        pill.appendChild(badge);
+        // Texto de horário
+        const txt=document.createElement('span');
+        txt.style.cssText='font-size:12px;font-weight:700;color:var(--texto)';
+        if(hs&&hf&&hs!==hf){
+          txt.innerHTML=`<span style="color:var(--cinza-texto);font-size:10px;font-weight:600">Seg–Sex</span> <strong>${hs}</strong> &nbsp;<span style="color:var(--cinza-texto);font-size:10px;font-weight:600">Sáb–Dom</span> <strong>${hf}</strong>`;
+        } else {
+          txt.innerHTML=`<strong>${hs||hf}</strong>`;
+        }
+        pill.appendChild(txt);
+        faixaHor.appendChild(pill);
+      });
+      bloco.appendChild(faixaHor);
+    }
+
+    // ── Dividir dias em 2 metades (15+15, 15+16, 16+15 etc.) ────────────
+    const metade=Math.floor(dias.length/2); // sempre 15 quando 30 dias
+    const partes=[dias.slice(0,metade), dias.slice(metade)];
+
+    // Função que constrói uma tabela para um subconjunto de dias
+    function buildTabela(diasParte){
+      const wrapP=document.createElement('div');
+      wrapP.className='cal-wrap';
+      const tblP=document.createElement('table');
+      tblP.className='cal-table';
+
+      const theadP=document.createElement('thead');
+      const trHP=document.createElement('tr');
+      trHP.innerHTML='<th class="t-lbl"></th>';
+      diasParte.forEach(d=>{
+        const th=document.createElement('th');
+        const fechado=!vagasDia(loc,d);
+        th.style.opacity=fechado?'.4':'1';
+        const isWeekend=d.getDay()===0||d.getDay()===6;
+        const mostraMes=d.getDate()===1;
+        th.innerHTML=`<span style="${isWeekend?'color:var(--vermelho)':''}">${DSEM[d.getDay()]}</span><br>
+          <span style="font-size:10px;font-weight:${mostraMes?'700':'400'};${mostraMes?'color:var(--vermelho)':''}">${d.getDate()}${mostraMes?'/'+d.toLocaleString('pt-BR',{month:'short'}):''}</span>`;
+        trHP.appendChild(th);
+      });
+      theadP.appendChild(trHP);tblP.appendChild(theadP);
+
+      const tbodyP=document.createElement('tbody');
+      loc.turnos.forEach(tr=>{
+        let maxSeats=0;
+        diasParte.forEach(d=>{const v=vagasDia(loc,d);if(v)maxSeats=Math.max(maxSeats,v[tr]||0);});
+        if(maxSeats===0) return;
+        for(let seat=0;seat<maxSeats;seat++){
+          const row=document.createElement('tr');
+          const lbl=document.createElement('td');lbl.className='t-lbl';
+          if(seat===0) lbl.innerHTML=`<span class="chip ${TURNOS_CLASS[tr]}">${TURNOS_LABEL[tr]}</span>`;
+          row.appendChild(lbl);
+          diasParte.forEach(d=>{
+            const ds=toDS(d);
+            const td=document.createElement('td');
+            const dayData=agenda[loc.id]?.[ds];
+            if(!dayData||dayData.fechado){
+              if(seat===0){td.innerHTML='<span class="chip chip-fechado">FECHADO</span>';}
+              else{td.style.borderColor='transparent';}
+            } else {
+              const gIdDiaTodo=dayData._diatodo;
+              const slots=dayData[tr]||[];
+              const vagas=vagasDia(loc,d);
+              const nVagas=vagas?vagas[tr]||0:0;
+              if(seat<nVagas){
+                const g=slots[seat];
+                const btnEl=document.createElement('button');
+                btnEl.className='chip '+TURNOS_CLASS[tr];
+                if(gIdDiaTodo) btnEl.style.fontWeight='800';
+                btnEl.textContent=g?g.nome:'—';
+                btnEl.onclick=()=>abrirModal(loc.id,ds,tr,seat,g?g.id:null,d.getDate(),tr);
+                td.appendChild(btnEl);
+                if(gIdDiaTodo&&seat===0&&tr===loc.turnos[0]){
+                  const badge=document.createElement('div');
+                  badge.style.cssText='font-size:7px;font-weight:800;color:var(--vermelho);text-align:center;line-height:1.2;letter-spacing:0.3px';
+                  badge.textContent='★ DIA TODO';
+                  td.appendChild(badge);
+                }
+              } else {td.style.borderColor='transparent';}
+            }
+            row.appendChild(td);
+          });
+          tbodyP.appendChild(row);
+        }
+      });
+      tblP.appendChild(tbodyP);wrapP.appendChild(tblP);
+      return wrapP;
+    }
+
+    // Primeira metade
+    bloco.appendChild(buildTabela(partes[0]));
+
+    // Separador entre metades (visível na tela, invisível no print — o print tem page-break)
+    if(partes[1].length>0){
+      const sep=document.createElement('div');
+      sep.className='tabela-sep no-print';
+      sep.style.cssText='height:18px;display:flex;align-items:center;gap:8px;padding:0 8px;margin:0';
+      sep.innerHTML=`<div style="flex:1;height:1px;background:var(--cinza-borda)"></div>
+        <span style="font-size:10px;font-weight:700;color:var(--cinza-texto);white-space:nowrap">${fmtDS(toDS(partes[1][0]))} → ${fmtDS(toDS(partes[1][partes[1].length-1]))}</span>
+        <div style="flex:1;height:1px;background:var(--cinza-borda)"></div>`;
+      bloco.appendChild(sep);
+
+      // Separador de período visível no PRINT
+      const sepPrint=document.createElement('div');
+      sepPrint.className='print-sep-periodo';
+      sepPrint.innerHTML=`<span>${fmtDS(toDS(partes[1][0]))} → ${fmtDS(toDS(partes[1][partes[1].length-1]))}</span>`;
+      bloco.appendChild(sepPrint);
+
+      // Segunda metade — no print, nova página dentro do mesmo bloco do local
+      const wrap2=document.createElement('div');
+      wrap2.className='cal-wrap-segunda';
+
+      // Mini cabeçalho para print da segunda metade
+      const printHdr2=document.createElement('div');
+      printHdr2.className='print-bloco-header';
+      printHdr2.innerHTML=`
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">RV</div>
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
+            <div style="font-size:9px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:${cor.bg}">📍 ${loc.nome} — 2ª parte</div>
+          <div style="font-size:10px;color:var(--cinza-texto)">${fmtDS(toDS(partes[1][0]))} → ${fmtDS(toDS(partes[1][partes[1].length-1]))}</div>
+        </div>
+        <div style="text-align:right;font-size:9px;color:var(--cinza-texto)">Gerado em: ${S.escala.geradoEm}</div>`;
+      wrap2.appendChild(printHdr2);
+
+      // Mini cabeçalho colorido da segunda metade (tela)
+      const hdr2=document.createElement('div');
+      hdr2.style.cssText=`background:${cor.bg};color:${cor.tx};padding:7px 14px;font-size:13px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;display:flex;align-items:center;justify-content:space-between;margin-top:8px`;
+      hdr2.innerHTML=`<span>📍 ${loc.nome}</span><span style="font-size:11px;opacity:0.8">${fmtDS(toDS(partes[1][0]))} → ${fmtDS(toDS(partes[1][partes[1].length-1]))}</span>`;
+      hdr2.className='no-print';
+      wrap2.appendChild(hdr2);
+
+      wrap2.appendChild(buildTabela(partes[1]));
+      bloco.appendChild(wrap2);
+    }
+
+    // Rodapé contagem (conta todos os dias)
+    const cnt={};
+    dias.forEach(d=>{
+      const ds=toDS(d);
+      const dayData=agenda[loc.id]?.[ds];
+      if(!dayData||dayData.fechado) return;
+      loc.turnos.forEach(tr=>{(dayData[tr]||[]).forEach(g=>{if(g)cnt[g.nome]=(cnt[g.nome]||0)+1;});});
+    });
+    const rod=document.createElement('div');rod.className='rodape-cnt no-print';
+    Object.entries(cnt).sort((a,b)=>b[1]-a[1]).forEach(([nome,n])=>{
+      const it=document.createElement('div');it.className='cnt-item';
+      it.innerHTML=`<span style="font-weight:600">${nome}</span><span class="cnt-num">${n}</span>`;
+      rod.appendChild(it);
+    });
+    bloco.appendChild(rod);
+
+    // Versão print do rodapé (aparece só na segunda metade / fim do local)
+    const rodPrint=document.createElement('div');
+    rodPrint.className='print-only';
+    const lp=document.createElement('span');lp.className='print-cnt-label';lp.textContent='Vagas por gerente:';
+    rodPrint.appendChild(lp);
+    Object.entries(cnt).sort((a,b)=>b[1]-a[1]).forEach(([nome,n])=>{
+      const sp=document.createElement('span');sp.className='print-cnt-item';
+      sp.textContent=`${nome}  ${n}`;rodPrint.appendChild(sp);
+    });
+    bloco.appendChild(rodPrint);
+
+    // Rodapé decorativo de impressão
+    const rodDeco=document.createElement('div');
+    rodDeco.className='print-rodape-deco';
+    rodDeco.innerHTML=`<span class="deco-dot-azul"></span><span style="letter-spacing:0.5px">RIVA VENDAS · Sistema de Escalas</span><span class="deco-dot-verm"></span>`;
+    bloco.appendChild(rodDeco);
+
+    cont.appendChild(bloco);
+  });
+}
+
+// ─── MODAL IMPRESSÃO ─────────────────────────────────────────────────────────
+function abrirModalImprimir(){
+  if(!S.escala){showToast('Gere as escalas primeiro!','warning');return;}
+  const lista=document.getElementById('print-locais-list');
+  lista.innerHTML='';
+  S.locais.forEach(l=>{
+    const temDados=S.escala.agenda[l.id]&&Object.keys(S.escala.agenda[l.id]).length>0;
+    if(!temDados) return;
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;background:var(--cinza-fundo);border-radius:var(--radius-sm)';
+    row.innerHTML=`<input type="checkbox" id="print-ck-${l.id}" checked style="width:15px;height:15px">
+      <label for="print-ck-${l.id}" style="font-size:13px;font-weight:600;cursor:pointer;flex:1">${l.nome}</label>
+      <span style="font-size:11px;color:var(--cinza-texto)">${totalVagasMes(l)} vagas</span>`;
+    lista.appendChild(row);
+  });
+  document.getElementById('modal-imprimir').style.display='flex';
+}
+function fecharModalImprimir(e){if(!e||e.target===document.getElementById('modal-imprimir'))document.getElementById('modal-imprimir').style.display='none';}
+function togglePrintLocais(val){S.locais.forEach(l=>{const ck=document.getElementById('print-ck-'+l.id);if(ck)ck.checked=val;});}
+
+function executarImpressao(){
+  document.querySelectorAll('.escala-bloco').forEach(bloco=>{
+    const lid=+bloco.dataset.locId;
+    const ck=document.getElementById('print-ck-'+lid);
+    if(ck&&!ck.checked)bloco.classList.add('print-oculto');
+    else bloco.classList.remove('print-oculto');
+  });
+  irAba(4);
+  document.getElementById('modal-imprimir').style.display='none';
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{document.querySelectorAll('.escala-bloco').forEach(b=>b.classList.remove('print-oculto'));},1000);
+  },200);
+}
+
+// ─── MODAL EDIÇÃO CÉLULA ──────────────────────────────────────────────────────
+function abrirModal(lid,ds,turno,seat,gidAtual,diaNum,tr){
+  modalCtx={lid,ds,turno,seat};
+  const dsemIdx=new Date(ds+'T12:00').getDay();
+  document.getElementById('modal-title').innerHTML=`Editar — Dia <span style="color:var(--vermelho)">${diaNum}</span>, ${TURNOS_LABEL[turno]}`;
+  const body=document.getElementById('modal-body');
+  body.innerHTML='';
+  const lbl=document.createElement('div');
+  lbl.style.cssText='font-size:13px;color:var(--cinza-texto);margin-bottom:10px;font-weight:500';
+  lbl.textContent='Escolha o gerente para esta vaga:';
+  body.appendChild(lbl);
+  const sel=document.createElement('select');
+  sel.id='modal-sel';sel.style.width='100%';
+  sel.innerHTML='<option value="">— Sem gerente —</option>';
+  gerentesAtivos().forEach(g=>{
+    sel.innerHTML+=`<option value="${g.id}"${g.id===gidAtual?' selected':''}>${g.nome} (${g.regional})</option>`;
+  });
+  body.appendChild(sel);
+  body.appendChild(Object.assign(document.createElement('div'),{className:'sep'}));
+  const loc=S.locais.find(x=>x.id===lid);
+  const v=vagasDia(loc,{getDay:()=>dsemIdx,toISOString:()=>ds+'T00:00:00.000Z'})||{m:0,t:0,n:0};
+  const lbl2=document.createElement('div');
+  lbl2.style.cssText='font-size:12px;font-weight:600;color:var(--cinza-texto);margin-bottom:8px';
+  lbl2.textContent=`Alterar vagas neste dia (${ds}):`;
+  body.appendChild(lbl2);
+  const rowV=document.createElement('div');rowV.className='row';rowV.style.gap='14px';
+  loc.turnos.forEach(t=>{
+    const d=document.createElement('div');d.className='row';d.style.gap='6px';
+    const classes={m:'turno-badge-m',t:'turno-badge-t',n:'turno-badge-n'};
+    d.innerHTML=`<span class="badge ${classes[t]}" style="font-size:11px">${TURNOS_LABEL[t]}</span>
+      <input type="number" id="vd-${t}" value="${v[t]||0}" min="0" max="8" style="width:52px">`;
+    rowV.appendChild(d);
+  });
+  body.appendChild(rowV);
+  document.getElementById('modal').style.display='flex';
+}
+
+function fecharModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none';}
+
+function salvarModal(){
+  if(!modalCtx) return;
+  const {lid,ds,turno,seat}=modalCtx;
+  const gid=+document.getElementById('modal-sel').value||null;
+  const aKey=lid+'_'+ds+'_'+turno+'_'+seat;
+  if(gid){S.ajustes[aKey]=gid;}else{delete S.ajustes[aKey];}
+  const loc=S.locais.find(x=>x.id===lid);
+
+  // Atualizar vagas do dia (pad override)
+  const padKey='pad_'+lid+'_'+ds;
+  const novoPad={};let padChanged=false;
+  loc.turnos.forEach(t=>{const el=document.getElementById('vd-'+t);if(el){novoPad[t]=+el.value;padChanged=true;}});
+  if(padChanged) S.ajustes[padKey]=novoPad;
+
+  document.getElementById('modal').style.display='none';
+
+  // Atualizar APENAS a célula editada na agenda existente (não regenerar tudo)
+  if(S.escala&&S.escala.agenda&&S.escala.agenda[lid]&&S.escala.agenda[lid][ds]){
+    const ger=gerentesAtivos();
+    const dayData=S.escala.agenda[lid][ds];
+
+    // Atualizar o gerente nesta vaga específica
+    if(!dayData[turno]) dayData[turno]=[];
+    dayData[turno][seat]=gid?ger.find(g=>g.id===gid)||null:null;
+
+    // Se mudou vagas do dia, ajustar slots (adicionar/remover posições)
+    if(padChanged){
+      loc.turnos.forEach(t=>{
+        const novasVagas=novoPad[t]||0;
+        if(!dayData[t]) dayData[t]=[];
+        // Expandir se necessário (novas vagas ficam vazias)
+        while(dayData[t].length<novasVagas) dayData[t].push(null);
+        // Cortar se diminuiu
+        dayData[t]=dayData[t].slice(0,novasVagas);
+      });
+    }
+
+    renderEscalasVisu();
+    renderRelatorio();
+    if(abaAtual===0) renderPainel();
+  } else if(S.escala&&S._periodoGlobalIni){
+    // Fallback: se não encontrou o dia na agenda, regenera
+    gerarEscalasInterno();
+  }
+
+  autoSave();showToast('Plantão atualizado!','success');
+}
+
+// ─── PERSISTÊNCIA ─────────────────────────────────────────────────────────────
+const STORAGE_KEY='riva_escalas_dados_v6';
+
+function salvarDados(){
+  try{
+    const dados={mes:S.mes,ano:S.ano,locais:S.locais,gerentes:S.gerentes,vgv:S.vgv,ajustes:S.ajustes,escala:S.escala,historicoEscalas:S.historicoEscalas||[],filaDomingos:S.filaDomingos||[],vagasManual:S.vagasManual||{},vagasManualTotal:S.vagasManualTotal||0,locais10pct:S.locais10pct??null,savedAt:new Date().toISOString()};
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(dados));
+    atualizarIndicadorSalvo(true);
+  }catch(e){console.warn('Erro ao salvar:',e);showToast('Erro ao salvar dados!','error');}
+}
+
+function carregarDados(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const dados=JSON.parse(raw);
+    if(!dados) return false;
+    S.mes=dados.mes??S.mes;S.ano=dados.ano??S.ano;
+    S.locais=(dados.locais??S.locais).map(l=>({diatodo:false,horarios:{m:'',t:'',n:''},horarios_fds:null,...l,horarios:{m:'',t:'',n:'',...(l.horarios||{})}}));
+    S.gerentes=(dados.gerentes??S.gerentes).map(g=>({novato:false,inativo:false,...g}));
+    S.vgv=dados.vgv??S.vgv;S.ajustes=dados.ajustes??S.ajustes;
+    S.escala=dados.escala??null;S.historicoEscalas=dados.historicoEscalas??[];
+    S.vagasManual=dados.vagasManual??{};S.vagasManualTotal=dados.vagasManualTotal??0;
+    S.locais10pct=dados.locais10pct??null;
+    const selMes=document.getElementById('sel-mes');const inpAno=document.getElementById('inp-ano');
+    if(selMes) selMes.value=S.mes;if(inpAno) inpAno.value=S.ano;
+    return dados.savedAt||true;
+  }catch(e){console.warn('Erro ao carregar:',e);return false;}
+}
+
+function atualizarIndicadorSalvo(salvo){
+  const el=document.getElementById('save-indicator');if(!el) return;
+  if(salvo){el.innerHTML='💾 Salvo';el.style.color='rgba(255,255,255,0.55)';}
+  else{el.innerHTML='● Não salvo';el.style.color='#F6C344';}
+}
+
+function autoSave(){
+  atualizarIndicadorSalvo(false);
+  clearTimeout(autoSave._t);
+  autoSave._t=setTimeout(salvarDados,600);
+}
+
+// ─── HISTÓRICO DE ESCALAS ─────────────────────────────────────────────────────
+function renderHistorico(){
+  const cont=document.getElementById('historico-cont');if(!cont) return;
+  cont.innerHTML='';
+  const hist=S.historicoEscalas||[];
+  if(hist.length===0){cont.innerHTML='<div class="warn-box">📋 Nenhuma escala gerada ainda.</div>';return;}
+  const tit=document.createElement('div');
+  tit.style.cssText='font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:800;color:var(--azul);margin-bottom:16px';
+  tit.textContent=`📋 Histórico de Escalas (${hist.length})`;
+  cont.appendChild(tit);
+  hist.forEach(esc=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.style.cssText='margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px';
+    const info=document.createElement('div');
+    info.innerHTML=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--azul)">${esc.nome}</div>
+      <div style="font-size:12px;color:var(--cinza-texto);margin-top:2px">Gerado em: ${esc.geradoEm} &nbsp;·&nbsp; ${Object.keys(esc.agenda||{}).length} locais</div>`;
+    card.appendChild(info);
+    const btns=document.createElement('div');btns.className='row';btns.style.gap='8px';
+    btns.innerHTML=`<button class="btn btn-outline btn-sm" onclick="carregarEscalaHistorico('${esc.id}')">📂 Abrir</button>
+      <button class="btn btn-danger btn-xs" onclick="excluirEscalaHistorico('${esc.id}')">🗑 Excluir</button>`;
+    card.appendChild(btns);cont.appendChild(card);
+  });
+}
+
+function carregarEscalaHistorico(id){
+  const esc=(S.historicoEscalas||[]).find(e=>String(e.id)===String(id));
+  if(!esc) return;
+  S.escala=esc;
+  try{
+    const [d1,m1,a1]=esc.nome.split(' → ')[0].split('/');
+    const [d2,m2,a2]=esc.nome.split(' → ')[1].split('/');
+    periodoSel={ini:{dia:+d1,mes:+m1,ano:+a1,ds:`${a1}-${m1.padStart(2,'0')}-${d1.padStart(2,'0')}`},fim:{dia:+d2,mes:+m2,ano:+a2,ds:`${a2}-${m2.padStart(2,'0')}-${d2.padStart(2,'0')}`}};
+    S._periodoGlobalIni=periodoSel.ini.ds;S._periodoGlobalFim=periodoSel.fim.ds;
+    S._periodoPorLocal=esc.periodoPorLocal||{};
+  }catch(e){}
+  renderEscalasVisu();renderRelatorio();irAba(4);
+  showToast(`Escala "${esc.nome}" carregada!`,'success');
+}
+
+function excluirEscalaHistorico(id){
+  if(!confirm('Excluir esta escala do histórico?')) return;
+  S.historicoEscalas=(S.historicoEscalas||[]).filter(e=>String(e.id)!==String(id));
+  if(S.escala&&String(S.escala.id)===String(id)) S.escala=null;
+  autoSave();renderHistorico();showToast('Escala excluída!','info');
+}
+
+// ─── RELATÓRIO COMPLETO ───────────────────────────────────────────────────────
+function renderRelatorio(){
+  if(!S.escala) return;
+  const {agenda,periodoIni,periodoFim,periodoPorLocal}=S.escala;
+  const cont=document.getElementById('relatorio-cont');
+  cont.innerHTML='';
+  const fmtDS=ds=>{const p=ds.split('-');return `${p[2]}/${p[1]}/${p[0]}`;};
+  const ativos=gerentesAtivos();
+
+  // Título
+  const tit=document.createElement('div');
+  tit.style.cssText='font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:var(--azul);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px';
+  tit.innerHTML=`<span>📈 Relatório — ${fmtDS(periodoIni)} a ${fmtDS(periodoFim)}</span>
+    <button class="btn btn-primary btn-sm" onclick="abrirModalImprimir()">🖨️ Imprimir</button>`;
+  cont.appendChild(tit);
+
+  // ── Contagem por gerente ──────────────────────────────────────────────────
+  const contGlobal={};const contPorLocal={};
+  ativos.forEach(g=>{contGlobal[g.id]=0;contPorLocal[g.id]={};});
+  S.locais.forEach(loc=>{
+    const pLoc=periodoPorLocal?.[loc.id];
+    const locIni=pLoc?.ini||periodoIni;const locFim=pLoc?.fim||periodoFim;
+    diasEntre(locIni,locFim).forEach(d=>{
+      const ds=toDS(d);const dd=agenda[loc.id]?.[ds];
+      if(!dd||dd.fechado) return;
+      loc.turnos.forEach(tr=>{
+        (dd[tr]||[]).forEach(g=>{
+          if(g){contGlobal[g.id]=(contGlobal[g.id]||0)+1;
+            if(!contPorLocal[g.id])contPorLocal[g.id]={};
+            contPorLocal[g.id][loc.nome]=(contPorLocal[g.id][loc.nome]||0)+1;}
+        });
+      });
+    });
+  });
+
+  const totalPlantoes=Object.values(contGlobal).reduce((s,v)=>s+v,0);
+  const totalVGVAtivos=ativos.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+  const maxP=Math.max(...ativos.map(g=>contGlobal[g.id]||0),1);
+
+  // ── Card resumo geral ─────────────────────────────────────────────────────
+  const resumo=document.createElement('div');
+  resumo.style.cssText='background:var(--azul);border-radius:var(--radius);padding:22px;color:#fff;margin-bottom:22px';
+  resumo.innerHTML=`
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;opacity:0.7;text-transform:uppercase;margin-bottom:12px">▶ Resumo Geral</div>
+    <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end">
+      <div><div style="font-size:10px;opacity:0.65;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Total Plantões</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:800;line-height:1">${totalPlantoes}</div></div>
+      <div><div style="font-size:10px;opacity:0.65;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Gerentes Ativos</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:800;line-height:1">${ativos.length}</div></div>
+      <div><div style="font-size:10px;opacity:0.65;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Locais</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:800;line-height:1">${S.locais.length}</div></div>
+      ${totalVGVAtivos>0?`<div><div style="font-size:10px;opacity:0.65;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">VGV Total</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;line-height:1">${fmtR(totalVGVAtivos)}</div></div>`:''}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px">
+      ${S.locais.map(l=>{
+        const n=ativos.reduce((s,g)=>s+(contPorLocal[g.id]?.[l.nome]||0),0);
+        return `<div style="background:rgba(255,255,255,0.12);border-radius:8px;padding:8px 14px;min-width:90px">
+          <div style="font-size:10px;opacity:0.75;font-weight:600;margin-bottom:2px">${l.nome}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800">${n}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  cont.appendChild(resumo);
+
+  // ── Card BLIP (novatos) ───────────────────────────────────────────────────
+  const locBlip=S.locais.find(l=>l.nome.toLowerCase().includes('blip'));
+  const novatos=ativos.filter(g=>g.novato);
+  if(locBlip){
+    const totalBlipMes=totalVagasMes(locBlip);
+    const vagasReservadas=Math.floor(totalBlipMes*0.10);
+    const cardNovato=document.createElement('div');
+    cardNovato.style.cssText='background:var(--amarelo-claro);border:1.5px solid var(--amarelo);border-radius:var(--radius);padding:18px 20px;margin-bottom:22px';
+    if(novatos.length>0){
+      const porNovato=Math.floor(vagasReservadas/novatos.length);
+      const pctCada=(10/novatos.length).toFixed(1);
+      cardNovato.innerHTML=`
+        <div style="font-size:11px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🌟 Reserva de Vagas — Gerentes Novatos no BLIP</div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:12px">
+          <div><div style="font-size:10px;color:#92400E;font-weight:600;opacity:0.75;text-transform:uppercase">Total vagas BLIP</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color:#92400E;line-height:1">${totalBlipMes}</div></div>
+          <div style="font-size:20px;color:#D97706">→ 10% reservado →</div>
+          <div><div style="font-size:10px;color:#92400E;font-weight:600;opacity:0.75;text-transform:uppercase">${vagasReservadas} vagas ÷ ${novatos.length} novato${novatos.length>1?'s':''}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color:#B45309;line-height:1">${porNovato} vagas/cada (${pctCada}%)</div></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${novatos.map(g=>{
+            const blipReal=agenda[locBlip.id]?Object.values(agenda[locBlip.id]).reduce((s,dd)=>{
+              if(!dd||dd.fechado) return s;
+              locBlip.turnos.forEach(tr=>(dd[tr]||[]).forEach(gx=>{if(gx&&gx.id===g.id)s++;}));
+              return s;
+            },0):0;
+            return `<div style="background:#FEF3C7;border:1px solid var(--amarelo);border-radius:8px;padding:8px 14px">
+              <div style="font-weight:700;color:#92400E;font-size:13px">${g.nome} <span class="badge badge-amarelo" style="font-size:9px;margin-left:4px">NOVATO</span></div>
+              <div style="font-size:12px;color:#B45309;margin-top:2px">Reservado: <strong>${porNovato}</strong> (${pctCada}%) · Alocado: <strong>${blipReal}</strong></div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    } else {
+      cardNovato.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🌟 Reserva Novatos — BLIP</div>
+        <div style="font-size:13px;color:#92400E">Nenhum gerente marcado como novato. Total BLIP: <strong>${totalBlipMes} vagas</strong>. Reserva de 10% (${vagasReservadas} vagas) não aplicada.</div>`;
+    }
+    cont.appendChild(cardNovato);
+  }
+
+  // ── Distribuição por Regional ─────────────────────────────────────────────
+  // Card comparativo VGV entre regionais (item 5)
+  if(totalVGVAtivos>0){
+    const cardVGVReg=document.createElement('div');
+    cardVGVReg.style.cssText='background:var(--cinza-fundo);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:16px 20px;margin-bottom:18px';
+    cardVGVReg.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">💰 VGV por Regional — Participação no Total</div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:12px">
+        ${['René','Cahú'].map(reg=>{
+          const gReg=ativos.filter(g=>g.regional===reg);
+          const vgvReg=gReg.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+          const pct=totalVGVAtivos>0?((vgvReg/totalVGVAtivos)*100).toFixed(1):0;
+          return `<div style="flex:1;min-width:140px;background:#fff;border-radius:8px;padding:12px 16px;border:1.5px solid var(--cinza-borda)">
+            <div style="font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Regional ${reg}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul);line-height:1">${fmtR(vgvReg)}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+              <div style="flex:1;height:6px;background:var(--cinza-borda);border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${reg==='René'?'var(--azul-claro)':'var(--verde)'};border-radius:4px"></div>
+              </div>
+              <span style="font-size:12px;font-weight:800;color:${reg==='René'?'var(--azul-claro)':'var(--verde)'}">${pct}%</span>
+            </div>
+          </div>`;
+        }).join('')}
+        <div style="flex:1;min-width:140px;background:var(--azul);border-radius:8px;padding:12px 16px;color:#fff">
+          <div style="font-size:11px;font-weight:700;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Total Geral</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;line-height:1">${fmtR(totalVGVAtivos)}</div>
+          <div style="font-size:11px;opacity:0.65;margin-top:6px">${ativos.length} gerentes ativos</div>
+        </div>
+      </div>`;
+    cont.appendChild(cardVGVReg);
+  }
+
+  ['René','Cahú'].forEach(reg=>{
+    const gReg=ativos.filter(g=>g.regional===reg);
+    if(!gReg.length) return;
+    const sec=document.createElement('div');sec.className='card';sec.style.marginBottom='18px';
+
+    const totalRegPlantoes=gReg.reduce((s,g)=>s+(contGlobal[g.id]||0),0);
+    const totalRegVGV=gReg.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+    const pctVGVReg=totalVGVAtivos>0?Math.round(totalRegVGV/totalVGVAtivos*100):0;
+
+    sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin-bottom:0">Regional ${reg}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div class="stat-mini"><div class="stat-mini-label">Total Plantões</div><div class="stat-mini-val">${totalRegPlantoes}</div></div>
+        <div class="stat-mini"><div class="stat-mini-label">Gerentes</div><div class="stat-mini-val">${gReg.length}</div></div>
+        ${totalRegVGV>0?`<div class="stat-mini"><div class="stat-mini-label">VGV Regional</div><div class="stat-mini-val" style="font-size:14px">${fmtR(totalRegVGV)} (${pctVGVReg}%)</div></div>`:''}
+      </div>
+    </div>`;
+
+    const t=document.createElement('table');
+    t.innerHTML=`<thead><tr>
+      <th>Gerente</th><th>Plantões</th><th>% do Total</th><th>VGV</th><th>% VGV</th>
+      ${S.locais.map(l=>`<th>${l.nome}</th>`).join('')}
+    </tr></thead>`;
+    const tb=document.createElement('tbody');
+    gReg.forEach(g=>{
+      const cnt=contGlobal[g.id]||0;
+      const pctTotal=totalPlantoes>0?((cnt/totalPlantoes)*100).toFixed(1):0;
+      const pctBar=maxP>0?Math.round(cnt/maxP*100):0;
+      const vgv=S.vgv[g.id]||0;
+      const pctVGV=totalVGVAtivos>0?((vgv/totalVGVAtivos)*100).toFixed(1):0;
+      const tr2=document.createElement('tr');
+      tr2.innerHTML=`
+        <td style="font-weight:700">${g.nome}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}</td>
+        <td><strong style="font-size:16px;font-family:'Barlow Condensed',sans-serif;color:var(--azul)">${cnt}</strong></td>
+        <td style="font-weight:700;color:var(--azul-medio)">${pctTotal}%</td>
+        <td style="font-size:12px;color:var(--cinza-texto)">${vgv>0?fmtR(vgv):'—'}</td>
+        <td style="font-size:12px;font-weight:700;color:var(--azul-medio)">${vgv>0?pctVGV+'%':'—'}</td>
+        ${S.locais.map(l=>`<td style="text-align:center;font-size:13px;font-weight:600">${contPorLocal[g.id]?.[l.nome]||0}</td>`).join('')}`;
+      tb.appendChild(tr2);
+    });
+
+    // Linha total regional
+    const trTotal=document.createElement('tr');
+    trTotal.style.cssText='background:var(--azul);color:#fff;font-weight:800';
+    const totalRegPorLocal={};
+    S.locais.forEach(l=>{
+      totalRegPorLocal[l.nome]=gReg.reduce((s,g)=>s+(contPorLocal[g.id]?.[l.nome]||0),0);
+    });
+    const pctRegTotal=totalPlantoes>0?((totalRegPlantoes/totalPlantoes)*100).toFixed(1):0;
+    trTotal.innerHTML=`
+      <td style="padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-size:14px">TOTAL — Regional ${reg}</td>
+      <td style="padding:9px 12px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800">${totalRegPlantoes}</span></td>
+      <td style="padding:9px 12px;font-weight:800">${pctRegTotal}%</td>
+      <td style="padding:9px 12px;font-size:12px;opacity:0.85">${totalRegVGV>0?fmtR(totalRegVGV):'—'}</td>
+      <td style="padding:9px 12px;font-size:12px;opacity:0.85">${totalVGVAtivos>0?pctVGVReg+'%':'—'}</td>
+      ${S.locais.map(l=>`<td style="text-align:center;padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800">${totalRegPorLocal[l.nome]||0}</td>`).join('')}`;
+    tb.appendChild(trTotal);
+    t.appendChild(tb);sec.appendChild(t);cont.appendChild(sec);
+  });
+
+  // ── Total Geral ───────────────────────────────────────────────────────────
+  const totalGeralPorLocal={};
+  S.locais.forEach(l=>{totalGeralPorLocal[l.nome]=ativos.reduce((s,g)=>s+(contPorLocal[g.id]?.[l.nome]||0),0);});
+  const cardGeral=document.createElement('div');
+  cardGeral.style.cssText='background:var(--azul);border-radius:var(--radius);padding:20px;color:#fff;margin-bottom:18px';
+  cardGeral.innerHTML=`
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;opacity:0.7;text-transform:uppercase;margin-bottom:10px">▶ Total Geral — Todas as Regionais</div>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;margin-bottom:14px">
+      <div><div style="font-size:10px;opacity:0.65;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Total Plantões</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:800;line-height:1">${totalPlantoes}</div></div>
+      <div><div style="font-size:10px;opacity:0.65;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Gerentes</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:800;line-height:1">${ativos.length}</div></div>
+      ${totalVGVAtivos>0?`<div><div style="font-size:10px;opacity:0.65;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">VGV Total</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;line-height:1">${fmtR(totalVGVAtivos)}</div></div>`:''}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      ${S.locais.map(l=>`<div style="background:rgba(255,255,255,0.12);border-radius:8px;padding:10px 16px;min-width:100px">
+        <div style="font-size:10px;opacity:0.75;font-weight:600;margin-bottom:4px">${l.nome}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800">${totalGeralPorLocal[l.nome]||0}</div>
+      </div>`).join('')}
+    </div>`;
+  cont.appendChild(cardGeral);
+
+  // Atualiza também o painel se estiver na aba 0
+  if(abaAtual===0) renderPainelRelatorioRapido();
+}
+
+// ─── VAGAS MANUAIS ────────────────────────────────────────────────────────────
+function renderVagasManuais(){
+  const lista=document.getElementById('lista-vagas-manuais');
+  if(!lista) return;
+  lista.innerHTML='';
+  const ger=gerentesAtivos();
+  if(!S.vagasManual) S.vagasManual={};
+  ger.forEach(g=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px;margin-bottom:6px;border-radius:var(--radius-sm);background:var(--cinza-fundo)';
+    row.innerHTML=`<span style="flex:1;font-weight:600;font-size:13px">${g.nome} <span style="font-size:11px;color:var(--cinza-texto);font-weight:400">(${g.regional})</span></span>
+      <input type="number" min="0" value="${S.vagasManual[g.id]||0}" style="width:80px;font-size:15px;font-weight:800;text-align:center"
+        oninput="S.vagasManual[${g.id}]=+this.value||0;atualizarVagasManual();autoSave()">
+      <span style="font-size:12px;color:var(--cinza-texto)">vagas</span>`;
+    lista.appendChild(row);
+  });
+  // total input value
+  const inp=document.getElementById('vagas-manual-total');
+  if(inp&&S.vagasManualTotal) inp.value=S.vagasManualTotal;
+  atualizarVagasManual();
+}
+
+function atualizarVagasManual(){
+  if(!S.vagasManual) S.vagasManual={};
+  const inp=document.getElementById('vagas-manual-total');
+  const total=inp?+inp.value||0:0;
+  S.vagasManualTotal=total;
+  const ger=gerentesAtivos();
+  const dist=ger.reduce((s,g)=>s+(S.vagasManual[g.id]||0),0);
+  const falta=total>0?total-dist:null;
+  const elDist=document.getElementById('vagas-manual-dist');
+  const elFalta=document.getElementById('vagas-manual-faltam');
+  if(elDist) elDist.textContent=dist;
+  if(elFalta){
+    if(falta===null){elFalta.textContent='—';elFalta.style.color='var(--cinza-texto)';}
+    else if(falta>0){elFalta.textContent=falta;elFalta.style.color='var(--vermelho)';}
+    else if(falta===0){elFalta.textContent='✓ OK';elFalta.style.color='var(--verde)';}
+    else{elFalta.textContent=falta;elFalta.style.color='var(--vermelho)';}
+  }
+  autoSave();
+}
+
+function limparVagasManuais(){
+  S.vagasManual={};S.vagasManualTotal=0;
+  renderVagasManuais();autoSave();showToast('Vagas manuais limpas','info');
+}
+
+function distribuirIgualitarioManual(){
+  const total=+(document.getElementById('vagas-manual-total')?.value||0);
+  if(!total){showToast('Informe o total de vagas primeiro','warning');return;}
+  const ger=gerentesAtivos();
+  if(!ger.length) return;
+  if(!S.vagasManual) S.vagasManual={};
+  const base=Math.floor(total/ger.length);
+  const resto=total%ger.length;
+  ger.forEach((g,i)=>S.vagasManual[g.id]=base+(i<resto?1:0));
+  renderVagasManuais();showToast('Distribuído igualitariamente!','success');
+}
+
+// ─── CONFIG 10% ATIVO ─────────────────────────────────────────────────────────
+function renderConfig10pct(){
+  const el=document.getElementById('config-10pct-lista');
+  if(!el) return;
+  if(!S.locais10pct) S.locais10pct=null; // null = todos
+  el.innerHTML='';
+  S.locais.forEach(l=>{
+    const ativo=S.locais10pct===null||S.locais10pct.includes(l.id);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px;margin-bottom:6px;border-radius:var(--radius-sm);border:1.5px solid '+(ativo?'var(--azul-claro)':'var(--cinza-borda)')+';background:'+(ativo?'var(--azul-fundo)':'#fff');
+    row.innerHTML=`<input type="checkbox" ${ativo?'checked':''} style="width:16px;height:16px" onchange="toggle10pctLocal(${l.id},this.checked)">
+      <span style="font-size:13px;font-weight:600;flex:1">${l.nome}</span>
+      <span style="font-size:11px;color:var(--cinza-texto)">${ativo?'✅ 10% ativo':'—'}</span>`;
+    el.appendChild(row);
+  });
+}
+
+function toggle10pctLocal(lid,checked){
+  if(!S.locais10pct) S.locais10pct=S.locais.map(l=>l.id); // inicializa com todos
+  if(checked){if(!S.locais10pct.includes(lid))S.locais10pct.push(lid);}
+  else{S.locais10pct=S.locais10pct.filter(x=>x!==lid);}
+  renderConfig10pct();autoSave();
+}
+
+// ─── ESC FECHA MODAIS ─────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  ['modal','modal-dia','modal-confirmar','modal-imprimir'].forEach(id=>{
+    const el=document.getElementById(id);if(el&&el.style.display!=='none')el.style.display='none';
+  });
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('beforeunload',()=>salvarDados());
+
+const savedAt=carregarDados();
+if(savedAt){
+  const dt=typeof savedAt==='string'?new Date(savedAt).toLocaleString('pt-BR'):'';
+  mudarMes();renderPainel();
+  if(S.escala){
+    try{
+      const parts=S.escala.nome.split(' → ');
+      const [d1,m1,a1]=parts[0].split('/');const [d2,m2,a2]=parts[1].split('/');
+      periodoSel={ini:{dia:+d1,mes:+m1,ano:+a1,ds:`${a1}-${m1.padStart(2,'0')}-${d1.padStart(2,'0')}`},
+        fim:{dia:+d2,mes:+m2,ano:+a2,ds:`${a2}-${m2.padStart(2,'0')}-${d2.padStart(2,'0')}`}};
+      S._periodoGlobalIni=periodoSel.ini.ds;S._periodoGlobalFim=periodoSel.fim.ds;
+      S._periodoPorLocal=S.escala.periodoPorLocal||{};
+    }catch(e){}
+    renderEscalasVisu();renderRelatorio();
+  }
+  atualizarIndicadorSalvo(true);
+  showToast('✅ Dados carregados'+(dt?' — salvo em '+dt:''),'success',4000);
+} else {
+  mudarMes();renderPainel();
+  showToast('Bem-vindo! Os dados serão salvos automaticamente.','info',4000);
+}
+</script>
+</body>
+</html>
