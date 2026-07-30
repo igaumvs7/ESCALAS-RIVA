@@ -802,7 +802,7 @@ tbody tr:hover td { background: #FAFBFF; }
         <ul style="margin-left:18px">
           <li><strong>Nome do local:</strong> edite diretamente no campo de texto.</li>
           <li><strong>Turno Noite:</strong> ative para habilitar um 3º turno (noturno) neste local.</li>
-          <li><strong>🕐 Horários dos Turnos:</strong> campo livre para informar o horário de cada turno (ex: "09:00 – 13:00"). Aparece na escala impressa.</li>
+          <li><strong>🕐 Horários dos Turnos:</strong> campo livre para informar o horário de cada turno (ex: "09:00 – 13:00"). Sábado, domingo e feriados podem ser ativados e configurados separadamente. Aparece na escala impressa.</li>
           <li><strong>🌅 Dia Todo:</strong> o mesmo gerente sorteado para a Manhã fica também na Tarde (ideal para Lumina).</li>
           <li><strong>Padrão por dia da semana:</strong> quantas vagas por turno em cada dia. 0 = sem plantão nesse dia.</li>
           <li><strong>Dias Fechados:</strong> datas no formato AAAA-MM-DD separadas por vírgula. Ex: 2026-04-21, 2026-12-25.</li>
@@ -1044,7 +1044,9 @@ let S = {
      padrao:{0:{m:2,t:2,n:2},1:{m:2,t:2,n:2},2:{m:2,t:2,n:2},3:{m:2,t:2,n:2},4:{m:2,t:2,n:2},5:{m:2,t:2,n:2},6:{m:2,t:2,n:2}},
      fechados:[], modo:'vgv',
      horarios:{m:'09:00 – 13:00', t:'13:00 – 17:00', n:'17:00 – 21:00'},
-     horarios_fds:{m:'09:00 – 12:00', t:'12:00 – 15:00', n:'15:00 – 18:00'}},
+     horarios_sab:{m:'09:00 – 12:00', t:'12:00 – 15:00', n:'15:00 – 18:00'},
+     horarios_dom:{m:'09:00 – 12:00', t:'12:00 – 15:00', n:'15:00 – 18:00'},
+     horarios_feriados:{m:'09:00 – 12:00', t:'12:00 – 15:00', n:'15:00 – 18:00'}},
     {id:6, nome:'Passaré', turnos:['m','t'], diatodo:false,
      padrao:{0:{m:1,t:1},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
      fechados:[], modo:'igual', diaSim:true, diaSimInicio:'',
@@ -1715,6 +1717,34 @@ function renderLocais(){
         ${temNoite?`<td style="padding:5px 8px"><input type="number" value="${p.n||0}" min="0" max="8" style="width:52px" onchange="setPadrao(${l.id},${i},'n',+this.value)"></td>`:''}
       </tr>`;
     });
+    const diasHorarioEspecial=[
+      {tipo:'sab',campo:'horarios_sab',titulo:'Sábado',curto:'Sáb'},
+      {tipo:'dom',campo:'horarios_dom',titulo:'Domingo',curto:'Dom'},
+      {tipo:'feriados',campo:'horarios_feriados',titulo:'Feriados',curto:'Feriados'}
+    ];
+    const opcoesHorarioEspecial=diasHorarioEspecial.map(item=>`
+      <label for="hor-esp-${item.tipo}-${l.id}" style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--cinza-texto);cursor:pointer">
+        <input type="checkbox" id="hor-esp-${item.tipo}-${l.id}" ${l[item.campo]?'checked':''} style="width:14px;height:14px" onchange="toggleHorarioEspecial(${l.id},'${item.tipo}',this.checked)">
+        ${item.titulo}
+      </label>`).join('');
+    const paineisHorarioEspecial=diasHorarioEspecial.filter(item=>l[item.campo]).map(item=>`
+      <div style="background:#fff;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:8px 10px">
+        <div style="font-size:11px;font-weight:700;color:var(--azul);margin-bottom:6px">${item.titulo}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <div style="flex:1;min-width:150px">
+            <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">☀️ Manhã</label>
+            <input type="text" placeholder="ex: 09:00 – 12:00" value="${l[item.campo]?.m||''}" style="width:100%;font-size:12px" onchange="setHorarioEspecial(${l.id},'${item.tipo}','m',this.value)">
+          </div>
+          <div style="flex:1;min-width:150px">
+            <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">🌤 Tarde</label>
+            <input type="text" placeholder="ex: 12:00 – 15:00" value="${l[item.campo]?.t||''}" style="width:100%;font-size:12px" onchange="setHorarioEspecial(${l.id},'${item.tipo}','t',this.value)">
+          </div>
+          ${temNoite?`<div style="flex:1;min-width:150px">
+            <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">🌙 Noite</label>
+            <input type="text" placeholder="ex: 15:00 – 18:00" value="${l[item.campo]?.n||''}" style="width:100%;font-size:12px" onchange="setHorarioEspecial(${l.id},'${item.tipo}','n',this.value)">
+          </div>`:''}
+        </div>
+      </div>`).join('');
     card.innerHTML=`
       <div class="row-between" style="margin-bottom:12px">
         <input type="text" value="${l.nome}" style="flex:1;font-weight:700;font-size:15px;max-width:280px" onchange="S.locais.find(x=>x.id===${l.id}).nome=this.value;autoSave()">
@@ -1743,28 +1773,11 @@ function renderLocais(){
             <input type="text" placeholder="ex: 18:00 – 22:00" value="${l.horarios?.n||''}" style="width:100%;font-size:12px" onchange="setHorario(${l.id},'n',this.value)">
           </div>`:''}
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${l.horarios_fds?'8px':'0'}">
-          <input type="checkbox" id="fds-ck-${l.id}" ${l.horarios_fds?'checked':''} style="width:14px;height:14px" onchange="toggleHorarioFds(${l.id},this.checked)">
-          <label for="fds-ck-${l.id}" style="font-size:11px;font-weight:700;color:var(--cinza-texto);cursor:pointer">Sáb / Dom / Feriados têm horários diferentes</label>
+        <div style="font-size:11px;font-weight:600;color:var(--cinza-texto);margin-bottom:6px">Dias com horários diferentes:</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:${paineisHorarioEspecial?'8px':'0'}">
+          ${opcoesHorarioEspecial}
         </div>
-        ${l.horarios_fds?`
-        <div style="background:#fff;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:8px 10px">
-          <div style="font-size:11px;font-weight:600;color:var(--cinza-texto);margin-bottom:6px">Sáb – Dom – Feriados</div>
-          <div style="display:flex;flex-wrap:wrap;gap:10px">
-            <div style="flex:1;min-width:150px">
-              <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">☀️ Manhã</label>
-              <input type="text" placeholder="ex: 09:00 – 12:00" value="${l.horarios_fds?.m||''}" style="width:100%;font-size:12px" onchange="setHorarioFds(${l.id},'m',this.value)">
-            </div>
-            <div style="flex:1;min-width:150px">
-              <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">🌤 Tarde</label>
-              <input type="text" placeholder="ex: 12:00 – 15:00" value="${l.horarios_fds?.t||''}" style="width:100%;font-size:12px" onchange="setHorarioFds(${l.id},'t',this.value)">
-            </div>
-            ${temNoite?`<div style="flex:1;min-width:150px">
-              <label style="font-size:10px;font-weight:700;color:var(--cinza-texto);display:block;margin-bottom:3px">🌙 Noite</label>
-              <input type="text" placeholder="ex: 15:00 – 18:00" value="${l.horarios_fds?.n||''}" style="width:100%;font-size:12px" onchange="setHorarioFds(${l.id},'n',this.value)">
-            </div>`:''}
-          </div>
-        </div>`:''}
+        ${paineisHorarioEspecial?`<div style="display:flex;flex-direction:column;gap:8px">${paineisHorarioEspecial}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:${l.diatodo?'#F0FFF4':'var(--cinza-fundo)'};border:1.5px solid ${l.diatodo?'#86EFAC':'var(--cinza-borda)'};border-radius:var(--radius-sm)">
         <input type="checkbox" id="diatodo-loc-${l.id}" ${l.diatodo?'checked':''} style="width:16px;height:16px" onchange="toggleDiaTodoLocal(${l.id},this.checked)">
@@ -1815,23 +1828,40 @@ function setHorario(lid,turno,val){
   const l=S.locais.find(x=>x.id===lid);
   if(l){if(!l.horarios)l.horarios={m:'',t:'',n:''};l.horarios[turno]=val;autoSave();}
 }
-function setHorarioFds(lid,turno,val){
-  const l=S.locais.find(x=>x.id===lid);
-  if(l){
-    if(!l.horarios_fds) l.horarios_fds={m:'',t:'',n:''};
-    l.horarios_fds[turno]=val;
-    // Se todos vazios, limpa o objeto
-    if(!l.horarios_fds.m&&!l.horarios_fds.t&&!l.horarios_fds.n) l.horarios_fds=null;
-    autoSave();
-  }
+function campoHorarioEspecial(tipo){
+  return {sab:'horarios_sab',dom:'horarios_dom',feriados:'horarios_feriados'}[tipo]||'';
 }
-function toggleHorarioFds(lid, ativo){
+function setHorarioEspecial(lid,tipo,turno,val){
   const l=S.locais.find(x=>x.id===lid);
-  if(!l) return;
-  if(ativo && !l.horarios_fds) l.horarios_fds={m:'',t:'',n:''};
-  else if(!ativo) l.horarios_fds=null;
+  const campo=campoHorarioEspecial(tipo);
+  if(!l||!campo) return;
+  if(!l[campo]) l[campo]={m:'',t:'',n:''};
+  l[campo][turno]=val;
+  autoSave();
+}
+function toggleHorarioEspecial(lid,tipo,ativo){
+  const l=S.locais.find(x=>x.id===lid);
+  const campo=campoHorarioEspecial(tipo);
+  if(!l||!campo) return;
+  if(ativo && !l[campo]) l[campo]={m:'',t:'',n:''};
+  else if(!ativo) l[campo]=null;
   autoSave();
   renderLocais();
+}
+function periodosHorarioLocal(loc){
+  return [
+    {rotulo:'Seg–Sex',horarios:loc.horarios},
+    {rotulo:'Sáb',horarios:loc.horarios_sab},
+    {rotulo:'Dom',horarios:loc.horarios_dom},
+    {rotulo:'Feriados',horarios:loc.horarios_feriados}
+  ];
+}
+function resumoHorarioTurno(loc,turno){
+  return periodosHorarioLocal(loc)
+    .map(item=>({rotulo:item.rotulo,valor:(item.horarios?.[turno]||'').trim()}))
+    .filter(item=>item.valor)
+    .map(item=>`${item.rotulo} ${item.valor}`)
+    .join(' / ');
 }
 function toggleDiaTodoLocal(lid,checked){
   const l=S.locais.find(x=>x.id===lid);
@@ -1865,7 +1895,7 @@ function removerLocal(id){
 function addLocal(){
   const pad={};
   for(let i=0;i<7;i++) pad[i]={m:1,t:1,n:0};
-  S.locais.push({id:Date.now(),nome:'Novo Local',turnos:['m','t'],padrao:pad,fechados:[],modo:'igual',horarios:{m:'',t:'',n:''},horarios_fds:null});
+  S.locais.push({id:Date.now(),nome:'Novo Local',turnos:['m','t'],padrao:pad,fechados:[],modo:'igual',horarios:{m:'',t:'',n:''},horarios_sab:null,horarios_dom:null,horarios_feriados:null});
   renderLocais();autoSave();showToast('Novo local adicionado!','success');
 }
 
@@ -2798,14 +2828,11 @@ function renderEscalasVisu(){
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:${cor.bg}">📍 ${loc.nome}</div>
         <div style="font-size:10px;color:var(--cinza-texto)">${fmtDS(locIni)} → ${fmtDS(locFim)}</div>
         ${(()=>{
-          const turnos=loc.turnos.filter(tr=>loc.horarios?.[tr]);
+          const turnos=loc.turnos.filter(tr=>resumoHorarioTurno(loc,tr));
           if(!turnos.length) return '';
-          const temFds=loc.horarios_fds&&turnos.some(tr=>loc.horarios_fds[tr]);
           const linhas=turnos.map(tr=>{
-            const hs=loc.horarios?.[tr]||'';
-            const hf=loc.horarios_fds?.[tr]||'';
-            if(temFds&&hf&&hs!==hf) return `${TURNOS_LABEL[tr]}: ${hs} (seg-sex) / ${hf} (sáb-dom)`;
-            return hs?`${TURNOS_LABEL[tr]}: ${hs}`:'';
+            const resumo=resumoHorarioTurno(loc,tr);
+            return resumo?`${TURNOS_LABEL[tr]}: ${resumo}`:'';
           }).filter(Boolean);
           return linhas.length?`<div style="font-size:8px;color:var(--cinza-texto);margin-top:3px">${linhas.join(' · ')}</div>`:'';
         })()}
@@ -2830,16 +2857,14 @@ function renderEscalasVisu(){
     bloco.appendChild(hdr);
 
     // ── Faixa de horários (abaixo do cabeçalho, antes da tabela) ─
-    const temAlgumHorario=loc.turnos.some(tr=>loc.horarios?.[tr]);
+    const temAlgumHorario=loc.turnos.some(tr=>resumoHorarioTurno(loc,tr));
     if(temAlgumHorario){
       const faixaHor=document.createElement('div');
       faixaHor.className='horarios-faixa';
       faixaHor.style.cssText=`background:${cor.bg}18;border-left:3px solid ${cor.bg};border-bottom:1px solid ${cor.bg}30;padding:6px 14px;display:flex;flex-wrap:wrap;gap:14px;align-items:center`;
-      const temFdsGlobal=loc.horarios_fds&&loc.turnos.some(tr=>loc.horarios_fds?.[tr]);
       loc.turnos.forEach(tr=>{
-        const hs=loc.horarios?.[tr]||'';
-        const hf=temFdsGlobal?(loc.horarios_fds?.[tr]||''):'';
-        if(!hs&&!hf) return;
+        const resumo=resumoHorarioTurno(loc,tr);
+        if(!resumo) return;
         const pill=document.createElement('div');
         pill.style.cssText='display:flex;align-items:center;gap:7px';
         // Badge do turno
@@ -2851,11 +2876,7 @@ function renderEscalasVisu(){
         // Texto de horário
         const txt=document.createElement('span');
         txt.style.cssText='font-size:12px;font-weight:700;color:var(--texto)';
-        if(hs&&hf&&hs!==hf){
-          txt.innerHTML=`<span style="color:var(--cinza-texto);font-size:10px;font-weight:600">Seg–Sex</span> <strong>${hs}</strong> &nbsp;<span style="color:var(--cinza-texto);font-size:10px;font-weight:600">Sáb–Dom</span> <strong>${hf}</strong>`;
-        } else {
-          txt.innerHTML=`<strong>${hs||hf}</strong>`;
-        }
+        txt.textContent=resumo;
         pill.appendChild(txt);
         faixaHor.appendChild(pill);
       });
@@ -3180,7 +3201,19 @@ function carregarDados(){
     const dados=JSON.parse(raw);
     if(!dados) return false;
     S.mes=dados.mes??S.mes;S.ano=dados.ano??S.ano;
-    S.locais=(dados.locais??S.locais).map(l=>({diatodo:false,horarios:{m:'',t:'',n:''},horarios_fds:null,...l,horarios:{m:'',t:'',n:'',...(l.horarios||{})}}));
+    S.locais=(dados.locais??S.locais).map(l=>{
+      const horariosLegados=l.horarios_fds?{m:'',t:'',n:'',...l.horarios_fds}:null;
+      const normalizado={
+        diatodo:false,
+        ...l,
+        horarios:{m:'',t:'',n:'',...(l.horarios||{})},
+        horarios_sab:l.horarios_sab??(horariosLegados?{...horariosLegados}:null),
+        horarios_dom:l.horarios_dom??(horariosLegados?{...horariosLegados}:null),
+        horarios_feriados:l.horarios_feriados??(horariosLegados?{...horariosLegados}:null)
+      };
+      delete normalizado.horarios_fds;
+      return normalizado;
+    });
     S.gerentes=(dados.gerentes??S.gerentes).map(g=>({novato:false,inativo:false,...g}));
     S.vgv=dados.vgv??S.vgv;S.ajustes=dados.ajustes??S.ajustes;
     S.escala=dados.escala??null;S.historicoEscalas=dados.historicoEscalas??[];
@@ -3326,7 +3359,10 @@ function abrirPdfBanco(id){
 
 function configurarBancoEscalas(){
   const atual=localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'';
-  const informado=prompt('Cole aqui o endereço do Aplicativo da Web do Apps Script (deve terminar em /exec):',atual);
+  const informado=prompt(
+    'CONFIGURAÇÃO INICIAL DO BANCO\n\nNo Google Apps Script, abra Implantar → Gerenciar implantações e copie o URL do Aplicativo da Web.\n\nCole abaixo o link completo terminado em /exec:',
+    atual
+  );
   if(informado===null) return false;
   const url=informado.trim();
   if(!url){
