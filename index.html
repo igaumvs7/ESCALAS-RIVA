@@ -1569,6 +1569,7 @@ function mudarMes(){
   // limpando ao trocar de mês, de propósito — isso é o esperado, você gera
   // uma escala nova por mês.
   S.escala=null;
+  calSemanasExtras=0;
   autoSave();
   if(abaAtual===0) renderPainel();
   if(abaAtual===2) renderCalendarioVagas();
@@ -1930,10 +1931,52 @@ function renderCalendarioVagas(){
     const t=document.createElement('div');
     t.className='cal-local-tab'+(l.id===calLocalAtivo?' active':'');
     t.textContent=l.nome;
-    t.onclick=()=>{calLocalAtivo=l.id;renderCalendarioVagas();};
+    t.onclick=()=>{calLocalAtivo=l.id;calSemanasExtras=0;renderCalendarioVagas();};
     tabs.appendChild(t);
   });
   renderCalMes();
+}
+
+// 2026-09-12 (pedido do dono): escalas como a do Lumina atravessam virada de
+// mês (ex. 14/09 → 03/10) — pra configurar os 3 dias de outubro, o único
+// jeito era trocar o mês inteiro no seletor lá em cima, o que tirava a
+// visão de setembro da tela. Quantas semanas extras do PRÓXIMO mês aparecem
+// no final da grade, além do mês selecionado — cresce clicando no botão
+// "+ mostrar mais dias", reseta ao trocar de local ou de mês.
+let calSemanasExtras=0;
+
+// Constrói 1 célula do calendário — extraído pra ser usado tanto pros dias
+// do mês selecionado quanto pros dias extras do próximo mês (mesmo template
+// nos dois casos, incluindo o clique, que já funciona com qualquer `ds`
+// independente do mês selecionado no topo).
+function construirCelulaDiaVagas_(loc,d,ehProximoMes){
+  const ds=toDS(d);
+  const fechado=(loc.fechados||[]).includes(ds);
+  const override=S.ajustes['pad_'+loc.id+'_'+ds];
+  const vagas=vagasDia(loc,d);
+  const cell=document.createElement('div');
+  cell.className='cal-dia'+(fechado?' fechado':'')+(override?' tem-override':'')+(ehProximoMes?' prox-mes':'');
+  if(ehProximoMes) cell.style.opacity='0.72';
+  cell.onclick=()=>abrirModalDia(loc.id,ds,d.getDate(),d.getDay());
+  const num=document.createElement('div');num.className='cal-dia-num';
+  num.textContent=ehProximoMes?`${d.getDate()}/${MESES[d.getMonth()+1].slice(0,3)}`:d.getDate();
+  cell.appendChild(num);
+  const dsem=document.createElement('div');dsem.className='cal-dia-dsem';dsem.textContent=DSEM[d.getDay()];cell.appendChild(dsem);
+  if(fechado){
+    const fch=document.createElement('div');fch.style.cssText='font-size:10px;color:var(--vermelho);font-weight:700;margin-top:2px';fch.textContent='FECHADO';cell.appendChild(fch);
+  } else if(vagas){
+    const vDiv=document.createElement('div');vDiv.className='cal-dia-vagas';
+    loc.turnos.forEach(tr=>{
+      const p=document.createElement('div');p.className='vaga-pill vaga-'+tr;
+      p.innerHTML=`<span>${TURNOS_LABEL[tr]}</span><strong>${vagas[tr]||0}</strong>`;
+      vDiv.appendChild(p);
+    });
+    cell.appendChild(vDiv);
+  }
+  if(override){
+    const ov=document.createElement('div');ov.style.cssText='font-size:9px;color:var(--azul-claro);font-weight:700;margin-top:2px;text-align:right';ov.textContent='✏️ override';cell.appendChild(ov);
+  }
+  return cell;
 }
 
 function renderCalMes(){
@@ -1962,32 +2005,46 @@ function renderCalMes(){
     const v=document.createElement('div');v.className='cal-dia vazio';grid.appendChild(v);
   }
   dias.forEach(d=>{
-    const ds=toDS(d);
-    const fechado=(loc.fechados||[]).includes(ds);
-    const override=S.ajustes['pad_'+loc.id+'_'+ds];
-    const vagas=vagasDia(loc,d);
-    const cell=document.createElement('div');
-    cell.className='cal-dia'+(fechado?' fechado':'')+(override?' tem-override':'');
-    cell.onclick=()=>abrirModalDia(loc.id,ds,d.getDate(),d.getDay());
-    const num=document.createElement('div');num.className='cal-dia-num';num.textContent=d.getDate();cell.appendChild(num);
-    const dsem=document.createElement('div');dsem.className='cal-dia-dsem';dsem.textContent=DSEM[d.getDay()];cell.appendChild(dsem);
-    if(fechado){
-      const fch=document.createElement('div');fch.style.cssText='font-size:10px;color:var(--vermelho);font-weight:700;margin-top:2px';fch.textContent='FECHADO';cell.appendChild(fch);
-    } else if(vagas){
-      const vDiv=document.createElement('div');vDiv.className='cal-dia-vagas';
-      loc.turnos.forEach(tr=>{
-        const p=document.createElement('div');p.className='vaga-pill vaga-'+tr;
-        p.innerHTML=`<span>${TURNOS_LABEL[tr]}</span><strong>${vagas[tr]||0}</strong>`;
-        vDiv.appendChild(p);
-      });
-      cell.appendChild(vDiv);
-    }
-    if(override){
-      const ov=document.createElement('div');ov.style.cssText='font-size:9px;color:var(--azul-claro);font-weight:700;margin-top:2px;text-align:right';ov.textContent='✏️ override';cell.appendChild(ov);
-    }
-    grid.appendChild(cell);
+    grid.appendChild(construirCelulaDiaVagas_(loc,d,false));
   });
+
+  // Dias extras do próximo mês (só aparecem se o dono clicar "+ mostrar
+  // mais dias" — não some nada do mês atual, só ACRESCENTA no final).
+  if(calSemanasExtras>0){
+    const sep=document.createElement('div');
+    sep.style.cssText='grid-column:1/-1;font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 4px;padding-top:8px;border-top:1px dashed var(--cinza-borda)';
+    const proxMesNum=S.mes===12?1:S.mes+1;
+    const proxAno=S.mes===12?S.ano+1:S.ano;
+    sep.textContent=`Início de ${MESES[proxMesNum]} ${proxAno} (dias extras)`;
+    grid.appendChild(sep);
+
+    const ultimoDia=dias[dias.length-1];
+    const totalExtras=calSemanasExtras*7;
+    for(let i=1;i<=totalExtras;i++){
+      const d=new Date(ultimoDia.getFullYear(),ultimoDia.getMonth(),ultimoDia.getDate()+i,12,0,0);
+      grid.appendChild(construirCelulaDiaVagas_(loc,d,true));
+    }
+  }
+
   cont.appendChild(grid);
+
+  const btnMais=document.createElement('button');
+  btnMais.type='button';
+  btnMais.className='btn btn-outline btn-sm';
+  btnMais.style.marginTop='14px';
+  btnMais.textContent=`+ Mostrar mais 7 dias (${MESES[S.mes===12?1:S.mes+1]})`;
+  btnMais.title='Útil quando a escala deste local atravessa a virada do mês (ex. Lumina 14/09 → 03/10) — mostra os primeiros dias do mês seguinte aqui embaixo, sem trocar de mês lá em cima.';
+  btnMais.onclick=()=>{calSemanasExtras++;renderCalMes();};
+  cont.appendChild(btnMais);
+  if(calSemanasExtras>0){
+    const btnMenos=document.createElement('button');
+    btnMenos.type='button';
+    btnMenos.className='btn btn-outline btn-sm';
+    btnMenos.style.cssText='margin-top:14px;margin-left:8px';
+    btnMenos.textContent='− Esconder dias extras';
+    btnMenos.onclick=()=>{calSemanasExtras=0;renderCalMes();};
+    cont.appendChild(btnMenos);
+  }
 }
 
 // ─── MODAL DIA ─────────────────────────────────────────────────────────────
@@ -1995,7 +2052,11 @@ function abrirModalDia(lid,ds,diaNum,diaWeek){
   const loc=S.locais.find(x=>x.id===lid);
   if(!loc) return;
   modalDiaCtx={lid,ds,diaNum};
-  document.getElementById('modal-dia-title').innerHTML=`Vagas — <span style="color:var(--vermelho)">${diaNum} de ${MESES[S.mes]} (${DSEM[diaWeek]})</span>`;
+  // Mês vem da própria data (ds), não de S.mes — com os "dias extras do
+  // próximo mês" (Calendário de Vagas), a célula clicada pode ser de um mês
+  // diferente do que está selecionado lá em cima.
+  const mesDoDs=Number(ds.split('-')[1]);
+  document.getElementById('modal-dia-title').innerHTML=`Vagas — <span style="color:var(--vermelho)">${diaNum} de ${MESES[mesDoDs]} (${DSEM[diaWeek]})</span>`;
   const body=document.getElementById('modal-dia-body');
   body.innerHTML='';
   const override=S.ajustes['pad_'+lid+'_'+ds];
