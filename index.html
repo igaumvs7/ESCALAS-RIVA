@@ -1695,7 +1695,7 @@ function renderPainelRelatorioRapido(){
       const vgv=S.vgv[g.id]||0;
       const pctVGV=totalVGV>0?Math.round(vgv/totalVGV*100):0;
       html+=`<tr>
-        <td style="font-weight:700">${g.nome}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}${g.inativo?` <span class="badge badge-cinza" style="font-size:9px">Inativo</span>`:''}</td>
+        <td style="font-weight:700">${g.nome}${cargoBadge(g)}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}${g.inativo?` <span class="badge badge-cinza" style="font-size:9px">Inativo</span>`:''}</td>
         <td><strong style="font-size:16px;font-family:'Barlow Condensed',sans-serif;color:var(--azul)">${cnt}</strong></td>
         <td style="font-size:12px;color:var(--cinza-texto)">${vgv>0?fmtR(vgv)+' ('+pctVGV+'%)':'—'}</td>
         ${S.locais.map(l=>`<td style="text-align:center;font-size:13px;font-weight:600">${contPorLocal[g.id]?.[l.nome]||0}</td>`).join('')}
@@ -2103,6 +2103,11 @@ function renderGerentesVGV(){
         <option${g.regional==='René'?' selected':''}>René</option>
         <option${g.regional==='Cahú'?' selected':''}>Cahú</option>
       </select>
+      <select title="Cargo — aparece no relatório pra diferenciar quem é Regional de quem é Vendas" style="width:auto;font-weight:600;color:${g.cargo==='regional'?'#1A4A9C':g.cargo==='vendas'?'#7A5A00':'var(--cinza-texto)'}" onchange="S.gerentes.find(x=>x.id===${g.id}).cargo=this.value||null;renderGerentesVGV();autoSave()">
+        <option value=""${!g.cargo?' selected':''}>— Cargo? —</option>
+        <option value="regional"${g.cargo==='regional'?' selected':''}>🏢 Gerente Regional</option>
+        <option value="vendas"${g.cargo==='vendas'?' selected':''}>💼 Gerente de Vendas</option>
+      </select>
       <label title="Gerente Novato — recebe 10% das vagas do BLIP" style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;padding:4px 8px;border-radius:var(--radius-sm);background:${g.novato?'#FEF9C3':'var(--cinza-fundo)'};border:1.5px solid ${g.novato?'#F59E0B':'var(--cinza-borda)'};color:${g.novato?'#92400E':'var(--cinza-texto)'}">
         <input type="checkbox" ${g.novato?'checked':''} onchange="S.gerentes.find(x=>x.id===${g.id}).novato=this.checked;renderGerentesVGV();autoSave()" style="width:13px;height:13px;margin:0">
         🌟 Novato
@@ -2156,7 +2161,16 @@ function renderGerentesVGV(){
 function setVGV(id,val){S.vgv[id]=val;renderGerentesVGV();autoSave();}
 function setPctManual(id,val){if(!S.pctManual)S.pctManual={};S.pctManual[id]=Math.max(0,Math.min(100,val));renderGerentesVGV();autoSave();}
 function removerGerente(id){if(confirm('Remover gerente?')){S.gerentes=S.gerentes.filter(x=>x.id!==id);renderGerentesVGV();autoSave();}}
-function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regional:'René',novato:false,inativo:false});renderGerentesVGV();autoSave();showToast('Gerente adicionado!','success');}
+function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regional:'René',cargo:null,novato:false,inativo:false});renderGerentesVGV();autoSave();showToast('Gerente adicionado!','success');}
+
+// Badge de cargo (2026-09-12, pedido do dono): usado nos relatórios pra
+// diferenciar Gerente Regional de Gerente de Vendas — mesma pessoa, mesma
+// lista, só rotulada certo em vez de aparecer genericamente "Gerente".
+function cargoBadge(g){
+  if(g.cargo==='regional') return '<span class="badge badge-azul" style="font-size:9px;margin-left:4px">🏢 Regional</span>';
+  if(g.cargo==='vendas') return '<span class="badge badge-amarelo" style="font-size:9px;margin-left:4px">💼 Vendas</span>';
+  return '';
+}
 
 // ─── CALENDÁRIO VISUAL DE PERÍODO ────────────────────────────────────────────
 function confirmarGerarEscalas(){
@@ -3852,7 +3866,7 @@ function renderRelatorio(){
       const pctVGV=totalVGVAtivos>0?((vgv/totalVGVAtivos)*100).toFixed(1):0;
       const tr2=document.createElement('tr');
       tr2.innerHTML=`
-        <td style="font-weight:700">${g.nome}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}</td>
+        <td style="font-weight:700">${g.nome}${cargoBadge(g)}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}</td>
         <td><strong style="font-size:16px;font-family:'Barlow Condensed',sans-serif;color:var(--azul)">${cnt}</strong></td>
         <td style="font-weight:700;color:var(--azul-medio)">${pctTotal}%</td>
         <td style="font-size:12px;color:var(--cinza-texto)">${vgv>0?fmtR(vgv):'—'}</td>
