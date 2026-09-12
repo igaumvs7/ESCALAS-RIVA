@@ -1557,7 +1557,18 @@ function mudarMes(){
   const anoAnt=S.mes===1?S.ano-1:S.ano;
   const lblVgv=document.getElementById('lbl-vgv');
   if(lblVgv) lblVgv.textContent='VGV de Referência — '+MESES[mesAnt]+' '+anoAnt;
-  S.escala=null; S.ajustes={};
+  // BUG REAL (2026-09-12, reportado pelo dono): trocar de mês apagava TODOS
+  // os overrides do Calendário de Vagas de TODOS os locais e TODAS as datas
+  // — não só do mês que estava saindo. Como `S.ajustes` guarda a chave com a
+  // data completa (ex. 'pad_locId_2026-09-14'), nunca havia motivo real pra
+  // zerar isso ao trocar de mês — são datas diferentes, chaves diferentes,
+  // não colidem. Esse zerado também quebrava o caso de uma escala atravessar
+  // virada de mês (ex. Lumina 14/09→03/10): configurar os dias de outubro
+  // exigia navegar pra outubro, o que apagava tudo que já tinha sido
+  // ajustado em setembro. `S.escala` (o resultado JÁ GERADO) continua
+  // limpando ao trocar de mês, de propósito — isso é o esperado, você gera
+  // uma escala nova por mês.
+  S.escala=null;
   autoSave();
   if(abaAtual===0) renderPainel();
   if(abaAtual===2) renderCalendarioVagas();
