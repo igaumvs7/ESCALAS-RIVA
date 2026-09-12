@@ -2472,17 +2472,51 @@ function gerarEscalasInterno(){
   }
 
   // ── Função sorteia 1 de um array, evitando 3x consecutivos ───────────────
-  function sortearAntiConsec(arr, ultimosDois){
-    if(!arr||arr.length===0) return null;
-    if(arr.length===1) return arr[0]; // sem escolha
-    // Exclui quem apareceu nas últimas 2 posições iguais (anti-trinca)
-    const [u1,u2]=ultimosDois||[null,null];
-    let elegiv=arr;
-    if(u1!==null&&u2!==null&&u1===u2){
-      elegiv=arr.filter(g=>g.id!==u1);
-      if(elegiv.length===0) elegiv=arr; // fallback
+  // 2026-09-12 (pedido do dono): "o Rene ficou com 2 dias só pra ele, 6 vagas
+  // num dia e mais 6 no outro, mesmo o % geral do mês batendo certinho".
+  // Causa raiz: BLIP e locais normais sorteavam ALEATORIAMENTE entre quem
+  // ainda tinha crédito, e a trava "anti-repetição" só olhava pro mesmo
+  // canal (mesmo turno+assento, comparando só com o dia anterior) — nada
+  // impedia a MESMA pessoa de ganhar TODOS os 6 turnos/assentos do MESMO
+  // dia, nem vários dias seguidos. O total do mês fechava certo (33/33/33)
+  // porque cada sorteio individual era só aleatório dentro de quem tinha
+  // saldo — mas "aleatório" não é a mesma coisa que "bem espalhado".
+  //
+  // Função única agora usada em TUDO (BLIP, locais normais e Dia Todo já
+  // usava algo parecido): sempre escolhe quem tem MAIS crédito restante
+  // (Dia Todo já fazia isso corretamente — generalizado daqui pra frente),
+  // e ANTES disso, sempre que possível, prioriza quem AINDA NÃO trabalhou
+  // nesse dia — é essa regra nova que impede 1 pessoa varrer o dia inteiro.
+  // Só cai pra quem já trabalhou hoje se não sobrar mais ninguém com crédito
+  // que ainda esteja livre nesse dia (evita vaga vazia à toa).
+  function escolherPorCredito_(candidatos, creditosMap, ultimosDoisIds, diaAtualDs, diaTrabalhadoHojeMap){
+    const comCredito=candidatos.filter(g=>(creditosMap[g.id]||0)>0);
+    if(comCredito.length===0) return null;
+
+    let pool=comCredito;
+    if(diaAtualDs && diaTrabalhadoHojeMap){
+      const semTrabalharHoje=comCredito.filter(g=>!diaTrabalhadoHojeMap[g.id]);
+      if(semTrabalharHoje.length>0) pool=semTrabalharHoje;
     }
-    return elegiv[Math.floor(Math.random()*elegiv.length)];
+
+    // Anti-trinca: evita a MESMA pessoa 3x seguidas na sequência geral do
+    // local (não só no mesmo canal) — desempate de segurança, a regra do
+    // "não trabalhou hoje" acima já resolve o caso mais comum.
+    const [u1,u2]=ultimosDoisIds||[null,null];
+    let elegiv=pool;
+    if(u1!==null&&u2!==null&&u1===u2){
+      const semUltimo=pool.filter(g=>g.id!==u1);
+      if(semUltimo.length>0) elegiv=semUltimo;
+    }
+
+    const maxCred=Math.max(...elegiv.map(g=>creditosMap[g.id]||0));
+    const prioritarios=elegiv.filter(g=>(creditosMap[g.id]||0)===maxCred);
+    const escolhido=prioritarios[Math.floor(Math.random()*prioritarios.length)];
+    if(escolhido){
+      creditosMap[escolhido.id]=Math.max(0,(creditosMap[escolhido.id]||0)-1);
+      if(diaAtualDs && diaTrabalhadoHojeMap) diaTrabalhadoHojeMap[escolhido.id]=true;
+    }
+    return escolhido||null;
   }
 
   const agenda={};
@@ -2540,29 +2574,24 @@ function gerarEscalasInterno(){
         }
       }
 
-      // Montar fila ordenada por créditos (maior → menor), embaralhar empates
-      function montarFilaBlip(){
-        const comCredito=ger.filter(g=>(creditosBlip[g.id]||0)>0);
-        // Embaralha antes de ordenar para desempate aleatório
-        for(let i=comCredito.length-1;i>0;i--){
-          const j=Math.floor(Math.random()*(i+1));
-          [comCredito[i],comCredito[j]]=[comCredito[j],comCredito[i]];
-        }
-        comCredito.sort((a,b)=>(creditosBlip[b.id]||0)-(creditosBlip[a.id]||0));
-        return comCredito;
-      }
-
       // Índice para round-robin fallback (quando todos os créditos se esgotam)
       let blipFallbackIdx=0;
 
-      // Distribuir vagas dia a dia usando fila de créditos + anti-consecutivos
-      const ultimosBlip={}; // {locId_turno: [gid, gid]}
+      // Distribuir vagas dia a dia — mesma regra de escolherPorCredito_ usada
+      // em todo o resto do sistema (ver comentário na definição dela): sempre
+      // prioriza quem AINDA NÃO trabalhou nesse dia, depois quem tem mais
+      // crédito. Um canal SÓ pro local inteiro (não mais por turno+assento) —
+      // é isso que impede a mesma pessoa varrer todos os turnos do mesmo dia.
+      const ultimosBlip={locId:[null,null]};
+      let diaAtualBlip=null;
+      let diaTrabalhadoHojeBlip={};
       dias.forEach(dia=>{
         const ds=toDS(dia);
         const diatodoKey='diatodo_'+loc.id+'_'+ds;
         const gidDiaTodoManual=S.ajustes[diatodoKey]||null;
         const v=vagasDia(loc,dia);
         if(!v){agenda[loc.id][ds]={fechado:true};return;}
+        if(ds!==diaAtualBlip){diaTrabalhadoHojeBlip={};diaAtualBlip=ds;}
         const daySlots={_diatodo:null};
         loc.turnos.forEach(tr=>{
           const n=v[tr]||0;
@@ -2572,16 +2601,10 @@ function gerarEscalasInterno(){
             if(S.ajustes[aKey]!==undefined){
               daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);
             } else {
-              const chave=loc.id+'_'+tr+'_'+s;
-              const ultimos=ultimosBlip[chave]||[null,null];
-              const fila=montarFilaBlip();
-              let escolhido;
-              if(fila.length>0){
-                escolhido=sortearAntiConsec(fila,ultimos.map(id=>ger.find(g=>g.id===id)||{id:id}));
-                if(escolhido){
-                  creditosBlip[escolhido.id]=Math.max(0,(creditosBlip[escolhido.id]||0)-1);
-                  ultimosBlip[chave]=[ultimos[1],escolhido.id];
-                }
+              const ultimos=ultimosBlip.locId;
+              let escolhido=escolherPorCredito_(ger,creditosBlip,ultimos,ds,diaTrabalhadoHojeBlip);
+              if(escolhido){
+                ultimosBlip.locId=[ultimos[1],escolhido.id];
               } else {
                 // Créditos esgotados: round-robin entre todos os gerentes ativos (garante sem vaga vazia)
                 const [uid1,uid2]=ultimos;
@@ -2592,7 +2615,7 @@ function gerarEscalasInterno(){
                 }
                 escolhido=candidatos[blipFallbackIdx%candidatos.length];
                 blipFallbackIdx++;
-                if(escolhido) ultimosBlip[chave]=[ultimos[1],escolhido.id];
+                if(escolhido) ultimosBlip.locId=[ultimos[1],escolhido.id];
               }
               daySlots[tr].push(escolhido||null);
             }
@@ -2691,29 +2714,12 @@ function gerarEscalasInterno(){
       }
     }
 
-    // ── Função: sorteia da fila de créditos com anti-consecutivo ──────────
-    // Sempre escolhe entre os que têm MAIS créditos (desempate aleatório).
-    // Anti-consecutivo nunca sacrifica equilíbrio: se só restar 1 elegível com crédito, usa ele mesmo que seja consecutivo.
+    // ── Dia Todo: mesma regra de escolherPorCredito_ (ver comentário na
+    // definição dela). Não precisa da checagem "já trabalhou hoje" porque
+    // aqui só existe 1 escolha por dia (é a pessoa do dia inteiro) — não tem
+    // como repetir DENTRO do mesmo dia por construção.
     function sortearCredito(ultimosDoisIds){
-      const comCredito=ger.filter(g=>(creditos[g.id]||0)>0);
-      if(comCredito.length===0) return null;
-
-      // Anti-consecutivo: se as últimas 2 são iguais, tenta excluir
-      const [u1,u2]=ultimosDoisIds||[null,null];
-      let elegiv=comCredito;
-      if(u1!==null&&u2!==null&&u1===u2){
-        const semUltimo=comCredito.filter(g=>g.id!==u1);
-        if(semUltimo.length>0) elegiv=semUltimo;
-        // se semUltimo.length===0, usa comCredito (equilíbrio tem prioridade)
-      }
-
-      // Escolhe sempre quem tem MAIS créditos — garante equilíbrio estrito
-      const maxCred=Math.max(...elegiv.map(g=>creditos[g.id]||0));
-      const prioritarios=elegiv.filter(g=>(creditos[g.id]||0)===maxCred);
-      // Desempate aleatório entre os que têm o mesmo máximo
-      const escolhido=prioritarios[Math.floor(Math.random()*prioritarios.length)];
-      if(escolhido) creditos[escolhido.id]=Math.max(0,(creditos[escolhido.id]||0)-1);
-      return escolhido||null;
+      return escolherPorCredito_(ger,creditos,ultimosDoisIds,null,null);
     }
 
     const ultimosLoc={};
@@ -2757,34 +2763,35 @@ function gerarEscalasInterno(){
         });
       }
 
-      // 2) Coletar slots restantes e distribuir com pool
-      const slotsRest=[];
+      // 2) Distribuir os slots restantes, um de cada vez, em ordem cronológica
+      // (dia → turno → assento). Mesma regra de escolherPorCredito_ do resto
+      // do sistema (ver comentário na definição dela): prioriza quem AINDA
+      // NÃO trabalhou nesse dia, depois quem tem mais crédito restante — é
+      // isso que impede a mesma pessoa varrer o local inteiro por 1-2 dias
+      // seguidos, mesmo com o total do mês batendo certo no final.
+      //
+      // ANTES disso: a composição certa (fichas = créditos de cada um) era
+      // só EMBARALHADA e andada em sequência — estatisticamente dava a soma
+      // certa no fim do mês, mas "aleatório" não é a mesma coisa que "bem
+      // espalhado", e podia (e dava, na prática) empilhar 6 vagas do mesmo
+      // dia inteiro pra 1 só pessoa.
+      const ultimosNormal={locId:[null,null]};
+      let diaAtualNormal=null;
+      let diaTrabalhadoHojeNormal={};
       dias.forEach(dia=>{
         const ds=toDS(dia);const v=vagasDia(loc,dia);if(!v) return;
+        if(ds!==diaAtualNormal){diaTrabalhadoHojeNormal={};diaAtualNormal=ds;}
         loc.turnos.forEach(tr=>{
           const n=v[tr]||0;
           for(let s=0;s<n;s++){
             if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
             if(atrib[ds+'_'+tr+'_'+s]!==undefined) continue;
-            slotsRest.push({ds,dia,tr,seat:s});
+            const ultimos=ultimosNormal.locId;
+            const escolhido=escolherPorCredito_(ger,creditos,ultimos,ds,diaTrabalhadoHojeNormal);
+            if(escolhido) ultimosNormal.locId=[ultimos[1],escolhido.id];
+            atrib[ds+'_'+tr+'_'+s]=escolhido;
           }
         });
-      });
-      // Pool = fichas dos créditos restantes
-      const pool=[];
-      ger.forEach(g=>{for(let i=0;i<(creditos[g.id]||0);i++) pool.push(g);});
-      for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-      const ultDiaTr={};
-      slotsRest.forEach((slot,i)=>{
-        if(i>=pool.length){atrib[slot.ds+'_'+slot.tr+'_'+slot.seat]=null;return;}
-        const ch=slot.ds+'_'+slot.tr;const ult=ultDiaTr[ch];
-        if(ult&&pool[i]&&pool[i].id===ult.id){
-          for(let t=i+1;t<Math.min(pool.length,i+ger.length*2);t++){
-            if(pool[t].id!==ult.id){[pool[i],pool[t]]=[pool[t],pool[i]];break;}
-          }
-        }
-        atrib[slot.ds+'_'+slot.tr+'_'+slot.seat]=pool[i]||null;
-        ultDiaTr[ch]=pool[i]||null;
       });
 
       // 3) Montar agenda com atrib
