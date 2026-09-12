@@ -20,10 +20,21 @@ function doPost(e) {
     }
     const conteudo = e && e.postData ? e.postData.contents : '';
     const dados = JSON.parse(conteudo || '{}');
-    if (dados.action !== 'salvarEscala') {
-      throw new Error('Ação inválida.');
+    if (dados.action === 'salvarEscala') {
+      return respostaJson_(salvarEscala_(dados));
     }
-    return respostaJson_(salvarEscala_(dados));
+    if (dados.action === 'listarEscalas') {
+      // Não precisa de lock — leitura não muda nada, e a trava de 30s do
+      // salvarEscala ficaria esperando à toa (2026-09-12: histórico
+      // persistente entre máquinas, pedido do dono).
+      lock.releaseLock();
+      return respostaJson_(listarEscalas_());
+    }
+    if (dados.action === 'obterEscalaJson') {
+      lock.releaseLock();
+      return respostaJson_(obterEscalaJson_(dados.id));
+    }
+    throw new Error('Ação inválida.');
   } catch (erro) {
     console.error(erro);
     return respostaJson_({ok: false, error: erro && erro.message ? erro.message : String(erro)});
@@ -108,6 +119,73 @@ function salvarEscala_(dados) {
     }
     throw erro;
   }
+}
+
+// Histórico persistente entre máquinas (2026-09-12): lê a aba BANCO GERAL
+// inteira e devolve todas as escalas já enviadas ao banco, mais recente
+// primeiro. É só leitura — nunca muda a planilha.
+function listarEscalas_() {
+  const planilha = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  const aba = planilha.getSheetByName(CONFIG.SHEET_NAME);
+  if (!aba) throw new Error('A aba BANCO GERAL não foi encontrada.');
+
+  const ultimaLinha = aba.getLastRow();
+  if (ultimaLinha < 2) return { ok: true, escalas: [] };
+
+  const dados = aba.getRange(2, 1, ultimaLinha - 1, 14).getValues();
+  const escalas = [];
+  for (let i = 0; i < dados.length; i++) {
+    const linha = i + 2;
+    const row = dados[i];
+    if (!row[0]) continue; // linha vazia no meio da planilha
+    escalas.push({
+      id: String(row[0]),
+      nome: String(row[1] || ''),
+      ano: Number(row[2]) || null,
+      mes: Number(row[3]) || null,
+      mesNome: String(row[4] || ''),
+      dataInicial: formatarDataIso_(row[5]),
+      dataFinal: formatarDataIso_(row[6]),
+      regional: String(row[7] || ''),
+      responsavel: String(row[8] || ''),
+      geradoEm: row[9] instanceof Date ? row[9].toISOString() : String(row[9] || ''),
+      pdfUrl: linkDaCelula_(aba.getRange(linha, 11)),
+      jsonUrl: linkDaCelula_(aba.getRange(linha, 12)),
+      status: String(row[12] || ''),
+      observacoes: String(row[13] || '')
+    });
+  }
+  // Mais recente primeiro — geradoEm é o que reflete "quando foi enviado/atualizado".
+  escalas.sort(function (a, b) { return (b.geradoEm || '').localeCompare(a.geradoEm || ''); });
+  return { ok: true, escalas: escalas };
+}
+
+// Busca o conteúdo completo (escala + locais + gerentes) do JSON já salvo no
+// Drive pra uma escala específica — usado quando o dono clica "Importar pra
+// editar aqui" numa escala que só existe no banco (não neste navegador).
+// Lido pelo próprio Apps Script (DriveApp), não por fetch direto do
+// navegador, porque o link do Drive não devolve JSON puro sem passar por
+// tela de consentimento.
+function obterEscalaJson_(id) {
+  if (!id) throw new Error('id é obrigatório.');
+  const resultado = listarEscalas_();
+  const entrada = resultado.escalas.find(function (e) { return e.id === String(id); });
+  if (!entrada) throw new Error('Escala não encontrada no banco.');
+  if (!entrada.jsonUrl) throw new Error('Esta escala não tem arquivo de dados salvo.');
+
+  const match = String(entrada.jsonUrl).match(/[-\w]{25,}/);
+  if (!match) throw new Error('Não foi possível identificar o arquivo no Drive.');
+  const arquivo = DriveApp.getFileById(match[0]);
+  const conteudo = arquivo.getBlob().getDataAsString('UTF-8');
+  return { ok: true, id: id, conteudo: conteudo };
+}
+
+function formatarDataIso_(valor) {
+  if (!(valor instanceof Date)) return String(valor || '');
+  const ano = valor.getFullYear();
+  const mes = String(valor.getMonth() + 1).padStart(2, '0');
+  const dia = String(valor.getDate()).padStart(2, '0');
+  return ano + '-' + mes + '-' + dia;
 }
 
 function validarDados_(dados) {

@@ -717,6 +717,7 @@ tbody tr:hover td { background: #FAFBFF; }
         <div class="card-title" id="lbl-vgv">VGV de Referência</div>
         <div class="info-box">VGV total de cada gerente no mês anterior. Usado para distribuição proporcional e para o BLIP (por VGV).</div>
         <div id="tabela-vgv"></div>
+        <div class="warn-box" id="aviso-pct-manual" style="display:none;margin-top:10px"></div>
         <div class="sep"></div>
         <div class="row">
           <span style="font-size:14px;font-weight:700;color:var(--azul)">Total VGV:</span>
@@ -1070,7 +1071,8 @@ let S = {
   filaDomingos: [], // [{gid, nome}] — ordem da fila de domingos da LOJA
   vagasManual: {}, // {gid: qtd} — vagas manuais por gerente
   vagasManualTotal: 0,
-  locais10pct: null // null = todos; array de ids = locais com 10% ativo
+  locais10pct: null, // null = todos; array de ids = locais com 10% ativo
+  pctManual: {} // {gid: 0-100} — % direto por gerente, alternativa ao VGV pra locais no modo "Por %"
 };
 
 let abaAtual = 0;
@@ -1151,6 +1153,12 @@ function irAbaHistorico(){
   document.getElementById('aba-ajuda').style.display='none';
   document.getElementById('aba-fila-dom').style.display='none';
   renderHistorico();
+  // Histórico persistente entre máquinas (2026-09-12): sempre que abre esta
+  // aba, busca no banco (Google Sheets/Drive) o que foi enviado de QUALQUER
+  // computador — não só o que está salvo neste navegador. Silencioso: se
+  // falhar (sem internet, banco não configurado), a lista local continua
+  // funcionando normalmente, só não mostra a seção "No banco".
+  carregarHistoricoDoBanco();
 }
 
 function irAbaAjuda(){
@@ -1580,6 +1588,7 @@ function renderPainel(){
       <select style="width:auto;font-size:12px" onchange="S.locais.find(x=>x.id===${l.id}).modo=this.value;autoSave();renderPainel()">
         <option value="igual"${l.modo==='igual'?' selected':''}>Igualitário</option>
         <option value="vgv"${l.modo==='vgv'?' selected':''}>Por VGV</option>
+        <option value="pct"${l.modo==='pct'?' selected':''}>Por %</option>
       </select>`}`;
     pm.appendChild(r);
   });
@@ -2109,9 +2118,11 @@ function renderGerentesVGV(){
   const tv=document.getElementById('tabela-vgv');
   tv.innerHTML='';
   const t=document.createElement('table');
-  t.innerHTML='<thead><tr><th>Gerente</th><th>Regional</th><th>VGV (R$)</th><th>%</th><th>Status</th></tr></thead>';
+  t.innerHTML='<thead><tr><th>Gerente</th><th>Regional</th><th>VGV (R$)</th><th>% do VGV</th><th>% Direto (locais "Por %")</th><th>Status</th></tr></thead>';
   const tb=document.createElement('tbody');
+  if(!S.pctManual) S.pctManual={};
   const totalVGV=S.gerentes.filter(g=>!g.inativo).reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+  const totalPctManual=S.gerentes.filter(g=>!g.inativo).reduce((s,g)=>s+(S.pctManual[g.id]||0),0);
   S.gerentes.forEach(g=>{
     const v=S.vgv[g.id]||0;
     const pct=totalVGV>0?Math.round(v/totalVGV*100):0;
@@ -2121,16 +2132,29 @@ function renderGerentesVGV(){
       <td><span class="badge ${g.regional==='René'?'badge-azul':'badge-verde'}">${g.regional}</span></td>
       <td><input type="number" value="${v}" min="0" style="width:130px" onchange="setVGV(${g.id},+this.value)" ${g.inativo?'disabled':''}></td>
       <td style="font-size:12px;min-width:36px;font-weight:600">${g.inativo?'—':pct+'%'}</td>
+      <td><input type="number" value="${S.pctManual[g.id]||0}" min="0" max="100" style="width:90px" onchange="setPctManual(${g.id},+this.value)" ${g.inativo?'disabled':''}> %</td>
       <td>${g.inativo?'<span class="badge badge-cinza">Inativo</span>':g.novato?'<span class="badge badge-amarelo">Novato</span>':'<span class="badge badge-verde">Ativo</span>'}</td>`;
     tb.appendChild(tr);
   });
   t.appendChild(tb);tv.appendChild(t);
   document.getElementById('total-vgv').textContent=fmtR(totalVGV);
+  // Aviso se o % direto não soma 100 — não trava nada (o cálculo usa proporção
+  // automaticamente, igual já fazia com VGV), só ajuda a conferir de cabeça.
+  const avisoPct=document.getElementById('aviso-pct-manual');
+  if(avisoPct){
+    if(totalPctManual>0 && totalPctManual!==100){
+      avisoPct.style.display='';
+      avisoPct.textContent=`⚠️ A soma do % Direto está em ${totalPctManual}% (não precisa ser 100% — o sistema divide pela proporção entre quem tem valor preenchido, mas confira se não esqueceu ninguém).`;
+    } else {
+      avisoPct.style.display='none';
+    }
+  }
   renderVagasManuais();
   renderConfig10pct();
 }
 
 function setVGV(id,val){S.vgv[id]=val;renderGerentesVGV();autoSave();}
+function setPctManual(id,val){if(!S.pctManual)S.pctManual={};S.pctManual[id]=Math.max(0,Math.min(100,val));renderGerentesVGV();autoSave();}
 function removerGerente(id){if(confirm('Remover gerente?')){S.gerentes=S.gerentes.filter(x=>x.id!==id);renderGerentesVGV();autoSave();}}
 function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regional:'René',novato:false,inativo:false});renderGerentesVGV();autoSave();showToast('Gerente adicionado!','success');}
 
@@ -2397,8 +2421,23 @@ function gerarEscalasInterno(){
   // Gerentes que venderam: têm VGV > 0. Os novatos têm reserva de 10%.
   // Cada gerente não-novato com VGV recebe vagas proporcionais ao seu VGV.
   function calcularVagasVGV(listaGer, totalVagas){
-    const totalVGVLista=listaGer.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
-    if(totalVGVLista===0){
+    return calcularVagasPorPeso_(listaGer, totalVagas, S.vgv);
+  }
+
+  // ── Por % Direto (2026-09-12, pedido do dono): mesma matemática do VGV
+  // (Largest Remainder Method — garante soma exata e respeita decimais), só
+  // que a "força" de cada gerente vem do % digitado à mão (S.pctManual) em
+  // vez do valor de VGV em R$. Serve pra quando a distribuição não deve
+  // seguir venda do mês anterior, e sim um percentual combinado direto.
+  function calcularVagasPct(listaGer, totalVagas){
+    return calcularVagasPorPeso_(listaGer, totalVagas, S.pctManual||{});
+  }
+
+  // Função genérica por trás de VGV e % Direto — mesmo algoritmo, só muda de
+  // onde vem o "peso" de cada gerente.
+  function calcularVagasPorPeso_(listaGer, totalVagas, pesoMap){
+    const totalPeso=listaGer.reduce((s,g)=>s+(pesoMap[g.id]||0),0);
+    if(totalPeso===0){
       const base=Math.floor(totalVagas/listaGer.length);
       const resto=totalVagas%listaGer.length;
       const result={};
@@ -2407,7 +2446,7 @@ function gerarEscalasInterno(){
     }
     // Largest Remainder Method - garante que soma = totalVagas e respeita decimais
     const exatos=listaGer.map(g=>{
-      const exato=(S.vgv[g.id]||0)/totalVGVLista*totalVagas;
+      const exato=(pesoMap[g.id]||0)/totalPeso*totalVagas;
       return{id:g.id,floor:Math.floor(exato),decimal:exato-Math.floor(exato)};
     });
     const result={};
@@ -2550,9 +2589,13 @@ function gerarEscalasInterno(){
       return;
     }
 
-    // ── IGUALITÁRIO ou POR VGV (outros locais) ────────────────────────────
+    // ── IGUALITÁRIO, POR VGV ou POR % DIRETO (outros locais) ──────────────
     const modoVGV=loc.modo==='vgv'&&totalVGV>0;
-    // Verificar se 10% está ativo para este local (só relevante no modo VGV)
+    const totalPctManualAtivo=ger.reduce((s,g)=>s+((S.pctManual||{})[g.id]||0),0);
+    const modoPct=loc.modo==='pct'&&totalPctManualAtivo>0;
+    // Verificar se 10% está ativo para este local (só relevante no modo VGV —
+    // o bônus de 10% pra novato/zerado é uma regra específica de VGV, não se
+    // aplica a % Direto, que já é um percentual combinado manualmente)
     const dez10ativo=modoVGV&&(!S.locais10pct||S.locais10pct.includes(loc.id));
 
     // ── Calcular total de vagas deste local no período ────────────────────
@@ -2595,12 +2638,16 @@ function gerarEscalasInterno(){
         const emb=[...ger].sort(()=>Math.random()-0.5);
         emb.forEach((g,i)=>creditos[g.id]=base+(i<resto?1:0));
       }
-    } else if(!modoVGV){
+    } else if(!modoVGV && !modoPct){
       // ── IGUALITÁRIO PURO: floor + resto máximo +1, sem aleatoriedade acumulada ──
       const base=Math.floor(unidadeCredito/ger.length);
       const resto=unidadeCredito%ger.length;
       const emb=[...ger].sort(()=>Math.random()-0.5);
       emb.forEach((g,i)=>creditos[g.id]=base+(i<resto?1:0));
+    } else if(modoPct){
+      // ── POR % DIRETO — sem bônus de 10%/zerados (isso é regra de VGV) ────
+      const dist=calcularVagasPct(ger, unidadeCredito);
+      ger.forEach(g=>creditos[g.id]=(creditos[g.id]||0)+(dist[g.id]||0));
     } else {
       // ── POR VGV (com possível reserva de 10% para zerados) ────────────
       // Dia Todo usa dias como unidade; locais normais usam vagas/turnos.
@@ -2852,7 +2899,7 @@ function renderEscalasVisu(){
     hdr.innerHTML=`<span>📍 ${loc.nome}</span>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         ${zeradosBadge}
-        <span style="font-size:12px;font-weight:600;opacity:.85">${fmtDS(locIni)} → ${fmtDS(locFim)} · ${loc.modo==='vgv'?'Por VGV':'Igualitário'}${loc.diatodo?' · Dia Todo':''}</span>
+        <span style="font-size:12px;font-weight:600;opacity:.85">${fmtDS(locIni)} → ${fmtDS(locFim)} · ${loc.modo==='vgv'?'Por VGV':loc.modo==='pct'?'Por %':'Igualitário'}${loc.diatodo?' · Dia Todo':''}</span>
       </div>`;
     bloco.appendChild(hdr);
 
@@ -3118,15 +3165,25 @@ function abrirModal(lid,ds,turno,seat,gidAtual,diaNum,tr){
   const loc=S.locais.find(x=>x.id===lid);
   const v=vagasDia(loc,{getDay:()=>dsemIdx,toISOString:()=>ds+'T00:00:00.000Z'})||{m:0,t:0,n:0};
   const lbl2=document.createElement('div');
-  lbl2.style.cssText='font-size:12px;font-weight:600;color:var(--cinza-texto);margin-bottom:8px';
-  lbl2.textContent=`Alterar vagas neste dia (${ds}):`;
+  lbl2.style.cssText='font-size:12px;font-weight:600;color:var(--cinza-texto);margin-bottom:2px';
+  lbl2.textContent=`Vagas neste dia (${ds}):`;
   body.appendChild(lbl2);
-  const rowV=document.createElement('div');rowV.className='row';rowV.style.gap='14px';
+  // 2026-09-12 (pedido do dono): "às vezes a escala já está certa, só falta
+  // adicionar uma vaga". Essa capacidade já existia (mudar o número aqui e
+  // salvar cria uma cadeira vazia extra SÓ neste dia, sem mexer no resto da
+  // escala) — só não estava óbvia. Agora tem texto explicando e um botão
+  // "+1 vaga" pra não precisar nem digitar.
+  const lblAjuda=document.createElement('div');
+  lblAjuda.style.cssText='font-size:11px;color:var(--cinza-texto);margin-bottom:8px;line-height:1.4';
+  lblAjuda.textContent='Aumente o número de um turno pra abrir uma cadeira extra só neste dia (o resto da escala não muda). Diminua pra fechar uma vaga vazia.';
+  body.appendChild(lblAjuda);
+  const rowV=document.createElement('div');rowV.className='row';rowV.style.gap='14px';rowV.style.flexWrap='wrap';
   loc.turnos.forEach(t=>{
-    const d=document.createElement('div');d.className='row';d.style.gap='6px';
+    const d=document.createElement('div');d.className='row';d.style.gap='6px';d.style.alignItems='center';
     const classes={m:'turno-badge-m',t:'turno-badge-t',n:'turno-badge-n'};
     d.innerHTML=`<span class="badge ${classes[t]}" style="font-size:11px">${TURNOS_LABEL[t]}</span>
-      <input type="number" id="vd-${t}" value="${v[t]||0}" min="0" max="8" style="width:52px">`;
+      <input type="number" id="vd-${t}" value="${v[t]||0}" min="0" max="8" style="width:52px">
+      <button type="button" class="btn btn-outline btn-xs" title="Adiciona 1 vaga extra neste turno, só hoje" onclick="const el=document.getElementById('vd-${t}');el.value=(+el.value||0)+1">+1 vaga</button>`;
     rowV.appendChild(d);
   });
   body.appendChild(rowV);
@@ -3263,14 +3320,15 @@ function renderHistorico(){
   topo.innerHTML=`<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--azul)">📋 Histórico de Escalas (${hist.length})</div>
     <div style="font-size:12px;color:var(--cinza-texto);margin-top:3px">As alterações ficam salvas neste navegador. Use “Enviar ao banco” para guardar PDF e dados permanentemente no Google Drive e Sheets.</div></div>
     <div class="row" style="gap:8px">
+      <button class="btn btn-outline btn-sm" onclick="carregarHistoricoDoBanco()">🔄 Atualizar do banco</button>
       <button class="btn btn-outline btn-sm" onclick="abrirPlanilhaBanco()">📊 Abrir planilha</button>
       <button class="btn btn-outline btn-sm" onclick="configurarBancoEscalas()">⚙️ Configurar banco</button>
     </div>`;
   cont.appendChild(topo);
+  cont.insertAdjacentHTML('beforeend','<div class="warn-box" id="historico-banco-status" style="display:none;margin-bottom:12px"></div>');
 
   if(hist.length===0){
     cont.insertAdjacentHTML('beforeend','<div class="warn-box">📋 Nenhuma escala gerada ainda.</div>');
-    return;
   }
 
   hist.forEach(esc=>{
@@ -3304,6 +3362,29 @@ function renderHistorico(){
       <button class="btn btn-danger btn-xs" onclick="excluirEscalaHistorico('${esc.id}')">🗑 Excluir</button>`;
     card.appendChild(btns);cont.appendChild(card);
   });
+
+  // ── Escalas que só existem no banco (enviadas de OUTRO computador) ─────
+  const idsLocais=new Set(hist.map(e=>String(e.id)));
+  const soNoBanco=historicoBancoCache.filter(e=>!idsLocais.has(String(e.id)));
+  if(soNoBanco.length>0){
+    cont.insertAdjacentHTML('beforeend',`<div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:var(--azul);margin:22px 0 4px">🌐 No banco (${soNoBanco.length}) — enviadas de outro computador</div>
+      <div style="font-size:12px;color:var(--cinza-texto);margin-bottom:12px">Aparecem aqui automaticamente, em qualquer navegador ou máquina, porque ficam guardadas no Google Drive/Sheets. Clique em "Importar" pra trazer pra este histórico.</div>`);
+    soNoBanco.forEach(e=>{
+      const card=document.createElement('div');
+      card.className='card';
+      card.style.cssText='margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-left:3px solid var(--azul-claro)';
+      const info=document.createElement('div');
+      info.style.minWidth='240px';
+      info.innerHTML=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:var(--azul)">${escaparHtml(e.nome||'Escala sem nome')}</div>
+        <div style="font-size:12px;color:var(--cinza-texto);margin-top:2px">Período: ${escaparHtml((e.dataInicial||'—')+' → '+(e.dataFinal||'—'))} &nbsp;·&nbsp; Responsável: ${escaparHtml(e.responsavel||'—')} &nbsp;·&nbsp; Gerado em: ${escaparHtml(e.geradoEm?new Date(e.geradoEm).toLocaleString('pt-BR'):'—')}</div>`;
+      card.appendChild(info);
+      const btns=document.createElement('div');btns.className='row';btns.style.cssText='gap:7px;flex-wrap:wrap;justify-content:flex-end';
+      btns.innerHTML=`${e.pdfUrl?`<button class="btn btn-outline btn-sm" onclick="window.open('${e.pdfUrl}','_blank','noopener')">☁️ Abrir PDF</button>`:''}
+        ${e.jsonUrl?`<button class="btn btn-outline btn-sm" onclick="window.open('${e.jsonUrl}','_blank','noopener')">📄 Abrir dados</button>`:''}
+        <button class="btn btn-primary btn-sm" onclick="importarEscalaDoBanco('${e.id}')">📥 Importar pra editar aqui</button>`;
+      card.appendChild(btns);cont.appendChild(card);
+    });
+  }
 }
 
 function carregarEscalaHistorico(id){
@@ -3355,6 +3436,83 @@ function abrirPlanilhaBanco(){
 function abrirPdfBanco(id){
   const esc=(S.historicoEscalas||[]).find(e=>String(e.id)===String(id));
   if(esc?.banco?.pdfUrl) window.open(esc.banco.pdfUrl,'_blank','noopener');
+}
+
+// ─── HISTÓRICO PERSISTENTE ENTRE MÁQUINAS (2026-09-12) ─────────────────────
+// Antes disso, "Enviar ao banco" só ESCREVIA no Google Sheets/Drive — nada
+// no sistema LIA de volta. Trocar de computador ou de navegador (ou limpar o
+// cache) fazia o histórico sumir da tela, mesmo com tudo intacto na
+// planilha. Agora, toda vez que abre a aba Histórico, o sistema busca a
+// lista completa do banco e mostra separado do que já está neste navegador.
+let historicoBancoCache=[];
+let carregandoHistoricoBanco=false;
+
+async function carregarHistoricoDoBanco(){
+  const webAppUrl=(localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'').trim();
+  if(!webAppUrl){historicoBancoCache=[];return;}
+  if(carregandoHistoricoBanco) return;
+  carregandoHistoricoBanco=true;
+  const aviso=document.getElementById('historico-banco-status');
+  if(aviso){aviso.textContent='🔄 Buscando histórico no banco...';aviso.style.display='';}
+  try{
+    const resposta=await fetch(webAppUrl,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'listarEscalas'}),
+      redirect:'follow'
+    });
+    const texto=await resposta.text();
+    const retorno=JSON.parse(texto);
+    if(!resposta.ok||!retorno.ok) throw new Error(retorno?.error||'O banco não respondeu.');
+    historicoBancoCache=retorno.escalas||[];
+    if(aviso) aviso.style.display='none';
+  }catch(e){
+    console.warn('Não foi possível carregar o histórico do banco:',e);
+    // Falha silenciosa de propósito — sem internet ou banco ainda não
+    // configurado não pode travar quem só quer ver o histórico local.
+    if(aviso){aviso.textContent='⚠️ Não foi possível buscar o histórico do banco agora (histórico deste navegador continua normal).';aviso.style.display='';}
+  }finally{
+    carregandoHistoricoBanco=false;
+  }
+  renderHistorico();
+}
+
+// Traz pra este navegador uma escala que só existe no banco (foi gerada ou
+// enviada de outro computador) — a partir daqui ela passa a se comportar
+// como qualquer item do histórico local (abrir, reimprimir, reenviar).
+async function importarEscalaDoBanco(id){
+  const webAppUrl=(localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'').trim();
+  if(!webAppUrl) return;
+  const entrada=historicoBancoCache.find(e=>String(e.id)===String(id));
+  if(!entrada) return;
+  showToast(`Importando "${entrada.nome}"...`,'info',4000);
+  try{
+    const resposta=await fetch(webAppUrl,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'obterEscalaJson',id:String(id)}),
+      redirect:'follow'
+    });
+    const texto=await resposta.text();
+    const retorno=JSON.parse(texto);
+    if(!resposta.ok||!retorno.ok) throw new Error(retorno?.error||'O banco não devolveu os dados.');
+    const pacote=JSON.parse(retorno.conteudo);
+    if(!pacote?.escala) throw new Error('Arquivo de dados desta escala está incompleto.');
+    if(!S.historicoEscalas) S.historicoEscalas=[];
+    S.historicoEscalas=S.historicoEscalas.filter(e=>String(e.id)!==String(id));
+    S.historicoEscalas.unshift({
+      ...pacote.escala,
+      id:entrada.id,
+      nome:entrada.nome,
+      geradoEm:entrada.geradoEm,
+      banco:{status:'salva',pdfUrl:entrada.pdfUrl,jsonUrl:entrada.jsonUrl,enviadoEm:entrada.geradoEm}
+    });
+    autoSave();renderHistorico();
+    showToast(`"${entrada.nome}" importada — já aparece no histórico deste navegador.`,'success',6000);
+  }catch(e){
+    console.error(e);
+    showToast(e.message||'Não foi possível importar esta escala.','error',6000);
+  }
 }
 
 function configurarBancoEscalas(){
