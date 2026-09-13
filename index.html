@@ -1315,9 +1315,12 @@ function renderFilaDomingos(){
       <div class="card" style="margin-top:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
           <div class="card-title" style="margin-bottom:0">📊 Histórico geral de domingos (desde sempre)</div>
-          <button class="btn btn-xs btn-outline" onclick="zerarHistoricoDomingos()">🗑 Zerar histórico</button>
+          <div class="row" style="gap:6px">
+            <button class="btn btn-xs btn-verde" onclick="recuperarDomingosDaEscalaAtual()" title="Escalas geradas antes deste histórico existir não entram sozinhas — use este botão pra somá-las">📥 Recuperar domingos da escala atual</button>
+            <button class="btn btn-xs btn-outline" onclick="zerarHistoricoDomingos()">🗑 Zerar histórico</button>
+          </div>
         </div>
-        <div class="info-box" style="margin-bottom:12px">Essa contagem <strong>nunca zera sozinha</strong> — soma mês após mês. É ela (não a fila do mês) que decide quem está "devendo" domingo há mais tempo.</div>
+        <div class="info-box" style="margin-bottom:12px">Essa contagem <strong>nunca zera sozinha</strong> — soma mês após mês. É ela (não a fila do mês) que decide quem está "devendo" domingo há mais tempo. Escalas geradas <strong>antes</strong> deste histórico existir (13/09/2026) precisam ser recuperadas manualmente: abra a escala no Histórico, volte aqui e clique em "Recuperar domingos da escala atual".</div>
         <div id="historico-dom-geral"></div>
       </div>
     </div>`;
@@ -1327,43 +1330,111 @@ function renderFilaDomingos(){
   renderHistoricoDomingosGeral();
 }
 
+// 2026-09-14 (pedido do dono): "mostrar o nome de todos que já pegaram
+// domingo mesmo que eu remova a pessoa do sistema". Antes, esta tela partia
+// da lista ATUAL de gerentes/vendedores ativos — removendo alguém, o nome
+// dele sumia do histórico, mesmo com o domingo contando pra sempre por
+// baixo. Agora lê direto do que foi REGISTRADO (S.historicoDomingos), que
+// desde 2026-09-14 guarda o nome junto — sobrevive à remoção.
 function renderHistoricoDomingosGeral(){
   const cont=document.getElementById('historico-dom-geral');
   if(!cont) return;
   cont.innerHTML='';
 
-  const regionais=S.gerentes.filter(g=>!g.inativo);
-  let temAlgumDado=false;
+  const entradas=Object.values(S.historicoDomingos||{});
+  if(entradas.length===0){
+    cont.insertAdjacentHTML('beforeend','<div style="font-size:12px;color:var(--cinza-texto);padding:8px 0">Nenhum domingo registrado ainda. Se você já gerou e enviou escalas ANTES desse histórico existir, use o botão "📥 Recuperar domingos da escala atual" acima.</div>');
+    return;
+  }
 
-  regionais.forEach(reg=>{
-    const totalReg=contarDomingos(reg.id);
-    const time=timeAtivo(reg.id);
-    const totaisTime=time.map(v=>({nome:v.nome,total:contarDomingos(v.id)}));
-    if(totalReg>0||totaisTime.some(t=>t.total>0)) temAlgumDado=true;
-
-    const box=document.createElement('div');
-    box.style.cssText='border:1.5px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px';
-    box.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${time.length?'8px':'0'}">
-        <span style="font-weight:700;font-size:13px">${escaparHtml(reg.nome)}${cargoBadge(reg)}</span>
-        <span class="badge ${totalReg>0?'badge-azul':'badge-cinza'}">${totalReg} domingo${totalReg!==1?'s':''} (regional)</span>
-      </div>`;
-    if(time.length){
-      const lista=document.createElement('div');
-      lista.style.cssText='display:flex;flex-direction:column;gap:4px;padding-left:10px;border-left:2px solid var(--cinza-borda)';
-      totaisTime.sort((a,b)=>a.total-b.total).forEach(t=>{
-        const linha=document.createElement('div');
-        linha.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px';
-        linha.innerHTML=`<span>${escaparHtml(t.nome)}</span><span class="badge ${t.total>0?'badge-verde':'badge-cinza'}" style="font-size:10px">${t.total} domingo${t.total!==1?'s':''}</span>`;
-        lista.appendChild(linha);
-      });
-      box.appendChild(lista);
+  // Agrupa por regional (tipo 'regional') e, dentro de cada um, os
+  // vendedores do time dele (tipo 'vendedor' com esse regionalId) — via
+  // nomeRegional salvo na hora, não a lista atual (regional removido
+  // continua aparecendo como cabeçalho do grupo dele).
+  const porRegional={}; // regionalId -> {nome, total, vendedores:{vid:{nome,total}}}
+  entradas.forEach(e=>{
+    if(e.tipo==='regional'){
+      if(!porRegional[e.gid]) porRegional[e.gid]={nome:e.nome||'(sem nome)',total:0,vendedores:{}};
+      porRegional[e.gid].total++;
+      porRegional[e.gid].nome=e.nome||porRegional[e.gid].nome;
+    } else if(e.tipo==='vendedor'){
+      const rid=e.regionalId??'sem-regional';
+      if(!porRegional[rid]) porRegional[rid]={nome:e.nomeRegional||'(regional removido)',total:0,vendedores:{}};
+      if(!porRegional[rid].vendedores[e.gid]) porRegional[rid].vendedores[e.gid]={nome:e.nome||'(sem nome)',total:0};
+      porRegional[rid].vendedores[e.gid].total++;
+      porRegional[rid].vendedores[e.gid].nome=e.nome||porRegional[rid].vendedores[e.gid].nome;
     }
-    cont.appendChild(box);
   });
 
-  if(!temAlgumDado){
-    cont.insertAdjacentHTML('beforeend','<div style="font-size:12px;color:var(--cinza-texto);padding:8px 0">Nenhum domingo registrado ainda — aparece aqui assim que gerar uma escala com domingo na Loja.</div>');
-  }
+  const aindaExiste=id=>S.gerentes.some(g=>String(g.id)===String(id));
+
+  Object.entries(porRegional)
+    .sort((a,b)=>b[1].total-a[1].total)
+    .forEach(([rid,dados])=>{
+      const removido=!aindaExiste(rid);
+      const vendedores=Object.values(dados.vendedores).sort((a,b)=>a.total-b.total);
+      const box=document.createElement('div');
+      box.style.cssText='border:1.5px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px';
+      box.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${vendedores.length?'8px':'0'}">
+          <span style="font-weight:700;font-size:13px">${escaparHtml(dados.nome)}${removido?' <span class="badge badge-cinza" style="font-size:9px">removido</span>':''}</span>
+          <span class="badge ${dados.total>0?'badge-azul':'badge-cinza'}">${dados.total} domingo${dados.total!==1?'s':''} (regional)</span>
+        </div>`;
+      if(vendedores.length){
+        const lista=document.createElement('div');
+        lista.style.cssText='display:flex;flex-direction:column;gap:4px;padding-left:10px;border-left:2px solid var(--cinza-borda)';
+        vendedores.forEach(v=>{
+          const linha=document.createElement('div');
+          linha.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px';
+          linha.innerHTML=`<span>${escaparHtml(v.nome)}</span><span class="badge ${v.total>0?'badge-verde':'badge-cinza'}" style="font-size:10px">${v.total} domingo${v.total!==1?'s':''}</span>`;
+          lista.appendChild(linha);
+        });
+        box.appendChild(lista);
+      }
+      cont.appendChild(box);
+    });
+}
+
+// BUG REAL (2026-09-14, reportado pelo dono): "já gerei escalas e até já
+// enviei ao banco mas a quantidade [...] ainda estão em 0". Esse histórico
+// só começou a existir em 2026-09-13 — ele conta o domingo no momento em
+// que a escala é GERADA, não quando é enviada ao banco. Escalas geradas
+// ANTES dessa data nunca passaram por esse código, então o histórico
+// legitimamente não sabe delas. Este botão varre a escala JÁ GERADA que
+// está na tela agora (e, se existirem, as escalas de time já geradas no
+// Histórico) e registra os domingos dela — mesma chave/mesma lógica de
+// sempre, então clicar de novo depois não duplica nada.
+function recuperarDomingosDaEscalaAtual(){
+  if(!S.escala){showToast('Gere ou abra uma escala primeiro (aba Escalas Geradas).','warning');return;}
+  const loc=S.locais.find(l=>l.nome.toLowerCase().includes('loja'));
+  if(!loc){showToast('Nenhum local "Loja" encontrado.','warning');return;}
+  const agenda=S.escala.agenda?.[loc.id]||{};
+  let qtd=0;
+  const ehTime=!!S.escala.filtroDe;
+  const regionalDoTime=ehTime?S.gerentes.find(g=>g.nome===S.escala.filtroDe):null;
+  Object.keys(agenda).forEach(ds=>{
+    if(new Date(ds+'T12:00').getDay()!==0) return;
+    const dia=agenda[ds];
+    if(!dia||dia.fechado) return;
+    // Todo domingo na Loja é 1 pessoa só — pega o primeiro nome não-nulo
+    // que aparecer em qualquer turno desse dia.
+    let quem=null;
+    Object.keys(dia).forEach(tr=>{
+      if(quem||tr==='_diatodo'||!Array.isArray(dia[tr])) return;
+      const achou=dia[tr].find(g=>g);
+      if(achou) quem=achou;
+    });
+    if(!quem) return;
+    if(ehTime&&regionalDoTime){
+      registrarDomingo_(loc.id+'_'+ds+'|time'+regionalDoTime.id,quem.id,{tipo:'vendedor',regionalId:regionalDoTime.id,nome:quem.nome,nomeRegional:regionalDoTime.nome});
+    } else {
+      registrarDomingo_(loc.id+'_'+ds+'|regional',quem.id,{tipo:'regional',nome:quem.nome});
+    }
+    qtd++;
+  });
+  autoSave();
+  renderHistoricoDomingosGeral();
+  if(qtd>0) showToast(`${qtd} domingo${qtd!==1?'s':''} recuperado${qtd!==1?'s':''} da escala atual!`,'success');
+  else showToast('Essa escala não tem nenhum domingo na Loja pra recuperar.','info');
 }
 
 function zerarHistoricoDomingos(){
@@ -2856,7 +2927,11 @@ function gerarEscalaDoTime_(regionalId){
     // doDia[0].locId (não "s" — fora de escopo aqui, só existe dentro do
     // doDia.forEach logo abaixo; erro que eu mesmo cometi e corrigi antes de
     // subir).
-    registrarDomingo_(doDia[0].locId+'_'+ds+'|time'+regionalId,escolhido.id,{tipo:'vendedor',regionalId});
+    // Guarda o NOME junto (2026-09-14, pedido do dono: "mostrar o nome de
+    // todos que já pegaram domingo mesmo que eu remova a pessoa") — sem
+    // isso, remover o vendedor ou o regional depois faria o nome sumir do
+    // histórico, mesmo com o domingo registrado pra sempre.
+    registrarDomingo_(doDia[0].locId+'_'+ds+'|time'+regionalId,escolhido.id,{tipo:'vendedor',regionalId,nome:escolhido.nome,nomeRegional:reg.nome});
     doDia.forEach(s=>{
       atribuido[s.locId+'|'+s.ds+'|'+s.tr+'|'+s.seat]=escolhido;
       creditos[escolhido.id]=Math.max(0,(creditos[escolhido.id]||0)-1);
@@ -3257,7 +3332,8 @@ function gerarEscalasInterno(){
           if(!domGer) return;
           // Chave = local+data: regenerar o MESMO mês sobrescreve a mesma
           // chave (não soma em dobro). Ver contarDomingos/registrarDomingo_.
-          registrarDomingo_(loc.id+'_'+ds+'|regional',domGer.id,{tipo:'regional'});
+          // Guarda o NOME junto (sobrevive à remoção da pessoa depois).
+          registrarDomingo_(loc.id+'_'+ds+'|regional',domGer.id,{tipo:'regional',nome:domGer.nome});
           // Todos os slots do domingo = domGer, debitar créditos
           loc.turnos.forEach(tr=>{
             const n=v[tr]||0;
