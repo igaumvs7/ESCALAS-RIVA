@@ -2268,6 +2268,18 @@ function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regiona
 // Cada Gerente Regional tem seu time de Gerentes de Vendas. Ficam fora de
 // S.gerentes de propósito (senão entrariam na escala principal); só são
 // usados pra subdividir as vagas do regional (ver gerarEscalaDoTime_).
+// BUG REAL (2026-09-13): os ids dos vendedores são STRING ('v1757...'), e o
+// código montava o onclick/onchange com JSON.stringify, que devolve a string
+// entre ASPAS DUPLAS. Como o atributo HTML também usa aspas duplas
+// (onchange="..."), o atributo fechava no meio do id e o comando inteiro
+// quebrava — nenhum nome era salvo, e a lista voltava pro padrão a cada
+// render. Este helper emite o argumento entre aspas SIMPLES, que convivem
+// bem dentro do atributo.
+function argJs_(v){
+  if(typeof v==='number') return String(v);
+  return "'"+String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"'";
+}
+
 function timeDoRegional(regionalId){
   if(!S.times) S.times={};
   if(!S.times[regionalId]) S.times[regionalId]=[];
@@ -2319,12 +2331,12 @@ function renderTimes(){
         </div>
         <div class="row" style="gap:8px">
           <label style="font-size:12px;font-weight:600;color:var(--cinza-texto)">Dividir por:</label>
-          <select style="width:auto;font-size:12px" onchange="setModoTime(${JSON.stringify(reg.id)},this.value)">
+          <select style="width:auto;font-size:12px" onchange="setModoTime(${argJs_(reg.id)},this.value)">
             <option value="igual"${modo==='igual'?' selected':''}>Igualitário</option>
             <option value="vgv"${modo==='vgv'?' selected':''}>Por VGV</option>
             <option value="pct"${modo==='pct'?' selected':''}>Por %</option>
           </select>
-          <button class="btn btn-verde btn-sm" onclick="addVendedor(${JSON.stringify(reg.id)})">+ Gerente de Vendas</button>
+          <button class="btn btn-verde btn-sm" onclick="addVendedor(${argJs_(reg.id)})">+ Gerente de Vendas</button>
         </div>
       </div>`;
     if(time.length===0){
@@ -2335,7 +2347,7 @@ function renderTimes(){
         const linha=document.createElement('div');
         linha.style.cssText=`display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px;border-radius:6px;background:${v.inativo?'#F9FAFB':'var(--cinza-fundo)'}`;
         if(v.inativo) linha.style.opacity='0.55';
-        const rid=JSON.stringify(reg.id), vid=JSON.stringify(v.id);
+        const rid=argJs_(reg.id), vid=argJs_(v.id);
         linha.innerHTML=`
           <input type="text" value="${escaparHtml(v.nome)}" style="flex:1;font-weight:600;font-size:13px" onchange="setVendedorCampo(${rid},${vid},'nome',this.value)">
           ${modo==='vgv'?`<input type="number" min="0" value="${(S.vgvTime||{})[v.id]||0}" title="VGV deste gerente de vendas" style="width:110px;font-size:13px" onchange="setVgvTime(${vid},+this.value)" ${v.inativo?'disabled':''}>`:''}
