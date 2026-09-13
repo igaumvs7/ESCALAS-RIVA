@@ -3397,7 +3397,15 @@ function renderEscalasVisu(){
             const ds=toDS(d);
             const td=document.createElement('td');
             const dayData=agenda[loc.id]?.[ds];
-            if(!dayData||dayData.fechado){
+            // Na escala de time (vagasDaAgenda), dia sem dado significa
+            // "esse regional não tinha vaga aqui nesse dia" — e não que o
+            // local estava fechado. Fica em branco, sem o selo FECHADO
+            // (2026-09-13, reportado pelo dono com print). Só mostra FECHADO
+            // quando o dia está realmente marcado como fechado.
+            const semVagaDoTime=S.escala.vagasDaAgenda&&!dayData;
+            if(semVagaDoTime){
+              td.style.borderColor='transparent';
+            } else if(!dayData||dayData.fechado){
               if(seat===0){td.innerHTML='<span class="chip chip-fechado">FECHADO</span>';}
               else{td.style.borderColor='transparent';}
             } else {
