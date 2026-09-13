@@ -1097,7 +1097,13 @@ let S = {
   times: {},           // {gerenteRegionalId: [{id,nome,novato,inativo}]}
   vgvTime: {},         // {vendedorId: valor}
   pctTime: {},         // {vendedorId: 0-100}
-  modoTime: {}         // {gerenteRegionalId: 'igual'|'vgv'|'pct'}
+  modoTime: {},        // {gerenteRegionalId: 'igual'|'vgv'|'pct'}
+  // Histórico de domingos NUNCA zera sozinho (2026-09-13, pedido do dono).
+  // {chave: {gid, tipo:'regional'|'vendedor', regionalId?}} — chave é
+  // local+data(+time do regional, pro nível vendedor), NÃO um contador solto:
+  // regenerar o mesmo mês sobrescreve as mesmas chaves, nunca soma em dobro.
+  // contarDomingos(id) deriva o total contando as entradas com esse gid.
+  historicoDomingos: {}
 };
 
 let abaAtual = 0;
@@ -1220,6 +1226,21 @@ function getLocLoja(){
   return S.locais.find(l=>l.nome.toLowerCase().includes('loja'))||null;
 }
 
+// ── Histórico de domingos que NUNCA zera sozinho (2026-09-13) ──────────────
+// Guarda QUAL domingo específico cada pessoa pegou (chave = local+data, ou
+// local+data+time pro nível de vendedor), não um contador solto. Isso é o
+// que torna seguro gerar o MESMO mês de novo: regenerar setembro sobrescreve
+// as mesmas chaves de setembro, nunca soma em cima — sem isso, cada "Gerar
+// Escalas" a mais inflaria o histórico de verdade.
+function contarDomingos(id){
+  if(!S.historicoDomingos) return 0;
+  return Object.values(S.historicoDomingos).filter(e=>String(e.gid)===String(id)).length;
+}
+function registrarDomingo_(chave,gid,extra){
+  if(!S.historicoDomingos) S.historicoDomingos={};
+  S.historicoDomingos[chave]=Object.assign({gid},extra||{});
+}
+
 function inicializarFilaDomingos(){
   // Sincroniza fila com gerentes ativos: adiciona novos ao fim, remove inativos
   const ger=gerentesAtivos();
@@ -1285,10 +1306,72 @@ function renderFilaDomingos(){
         <div class="card-title">📅 Domingos de ${MESES[S.mes]}</div>
         <div style="display:flex;flex-direction:column;gap:6px" id="fila-dom-preview"></div>
       </div>
+
+      <!-- 2026-09-13 (pedido do dono): "tem que ter uma contagem geral, de
+           todos" — diferente do card acima (só o mês selecionado), este NUNCA
+           zera sozinho, é a soma desde que o histórico começou a ser
+           guardado, e junta regionais e vendedores de TODOS os times num
+           lugar só. -->
+      <div class="card" style="margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:0">📊 Histórico geral de domingos (desde sempre)</div>
+          <button class="btn btn-xs btn-outline" onclick="zerarHistoricoDomingos()">🗑 Zerar histórico</button>
+        </div>
+        <div class="info-box" style="margin-bottom:12px">Essa contagem <strong>nunca zera sozinha</strong> — soma mês após mês. É ela (não a fila do mês) que decide quem está "devendo" domingo há mais tempo.</div>
+        <div id="historico-dom-geral"></div>
+      </div>
     </div>`;
 
   renderFilaLista(domPorGer, domingos, locLoja);
   renderFilaPreview(domPorGer, domingos, locLoja);
+  renderHistoricoDomingosGeral();
+}
+
+function renderHistoricoDomingosGeral(){
+  const cont=document.getElementById('historico-dom-geral');
+  if(!cont) return;
+  cont.innerHTML='';
+
+  const regionais=S.gerentes.filter(g=>!g.inativo);
+  let temAlgumDado=false;
+
+  regionais.forEach(reg=>{
+    const totalReg=contarDomingos(reg.id);
+    const time=timeAtivo(reg.id);
+    const totaisTime=time.map(v=>({nome:v.nome,total:contarDomingos(v.id)}));
+    if(totalReg>0||totaisTime.some(t=>t.total>0)) temAlgumDado=true;
+
+    const box=document.createElement('div');
+    box.style.cssText='border:1.5px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px';
+    box.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${time.length?'8px':'0'}">
+        <span style="font-weight:700;font-size:13px">${escaparHtml(reg.nome)}${cargoBadge(reg)}</span>
+        <span class="badge ${totalReg>0?'badge-azul':'badge-cinza'}">${totalReg} domingo${totalReg!==1?'s':''} (regional)</span>
+      </div>`;
+    if(time.length){
+      const lista=document.createElement('div');
+      lista.style.cssText='display:flex;flex-direction:column;gap:4px;padding-left:10px;border-left:2px solid var(--cinza-borda)';
+      totaisTime.sort((a,b)=>a.total-b.total).forEach(t=>{
+        const linha=document.createElement('div');
+        linha.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px';
+        linha.innerHTML=`<span>${escaparHtml(t.nome)}</span><span class="badge ${t.total>0?'badge-verde':'badge-cinza'}" style="font-size:10px">${t.total} domingo${t.total!==1?'s':''}</span>`;
+        lista.appendChild(linha);
+      });
+      box.appendChild(lista);
+    }
+    cont.appendChild(box);
+  });
+
+  if(!temAlgumDado){
+    cont.insertAdjacentHTML('beforeend','<div style="font-size:12px;color:var(--cinza-texto);padding:8px 0">Nenhum domingo registrado ainda — aparece aqui assim que gerar uma escala com domingo na Loja.</div>');
+  }
+}
+
+function zerarHistoricoDomingos(){
+  if(!confirm('Zerar TODO o histórico de domingos (regionais e times)? Isso não pode ser desfeito — use só se for começar do zero de propósito.')) return;
+  S.historicoDomingos={};
+  autoSave();
+  renderHistoricoDomingosGeral();
+  showToast('Histórico de domingos zerado.','info');
 }
 
 function renderFilaLista(domPorGer, domingos, locLoja){
@@ -2739,9 +2822,11 @@ function gerarEscalaDoTime_(regionalId){
   const pesoMap = modo==='vgv' ? (S.vgvTime||{}) : modo==='pct' ? (S.pctTime||{}) : {};
   const creditos=repartirPorPeso_(time, slots.length, pesoMap);
 
-  // 3) Domingo na Loja: o dia inteiro do mesmo vendedor, com rodízio no time
+  // 3) Domingo na Loja: o dia inteiro do mesmo vendedor, com rodízio no time.
+  // 2026-09-13: histórico PERMANENTE (contarDomingos), separado por regional
+  // (chave leva o regionalId) — o vendedor do time do René não compete com o
+  // vendedor do time do Cahú, cada time tem seu próprio rodízio.
   const locaisPorId={};S.locais.forEach(l=>locaisPorId[l.id]=l);
-  const domCount={};time.forEach(v=>domCount[v.id]=0);
   const atribuido={}; // "locId|ds|tr|seat" -> vendedor
   const domingosLoja={};
   slots.forEach(s=>{
@@ -2750,15 +2835,28 @@ function gerarEscalaDoTime_(regionalId){
     if(new Date(s.ds+'T12:00').getDay()!==0) return;
     (domingosLoja[s.ds]=domingosLoja[s.ds]||[]).push(s);
   });
+  // Mesma correção do bug de regeneração da escala principal: limpa as
+  // entradas desse período+time ANTES de decidir, nunca sobrescreve aos
+  // poucos no meio do cálculo (senão regenerar a escala do time trocaria
+  // quem pegou qual domingo mesmo com a soma total ficando igual).
+  Object.keys(domingosLoja).forEach(ds=>{
+    delete S.historicoDomingos[domingosLoja[ds][0].locId+'_'+ds+'|time'+regionalId];
+  });
   Object.keys(domingosLoja).sort().forEach(ds=>{
     const doDia=domingosLoja[ds];
     const elegiveis=time.filter(v=>(creditos[v.id]||0)>=doDia.length);
     const pool=elegiveis.length?elegiveis:time.filter(v=>(creditos[v.id]||0)>0);
     if(!pool.length) return;
-    const min=Math.min(...pool.map(v=>domCount[v.id]||0));
-    const escolhido=pool.filter(v=>(domCount[v.id]||0)===min)[0];
+    const min=Math.min(...pool.map(v=>contarDomingos(v.id)));
+    const escolhido=pool.filter(v=>contarDomingos(v.id)===min)[0];
     if(!escolhido) return;
-    domCount[escolhido.id]++;
+    // Chave = local+data+time-do-regional: separado da chave '|regional' da
+    // escala principal (mesma data, fato diferente — "quem do TIME pegou",
+    // não "qual regional pegou"), e regenerar sobrescreve, não soma.
+    // doDia[0].locId (não "s" — fora de escopo aqui, só existe dentro do
+    // doDia.forEach logo abaixo; erro que eu mesmo cometi e corrigi antes de
+    // subir).
+    registrarDomingo_(doDia[0].locId+'_'+ds+'|time'+regionalId,escolhido.id,{tipo:'vendedor',regionalId});
     doDia.forEach(s=>{
       atribuido[s.locId+'|'+s.ds+'|'+s.tr+'|'+s.seat]=escolhido;
       creditos[escolhido.id]=Math.max(0,(creditos[escolhido.id]||0)-1);
@@ -2913,7 +3011,6 @@ function gerarEscalasInterno(){
 
   const agenda={};
   S._zeradosPorLocal={};
-  let _domPorGerLoja={};
 
   S.locais.forEach(loc=>{
     if(!locaisSel.includes(loc.id)) return;
@@ -3124,7 +3221,18 @@ function gerarEscalasInterno(){
       const atrib={};
       if(isLojaLocal){
         inicializarFilaDomingos();
-        if(!_domPorGerLoja) _domPorGerLoja={};
+        // BUG REAL encontrado ao testar (2026-09-13): regenerar o MESMO mês
+        // duas vezes dava a MESMA soma total mas trocava QUEM pegou qual
+        // domingo — porque contarDomingos() via as entradas ANTIGAS desse
+        // mesmo período ainda paradas em S.historicoDomingos enquanto a
+        // segunda rodada ia decidindo, contaminando a escolha com dado que
+        // estava prestes a ser substituído. Corrigido: apaga as entradas
+        // desse local+período ANTES de começar a decidir, nunca vai
+        // sobrescrevendo aos poucos no meio do cálculo.
+        dias.forEach(dia=>{
+          if(dia.getDay()!==0) return;
+          delete S.historicoDomingos[loc.id+'_'+toDS(dia)+'|regional'];
+        });
         dias.forEach(dia=>{
           if(dia.getDay()!==0) return;
           const ds=toDS(dia);
@@ -3138,11 +3246,18 @@ function gerarEscalasInterno(){
           let domGer=null;
           for(let fi=0;fi<S.filaDomingos.length;fi++){
             const g=ger.find(x=>x.id===S.filaDomingos[fi].gid);if(!g) continue;
-            const min=Math.min(...S.filaDomingos.map(x=>_domPorGerLoja[x.gid]||0));
-            if((_domPorGerLoja[g.id]||0)===min){domGer=g;break;}
+            // 2026-09-13: usa o HISTÓRICO PERMANENTE (contarDomingos), não um
+            // contador que zera a cada geração — senão setembro esquece o
+            // que aconteceu em agosto e a fila fica injusta ao longo dos
+            // meses (pedido explícito do dono: "tem que ter uma contagem
+            // geral, de todos").
+            const min=Math.min(...S.filaDomingos.map(x=>contarDomingos(x.gid)));
+            if(contarDomingos(g.id)===min){domGer=g;break;}
           }
           if(!domGer) return;
-          _domPorGerLoja[domGer.id]=(_domPorGerLoja[domGer.id]||0)+1;
+          // Chave = local+data: regenerar o MESMO mês sobrescreve a mesma
+          // chave (não soma em dobro). Ver contarDomingos/registrarDomingo_.
+          registrarDomingo_(loc.id+'_'+ds+'|regional',domGer.id,{tipo:'regional'});
           // Todos os slots do domingo = domGer, debitar créditos
           loc.turnos.forEach(tr=>{
             const n=v[tr]||0;
@@ -3695,7 +3810,7 @@ function salvarDados(){
     // sem estar nesta lista, o que o dono digitasse sumia ao recarregar a
     // página (o salvamento monta um objeto campo a campo, não salva o S
     // inteiro — o que não estiver listado aqui simplesmente não persiste).
-    const dados={mes:S.mes,ano:S.ano,locais:S.locais,gerentes:S.gerentes,vgv:S.vgv,ajustes:S.ajustes,escala:S.escala,historicoEscalas:S.historicoEscalas||[],filaDomingos:S.filaDomingos||[],vagasManual:S.vagasManual||{},vagasManualTotal:S.vagasManualTotal||0,locais10pct:S.locais10pct??null,pctManual:S.pctManual||{},times:S.times||{},vgvTime:S.vgvTime||{},pctTime:S.pctTime||{},modoTime:S.modoTime||{},savedAt:new Date().toISOString()};
+    const dados={mes:S.mes,ano:S.ano,locais:S.locais,gerentes:S.gerentes,vgv:S.vgv,ajustes:S.ajustes,escala:S.escala,historicoEscalas:S.historicoEscalas||[],filaDomingos:S.filaDomingos||[],vagasManual:S.vagasManual||{},vagasManualTotal:S.vagasManualTotal||0,locais10pct:S.locais10pct??null,pctManual:S.pctManual||{},times:S.times||{},vgvTime:S.vgvTime||{},pctTime:S.pctTime||{},modoTime:S.modoTime||{},historicoDomingos:S.historicoDomingos||{},savedAt:new Date().toISOString()};
     localStorage.setItem(STORAGE_KEY,JSON.stringify(dados));
     atualizarIndicadorSalvo(true);
   }catch(e){console.warn('Erro ao salvar:',e);showToast('Erro ao salvar dados!','error');}
@@ -3731,6 +3846,7 @@ function carregarDados(){
     S.vgvTime=dados.vgvTime??{};
     S.pctTime=dados.pctTime??{};
     S.modoTime=dados.modoTime??{};
+    S.historicoDomingos=dados.historicoDomingos??{};
     const selMes=document.getElementById('sel-mes');const inpAno=document.getElementById('inp-ano');
     if(selMes) selMes.value=S.mes;if(inpAno) inpAno.value=S.ano;
     return dados.savedAt||true;
@@ -4028,7 +4144,34 @@ async function gerarPdfEscalaBlob(esc){
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
     for(let i=0;i<blocos.length;i++){
-      const canvas=await window.html2canvas(blocos[i],{scale:1.45,useCORS:true,backgroundColor:'#FFFFFF',logging:false});
+      // BUG REAL (2026-09-13, reportado pelo dono com PDF em anexo): escalas
+      // com pouco conteúdo (o caso mais comum são as escalas de time, mais
+      // curtas que a principal) saíam "de lado" — o conteúdo espremido numa
+      // faixa estreita no canto da página, com um vazio enorme do lado.
+      // Causa: .cal-wrap tem `overflow-x:auto` (rolagem lateral, útil na
+      // tela num celular estreito) — e o html2canvas tem um problema
+      // documentado (não é bug nosso, é da própria biblioteca) de medir
+      // errado a largura de elementos dentro de um ancestral com overflow
+      // automático, ficando mais evidente quanto menos conteúdo tem pra
+      // "forçar" a largura certa. Corrigido: durante a captura, tira o
+      // overflow-x de todo `.cal-wrap` desse bloco (fica tudo visível, sem
+      // rolagem) e passa a largura/altura REAIS na mão pro html2canvas, em
+      // vez de deixar ele adivinhar.
+      const wraps=Array.from(blocos[i].querySelectorAll('.cal-wrap'));
+      const overflowAnterior=wraps.map(w=>w.style.overflowX);
+      wraps.forEach(w=>{w.style.overflowX='visible';});
+      const larguraReal=blocos[i].scrollWidth;
+      const alturaReal=blocos[i].scrollHeight;
+      let canvas;
+      try{
+        canvas=await window.html2canvas(blocos[i],{
+          scale:1.45,useCORS:true,backgroundColor:'#FFFFFF',logging:false,
+          width:larguraReal,height:alturaReal,
+          windowWidth:larguraReal,windowHeight:alturaReal
+        });
+      }finally{
+        wraps.forEach((w,idx)=>{w.style.overflowX=overflowAnterior[idx];});
+      }
       const img=canvas.toDataURL('image/jpeg',0.92);
       if(i>0) pdf.addPage('a4','landscape');
       const maxW=287,maxH=200;
