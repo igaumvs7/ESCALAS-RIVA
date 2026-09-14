@@ -596,7 +596,7 @@ tbody tr:hover td { background: #FAFBFF; }
   </div>
   <div class="header-actions">
     <span id="save-indicator" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.45);min-width:80px;text-align:right">—</span>
-    <button class="btn btn-secondary btn-sm" onclick="abrirModalImprimir()">🖨️ Imprimir / PDF</button>
+    <button class="btn btn-secondary btn-sm" onclick="abrirModalImprimir()">🖨️ Gerar PDF</button>
     <button class="btn btn-primary" onclick="confirmarGerarEscalas()">⚡ Gerar Escalas</button>
   </div>
 </div>
@@ -900,19 +900,19 @@ tbody tr:hover td { background: #FAFBFF; }
 <!-- ─── MODAL IMPRESSÃO POR LOCAL ──────────────────────────── -->
 <div class="modal-overlay" id="modal-imprimir" style="display:none" onclick="fecharModalImprimir(event)">
   <div class="modal-box" style="max-width:420px" onclick="event.stopPropagation()">
-    <div class="modal-title">🖨️ Imprimir / Gerar PDF</div>
-    <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:14px">Escolha quais locais deseja incluir na impressão:</div>
+    <div class="modal-title">🖨️ Gerar PDF</div>
+    <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:14px">Escolha quais locais deseja incluir no PDF:</div>
     <div id="print-locais-list"></div>
     <div style="margin-top:10px;display:flex;gap:8px;margin-bottom:16px">
       <button class="btn btn-xs btn-outline" onclick="togglePrintLocais(true)">Todos</button>
       <button class="btn btn-xs btn-outline" onclick="togglePrintLocais(false)">Nenhum</button>
     </div>
     <div class="info-box" style="font-size:12px;margin-bottom:16px">
-      💡 Cada local será impresso em uma <strong>página separada</strong>, com cabeçalho completo (Riva Vendas, período, nome do local). Selecione só os locais desejados.
+      💡 Cada local vira uma <strong>página separada</strong>, sempre em formato paisagem, com cabeçalho completo (empresa, período, nome do local). Selecione só os locais desejados.
     </div>
     <div class="row" style="justify-content:flex-end;gap:8px">
       <button class="btn btn-outline" onclick="fecharModalImprimir()">Cancelar</button>
-      <button class="btn btn-primary" onclick="executarImpressao()">🖨️ Imprimir / PDF</button>
+      <button class="btn btn-primary" onclick="executarImpressao()">🖨️ Baixar PDF</button>
     </div>
   </div>
 </div>
@@ -1840,7 +1840,7 @@ function renderAjuda(){
         <li>Clique em qualquer nome de gerente (chip colorido) para <strong>editar manualmente</strong> aquela vaga — trocar o gerente ou alterar o número de vagas naquele dia.</li>
         <li>A linha <strong>★ DIA TODO</strong> indica que o mesmo gerente está em todos os turnos daquele dia (ex: Lumina).</li>
         <li>No rodapé de cada local aparece o <strong>contador de vagas por gerente</strong>.</li>
-        <li>Use o botão <strong>"🖨️ Selecionar e Imprimir"</strong> para escolher quais locais incluir no PDF.</li>
+        <li>Use o botão <strong>"🖨️ Selecionar e Baixar PDF"</strong> para escolher quais locais incluir no PDF (sempre em paisagem).</li>
       </ul>
     `)}
 
@@ -3650,7 +3650,7 @@ function renderEscalasVisu(){
     Escalas &nbsp;<span style="font-size:18px;color:var(--vermelho)">${fmtDS(periodoIni)} → ${fmtDS(periodoFim)}</span>
     ${S.escala.filtroDe?`<div style="font-size:15px;font-weight:700;color:var(--azul-claro);font-family:Barlow;margin-top:2px">🔎 Filtro: ${escaparHtml(S.escala.filtroDe.toUpperCase())} — time de vendas</div>`:''}
   </div>
-  <button class="btn btn-primary btn-sm no-print" onclick="abrirModalImprimir()">🖨️ Selecionar e Imprimir</button>`;
+  <button class="btn btn-primary btn-sm no-print" onclick="abrirModalImprimir()">🖨️ Selecionar e Baixar PDF</button>`;
   cont.appendChild(cabHdr);
   if(!S.escala.filtroDe){
     cont.insertAdjacentHTML('beforeend','<div class="info-box no-print" style="margin-bottom:16px">💡 Clique no <strong>nome de um gerente</strong> no rodapé de qualquer local para dividir as vagas dele entre o time de vendas dele (gera uma escala nova, separada — esta aqui continua intacta).</div>');
@@ -3960,24 +3960,39 @@ function abrirModalImprimir(){
 function fecharModalImprimir(e){if(!e||e.target===document.getElementById('modal-imprimir'))document.getElementById('modal-imprimir').style.display='none';}
 function togglePrintLocais(val){S.locais.forEach(l=>{const ck=document.getElementById('print-ck-'+l.id);if(ck)ck.checked=val;});}
 
-function executarImpressao(){
-  document.querySelectorAll('.escala-bloco').forEach(bloco=>{
-    const lid=+bloco.dataset.locId;
-    const ck=document.getElementById('print-ck-'+lid);
-    if(ck&&!ck.checked)bloco.classList.add('print-oculto');
-    else bloco.classList.remove('print-oculto');
+async function executarImpressao(){
+  // BUG REAL (2026-09-14, reportado pelo dono com print do PDF em anexo):
+  // este botão usava window.print() + @page{size:A4 landscape} e dependia
+  // do driver de impressora escolhido no diálogo do sistema respeitar essa
+  // orientação. Quando o destino não é o "Salvar como PDF" nativo do Chrome
+  // (ex.: "Microsoft Print to PDF" direto pelo diálogo do Windows), o driver
+  // ignora o @page e usa retrato por padrão — o conteúdo (desenhado pensando
+  // em paisagem) sai rotacionado/espremido, exatamente o "de lado" relatado.
+  // Fix: gera o PDF pelo MESMO motor já validado do "Enviar ao banco" /
+  // "Baixar PDF" (html2canvas + jsPDF com orientation:'landscape' forçado no
+  // próprio arquivo) — não depende de driver nenhum, sempre paisagem de
+  // verdade. Só filtra pelos locais marcados no modal.
+  if(!S.escala) return;
+  const selecionados=new Set();
+  S.locais.forEach(l=>{
+    const ck=document.getElementById('print-ck-'+l.id);
+    if(ck&&ck.checked) selecionados.add(l.id);
   });
-  irAba(4);
   document.getElementById('modal-imprimir').style.display='none';
-  const tituloOriginal=document.title;
-  document.title=nomeArquivoSeguro(S.escala?.nome||'Escala Riva');
-  setTimeout(()=>{
-    window.print();
-    setTimeout(()=>{
-      document.title=tituloOriginal;
-      document.querySelectorAll('.escala-bloco').forEach(b=>b.classList.remove('print-oculto'));
-    },1000);
-  },200);
+  if(selecionados.size===0){ showToast('Selecione pelo menos um local.','warning'); return; }
+  showToast('Gerando PDF em paisagem...','info',4000);
+  try{
+    const blob=await gerarPdfEscalaBlob(S.escala,selecionados);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=nomeArquivoSeguro(S.escala?.nome||'Escala')+'.pdf';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    showToast('PDF gerado em paisagem — pronto para enviar!','success');
+  }catch(e){
+    console.error(e);
+    showToast(e.message||'Não foi possível gerar o PDF.','error',6000);
+  }
 }
 
 // ─── MODAL EDIÇÃO CÉLULA ──────────────────────────────────────────────────────
@@ -4410,7 +4425,7 @@ function blobParaBase64(blob){
   });
 }
 
-async function gerarPdfEscalaBlob(esc){
+async function gerarPdfEscalaBlob(esc,locaisIds){
   if(!window.html2canvas||!window.jspdf?.jsPDF) throw new Error('O gerador de PDF não carregou. Verifique a internet e tente novamente.');
   const aba=document.getElementById('aba-4');
   if(!aba) throw new Error('A área da escala não foi encontrada.');
@@ -4422,7 +4437,10 @@ async function gerarPdfEscalaBlob(esc){
     renderEscalasVisu();
     if(document.fonts?.ready) await document.fonts.ready;
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    const blocos=Array.from(aba.querySelectorAll('.escala-bloco'));
+    let blocos=Array.from(aba.querySelectorAll('.escala-bloco'));
+    // locaisIds opcional (Set de ids) — usado pelo "Selecionar e Baixar PDF"
+    // pra incluir só os locais marcados, sem precisar de outra função.
+    if(locaisIds) blocos=blocos.filter(b=>locaisIds.has(+b.dataset.locId));
     if(!blocos.length) throw new Error('Esta escala não possui locais para gerar o PDF.');
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
@@ -4575,7 +4593,7 @@ function renderRelatorio(){
   const tit=document.createElement('div');
   tit.style.cssText='font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:var(--azul);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px';
   tit.innerHTML=`<span>📈 Relatório — ${fmtDS(periodoIni)} a ${fmtDS(periodoFim)}</span>
-    <button class="btn btn-primary btn-sm" onclick="abrirModalImprimir()">🖨️ Imprimir</button>`;
+    <button class="btn btn-primary btn-sm" onclick="abrirModalImprimir()">🖨️ Baixar PDF</button>`;
   cont.appendChild(tit);
 
   // ── Contagem por gerente ──────────────────────────────────────────────────
