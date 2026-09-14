@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escalas Riva Vendas</title>
+<title>Escalas</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -575,11 +575,20 @@ tbody tr:hover td { background: #FAFBFF; }
 <!-- ─── HEADER ─────────────────────────────────────────────── -->
 <div id="header" class="no-print">
   <div class="logo-area">
-    <div class="logo-icon">RV</div>
+    <div class="logo-icon" id="hdr-logo-icon">RV</div>
     <div class="logo-text">
-      <div class="logo-nome">RIVA VENDAS</div>
+      <div class="logo-nome" id="hdr-logo-nome">RIVA VENDAS</div>
       <div class="logo-sub">Sistema de Escalas</div>
     </div>
+    <!-- 2026-09-13 (pedido do dono): "isso que eu fiz tudo da RIVA (RV) na
+         DIRECIONAL (DV)... não pode ter as coisas da RIVA nem as mini logos".
+         Um sistema só, dados 100% separados por empresa (ver EMPRESAS/
+         trocarEmpresa_ mais abaixo) — nada de Riva aparece enquanto
+         Direcional estiver selecionada, e vice-versa. -->
+    <select id="hdr-empresa-sel" onchange="trocarEmpresa_(this.value)" title="Trocar de empresa — os dados de cada uma ficam completamente separados" style="margin-left:14px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;background:#fff;color:var(--azul);border:none;cursor:pointer">
+      <option value="RIVA">🏢 RIVA VENDAS</option>
+      <option value="DIRECIONAL">🏢 DIRECIONAL VENDAS</option>
+    </select>
   </div>
   <div class="header-center">
     <span class="header-mes-label">Período:</span>
@@ -608,9 +617,9 @@ tbody tr:hover td { background: #FAFBFF; }
 <!-- ─── PRINT HEADER (global, aparece só na impressão) ─────── -->
 <div id="print-header">
   <div class="print-logo">
-    <div class="print-logo-icon">RV</div>
+    <div class="print-logo-icon" id="print-logo-icon">RV</div>
     <div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul)" id="print-logo-nome">RIVA VENDAS</div>
       <div style="font-size:13px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>
     </div>
   </div>
@@ -1020,8 +1029,81 @@ tbody tr:hover td { background: #FAFBFF; }
 <script>
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
 const CLOUD_SPREADSHEET_URL='https://docs.google.com/spreadsheets/d/12jTIthOgHc1GI7D6DdkyD_kqhtDC7-aaR12Pgn9_F40/edit';
+// CLOUD_WEBAPP_URL e CLOUD_RESPONSAVEL sao COMPARTILHADOS entre as empresas
+// de proposito -- e o MESMO Apps Script/planilha por baixo (so a pasta do
+// Drive e diferente, e o Apps Script escolhe pelo campo "empresa" que a
+// gente manda em cada envio) -- nao tem por que configurar isso duas vezes.
 const CLOUD_WEBAPP_STORAGE_KEY='riva_banco_webapp_url';
 const CLOUD_RESPONSAVEL_STORAGE_KEY='riva_banco_responsavel';
+
+// ─── EMPRESAS (2026-09-13, pedido do dono) ─────────────────────────────────
+// "Isso que eu fiz tudo da RIVA (RV) na DIRECIONAL (DV)... não pode ter as
+// coisas da RIVA nem as mini logos." Um sistema só (1 link), dados 100%
+// separados por empresa: cada uma tem sua própria chave de localStorage
+// (gerentes, locais, escalas, fila de domingos, histórico — tudo), e a marca
+// (nome + sigla do logo) troca em tela e no PDF conforme a selecionada.
+// STORAGE_KEY da RIVA fica EXATAMENTE igual ao de sempre ('riva_escalas_
+// dados_v6') de propósito — quem já usa o sistema não perde nada ao
+// atualizar a página.
+const EMPRESAS = {
+  RIVA: { nome: 'RIVA VENDAS', sigla: 'RV', storageKey: 'riva_escalas_dados_v6' },
+  DIRECIONAL: { nome: 'DIRECIONAL VENDAS', sigla: 'DV', storageKey: 'direcional_escalas_dados_v1' }
+};
+const EMPRESA_ATUAL_STORAGE_KEY='riva_empresa_atual';
+let empresaAtualId = localStorage.getItem(EMPRESA_ATUAL_STORAGE_KEY) || 'RIVA';
+if(!EMPRESAS[empresaAtualId]) empresaAtualId='RIVA';
+
+function empresaAtual(){ return EMPRESAS[empresaAtualId] || EMPRESAS.RIVA; }
+function storageKeyAtual(){ return empresaAtual().storageKey; }
+
+// Atualiza logo/nome em tela e no cabeçalho de impressão pra bater com a
+// empresa selecionada — chamado ao carregar a página e sempre que troca.
+function aplicarBranding(){
+  const emp=empresaAtual();
+  const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
+  set('hdr-logo-icon',emp.sigla);
+  set('hdr-logo-nome',emp.nome);
+  set('print-logo-icon',emp.sigla);
+  set('print-logo-nome',emp.nome);
+  const sel=document.getElementById('hdr-empresa-sel');
+  if(sel) sel.value=empresaAtualId;
+  document.title='Escalas '+emp.nome;
+}
+
+// Troca de empresa: salva tudo da empresa ATUAL antes de sair (nada se
+// perde), troca a "gaveta" de dados, e recarrega a tela do zero. Se for a
+// primeira vez que essa empresa é usada nesse navegador, começa com um
+// cadastro em branco — de propósito, pra não vir nada da Riva junto.
+function trocarEmpresa_(novaId){
+  if(!EMPRESAS[novaId] || novaId===empresaAtualId) return;
+  salvarDados(); // garante que a empresa que está saindo não perde nada
+  empresaAtualId=novaId;
+  localStorage.setItem(EMPRESA_ATUAL_STORAGE_KEY,novaId);
+  const havia=carregarDados();
+  aplicarBranding();
+  if(!havia) zerarEstadoParaEmpresaNova_();
+  historicoBancoCache=[]; // é da outra empresa, não reaproveita
+  calSemanasExtras=0;
+  mudarMes();
+  renderPainel();
+  if(S.escala){renderEscalasVisu();renderRelatorio();}
+  showToast(`Empresa trocada para ${empresaAtual().nome}${havia?'':' — cadastro novo, comece em Locais & Padrões'}.`,'info',6000);
+}
+
+// Cadastro em branco pra uma empresa nova (nunca usada nesse navegador) —
+// NÃO herda os exemplos de locais/gerentes que só fazem sentido pra RIVA
+// (Shopping Parangaba, René, Cahú...). Extraído de trocarEmpresa_ porque
+// também precisa rodar no BOOT da página: se o navegador está com
+// Direcional selecionada mas ainda sem nada salvo, sem isso o "S" inicial
+// (que sempre nasce com o exemplo da Riva, seed do arquivo) vazaria pra tela
+// da Direcional só de dar F5 antes de configurar qualquer coisa.
+function zerarEstadoParaEmpresaNova_(){
+  S.gerentes=[];S.locais=[];S.vgv={};S.ajustes={};S.escala=null;
+  S.historicoEscalas=[];S.filaDomingos=[];S.vagasManual={};S.vagasManualTotal=0;
+  S.locais10pct=null;S.pctManual={};S.times={};S.vgvTime={};S.pctTime={};
+  S.modoTime={};S.historicoDomingos={};S.filaDomingosTime={};
+  autoSave();
+}
 const MESES = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DSEM = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const TURNOS_LABEL = {m:'Manhã', t:'Tarde', n:'Noite'};
@@ -1810,9 +1892,9 @@ function renderAjuda(){
     <!-- Rodapé de crédito -->
     <div style="margin-top:32px;padding:18px 20px;background:var(--azul);border-radius:var(--radius);color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:38px;height:38px;background:var(--vermelho);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px">RV</div>
+        <div style="width:38px;height:38px;background:var(--vermelho);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px">${empresaAtual().sigla}</div>
         <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.5px">Sistema de Escalas · Riva Vendas</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.5px">Sistema de Escalas · ${empresaAtual().nome}</div>
           <div style="font-size:11px;opacity:0.65;margin-top:2px">Desenvolvido especialmente para a equipe de vendas</div>
         </div>
       </div>
@@ -3591,9 +3673,9 @@ function renderEscalasVisu(){
     printHdr.className='print-bloco-header';
     printHdr.innerHTML=`
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">RV</div>
+        <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">${empresaAtual().sigla}</div>
         <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">${empresaAtual().nome}</div>
           <div style="font-size:9px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>${S.escala.filtroDe?`<div style="font-size:9px;font-weight:800;color:var(--azul-claro)">🔎 Filtro: ${S.escala.filtroDe.toUpperCase()}</div>`:''}
         </div>
       </div>
@@ -3775,9 +3857,9 @@ function renderEscalasVisu(){
       printHdr2.className='print-bloco-header';
       printHdr2.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">RV</div>
+          <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">${empresaAtual().sigla}</div>
           <div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">${empresaAtual().nome}</div>
             <div style="font-size:9px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>${S.escala.filtroDe?`<div style="font-size:9px;font-weight:800;color:var(--azul-claro)">🔎 Filtro: ${S.escala.filtroDe.toUpperCase()}</div>`:''}
           </div>
         </div>
@@ -3851,7 +3933,7 @@ function renderEscalasVisu(){
     // Rodapé decorativo de impressão
     const rodDeco=document.createElement('div');
     rodDeco.className='print-rodape-deco';
-    rodDeco.innerHTML=`<span class="deco-dot-azul"></span><span style="letter-spacing:0.5px">RIVA VENDAS · Sistema de Escalas</span><span class="deco-dot-verm"></span>`;
+    rodDeco.innerHTML=`<span class="deco-dot-azul"></span><span style="letter-spacing:0.5px">${empresaAtual().nome} · Sistema de Escalas</span><span class="deco-dot-verm"></span>`;
     bloco.appendChild(rodDeco);
 
     cont.appendChild(bloco);
@@ -3996,8 +4078,10 @@ function salvarModal(){
 }
 
 // ─── PERSISTÊNCIA ─────────────────────────────────────────────────────────────
-const STORAGE_KEY='riva_escalas_dados_v6';
-
+// 2026-09-13: STORAGE_KEY virou storageKeyAtual() — cada empresa tem sua
+// própria "gaveta" no localStorage (ver EMPRESAS mais acima). A da RIVA
+// continua sendo exatamente 'riva_escalas_dados_v6' de propósito, pra não
+// perder o que já estava salvo antes dessa mudança.
 function salvarDados(){
   try{
     // pctManual/times/vgvTime/pctTime/modoTime entraram aqui em 2026-09-13:
@@ -4005,14 +4089,14 @@ function salvarDados(){
     // página (o salvamento monta um objeto campo a campo, não salva o S
     // inteiro — o que não estiver listado aqui simplesmente não persiste).
     const dados={mes:S.mes,ano:S.ano,locais:S.locais,gerentes:S.gerentes,vgv:S.vgv,ajustes:S.ajustes,escala:S.escala,historicoEscalas:S.historicoEscalas||[],filaDomingos:S.filaDomingos||[],vagasManual:S.vagasManual||{},vagasManualTotal:S.vagasManualTotal||0,locais10pct:S.locais10pct??null,pctManual:S.pctManual||{},times:S.times||{},vgvTime:S.vgvTime||{},pctTime:S.pctTime||{},modoTime:S.modoTime||{},historicoDomingos:S.historicoDomingos||{},filaDomingosTime:S.filaDomingosTime||{},savedAt:new Date().toISOString()};
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(dados));
+    localStorage.setItem(storageKeyAtual(),JSON.stringify(dados));
     atualizarIndicadorSalvo(true);
   }catch(e){console.warn('Erro ao salvar:',e);showToast('Erro ao salvar dados!','error');}
 }
 
 function carregarDados(){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY);
+    const raw=localStorage.getItem(storageKeyAtual());
     if(!raw) return false;
     const dados=JSON.parse(raw);
     if(!dados) return false;
@@ -4230,7 +4314,11 @@ async function carregarHistoricoDoBanco(){
     const texto=await resposta.text();
     const retorno=JSON.parse(texto);
     if(!resposta.ok||!retorno.ok) throw new Error(retorno?.error||'O banco não respondeu.');
-    historicoBancoCache=retorno.escalas||[];
+    // 2026-09-13: a planilha é COMPARTILHADA entre as duas empresas — filtra
+    // aqui pra Direcional nunca ver escala da Riva na lista "No banco" e
+    // vice-versa. Linha antiga (sem coluna EMPRESA) já volta como 'RIVA' do
+    // Code.gs, então continua aparecendo certo pra quem já usava antes disso.
+    historicoBancoCache=(retorno.escalas||[]).filter(e=>String(e.empresa||'RIVA').toUpperCase()===empresaAtualId);
     if(aviso) aviso.style.display='none';
   }catch(e){
     console.warn('Não foi possível carregar o histórico do banco:',e);
@@ -4446,7 +4534,12 @@ async function enviarEscalaParaBanco(id){
       status:'ATIVA',
       observacoes:'',
       pdfBase64,
-      jsonConteudo:JSON.stringify(pacoteJson)
+      jsonConteudo:JSON.stringify(pacoteJson),
+      // 2026-09-13: diz pro Code.gs em qual pasta do Drive salvar (RIVA ou
+      // DIRECIONAL têm pastas separadas) e marca a coluna EMPRESA na
+      // planilha — é isso que permite listarEscalas() filtrar por empresa
+      // depois, sem misturar o histórico de uma na tela da outra.
+      empresa:empresaAtualId
     };
     const resposta=await fetch(webAppUrl,{
       method:'POST',
@@ -4794,6 +4887,7 @@ document.addEventListener('keydown',e=>{
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 window.addEventListener('beforeunload',()=>salvarDados());
 
+aplicarBranding(); // logo/nome/título certos ANTES de carregar dados (evita "piscar" RIVA em quem abre já em Direcional)
 const savedAt=carregarDados();
 if(savedAt){
   const dt=typeof savedAt==='string'?new Date(savedAt).toLocaleString('pt-BR'):'';
@@ -4812,6 +4906,12 @@ if(savedAt){
   atualizarIndicadorSalvo(true);
   showToast('✅ Dados carregados'+(dt?' — salvo em '+dt:''),'success',4000);
 } else {
+  // BUG REAL encontrado ao revisar (2026-09-13): sem isso, abrir o sistema
+  // com Direcional selecionada mas SEM nada salvo ainda mostraria os
+  // exemplos da Riva (Shopping Parangaba, René, Cahú...) — porque o "S"
+  // inicial do arquivo sempre nasce com esse seed, pensado só pra quem abre
+  // a RIVA pela 1ª vez. Zera pra qualquer empresa que não seja a Riva.
+  if(empresaAtualId!=='RIVA') zerarEstadoParaEmpresaNova_();
   mudarMes();renderPainel();
   showToast('Bem-vindo! Os dados serão salvos automaticamente.','info',4000);
 }

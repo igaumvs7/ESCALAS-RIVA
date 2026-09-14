@@ -1,8 +1,23 @@
+// 2026-09-13 (pedido do dono): agora o sistema tambem gera escalas da
+// DIRECIONAL (DV), alem da RIVA (RV). Mesma planilha BANCO GERAL pra nao
+// precisar mexer no Google de novo, mas cada empresa tem sua PROPRIA pasta
+// no Drive (isolamento real dos arquivos) e cada linha da planilha ganha
+// uma coluna EMPRESA pra nunca confundir na hora de olhar o historico.
 const CONFIG = {
   SPREADSHEET_ID: '12jTIthOgHc1GI7D6DdkyD_kqhtDC7-aaR12Pgn9_F40',
   SHEET_NAME: 'BANCO GERAL',
-  FOLDER_ID: '1x5Fo5dsU9dWofGTQEiM3_3iXdotUnQoz'
+  FOLDER_ID_RIVA: '1x5Fo5dsU9dWofGTQEiM3_3iXdotUnQoz',
+  FOLDER_ID_DIRECIONAL: '1p_YWF-DHbcB_IaCi_avnGf1GUHHN26V1'
 };
+
+// dados.empresa vem do sistema ('RIVA' ou 'DIRECIONAL'). Payload antigo (de
+// antes desse campo existir) nao manda esse campo -- cai em RIVA, que e o
+// comportamento de sempre, sem quebrar nada que ja estava salvo.
+function pastaDaEmpresa_(empresa) {
+  const nome = String(empresa || 'RIVA').toUpperCase();
+  const id = nome === 'DIRECIONAL' ? CONFIG.FOLDER_ID_DIRECIONAL : CONFIG.FOLDER_ID_RIVA;
+  return DriveApp.getFolderById(id);
+}
 
 function doGet() {
   return respostaJson_({
@@ -50,7 +65,8 @@ function salvarEscala_(dados) {
   const aba = planilha.getSheetByName(CONFIG.SHEET_NAME);
   if (!aba) throw new Error('A aba BANCO GERAL não foi encontrada.');
 
-  const pasta = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+  const pasta = pastaDaEmpresa_(dados.empresa);
+  const empresa = String(dados.empresa || 'RIVA').toUpperCase();
   const id = String(dados.id).trim();
   const nome = sanitizarNome_(dados.nome);
   const sufixo = id.replace(/[^a-zA-Z0-9_-]/g, '').slice(-24) || String(Date.now());
@@ -74,7 +90,7 @@ function salvarEscala_(dados) {
     const dataFinal = dataDaEscala_(dados.dataFinal);
     const geradoEm = new Date();
 
-    aba.getRange(linha, 1, 1, 14).setValues([[
+    aba.getRange(linha, 1, 1, 15).setValues([[
       id,
       nome,
       ano,
@@ -88,7 +104,8 @@ function salvarEscala_(dados) {
       'ABRIR PDF',
       'ABRIR DADOS',
       String(dados.status || 'ATIVA'),
-      String(dados.observacoes || '')
+      String(dados.observacoes || ''),
+      empresa
     ]]);
 
     aba.getRange(linha, 11).setRichTextValue(
@@ -132,7 +149,7 @@ function listarEscalas_() {
   const ultimaLinha = aba.getLastRow();
   if (ultimaLinha < 2) return { ok: true, escalas: [] };
 
-  const dados = aba.getRange(2, 1, ultimaLinha - 1, 14).getValues();
+  const dados = aba.getRange(2, 1, ultimaLinha - 1, 15).getValues();
   const escalas = [];
   for (let i = 0; i < dados.length; i++) {
     const linha = i + 2;
@@ -152,7 +169,12 @@ function listarEscalas_() {
       pdfUrl: linkDaCelula_(aba.getRange(linha, 11)),
       jsonUrl: linkDaCelula_(aba.getRange(linha, 12)),
       status: String(row[12] || ''),
-      observacoes: String(row[13] || '')
+      observacoes: String(row[13] || ''),
+      // Coluna 15 (índice 14) só existe em linhas gravadas a partir de
+      // 2026-09-13 — linhas antigas (só RIVA, de antes da Direcional
+      // existir) ficam com célula vazia aqui, então caem em 'RIVA' por
+      // padrão, que é o que elas realmente são.
+      empresa: String(row[14] || 'RIVA').toUpperCase()
     });
   }
   // Mais recente primeiro — geradoEm é o que reflete "quando foi enviado/atualizado".
