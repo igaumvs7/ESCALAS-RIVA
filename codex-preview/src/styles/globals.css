@@ -1,0 +1,1119 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   VIVAS CONNECT · Design System (Dark Mode Glassmorphism, per CLAUDE.md)
+   DARK MODE ONLY. No light mode. No theme toggle.
+   ============================================================================= */
+
+@theme {
+  /* Base surface */
+  --color-bg-primary: #0A0A0F;
+  --color-bg-card: rgba(15, 18, 35, 0.6);
+
+  /* Accents (fixed VIVAS brand — no per-tenant override in self-hosted) */
+  --color-accent-primary: #E8B94A;
+  --color-accent-secondary: #3B82F6;
+  /* Dourado — toque premium (telas de auth por enquanto; ver globals.css) */
+  --color-accent-gold: #E8B94A;
+  --color-accent-gold-light: #F5D78A;
+
+  /* Text */
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-label: #CBD5E1;
+
+  /* Status */
+  --color-success: #10B981;
+  --color-error: #EF4444;
+
+  /* Borders */
+  --color-border-card: rgba(232, 185, 74, 0.15);
+  --color-border-soft: rgba(232, 185, 74, 0.12);
+  --color-border-divider: rgba(232, 185, 74, 0.08);
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Radii */
+  --radius-card: 16px;
+}
+
+/* -----------------------------------------------------------------------------
+   Sistema de TEMAS (paleta de cores, aba Configurações > Temas)
+   -----------------------------------------------------------------------------
+   Cada tema define o MESMO conjunto de tokens; trocar tema é só trocar o
+   atributo `data-theme` na <html> (ver ThemeProvider.tsx) — nenhum componente
+   precisa saber qual tema está ativo.
+
+   `--accent-primary`/`--accent-secondary` são as cores DOMINANTES do tema (o
+   que antes era só "azul" virou "a cor 1 e a cor 2 do tema escolhido").
+   As variantes "-rgb" (triplet R,G,B sem parênteses) existem pra permitir
+   `rgba(var(--accent-primary-rgb), 0.2)` em qualquer opacidade, já que CSS não
+   deixa extrair canais de um `#hex` em runtime.
+   `--accent-gold`/`--accent-gold-light` são mantidos por compatibilidade com
+   componentes antigos que já usavam essas variáveis diretamente (telas de
+   auth) — em todo tema eles apontam pro mesmo tom que accent-primary/-light.
+
+   Gráficos, números e indicadores de dado (sucesso/erro/status) NÃO seguem o
+   tema — usam cores fixas e variadas de propósito (ver --data-* abaixo), pra
+   não cansar a vista com uma paleta só em telas de muito dado.
+   ----------------------------------------------------------------------------- */
+/* Pedido do dono: preto + AZUL PREMIUM + branco como identidade principal,
+   dourado só como detalhe — o azul genérico (#3B82F6, tom "Bootstrap") virou
+   um azul-royal mais profundo e saturado. Dourado continua em accent-primary
+   (focus ring, indicador ativo, links) só como toque, não como cor de peso. */
+/* `--accent-primary-contrast`/`--accent-secondary-contrast`: cor de TEXTO
+   segura pra usar EM CIMA de um fundo `--accent-primary`/`--accent-secondary`
+   (pill selecionada, badge, bolha de mensagem enviada, etc.). Nunca usar
+   `text-white` fixo nesses casos — em vários temas o accent-primary é claro
+   (ex.: Escuridão `#E8EBF0`, Sol do Meio-Dia `#FFC94D`), e texto branco em
+   cima fica ilegível (contraste ~1.2–1.8:1, bug real reportado pelo dono:
+   "nos filtros, em alguns temas, não dá pra enxergar"). `-primary-contrast`
+   é sempre `--color-bg-primary` (o accent-primary é claro nos 8 temas, então
+   o fundo escuro do próprio tema sempre bate contraste ≥6.9:1 — não precisa
+   variar por tema). `-secondary-contrast` varia (branco OU o bg escuro,
+   o que der mais contraste em cada tema — calculado tema a tema abaixo). */
+:root {
+  --accent-primary-contrast: var(--color-bg-primary);
+}
+
+:root,
+:root[data-theme="vivas-premium"] {
+  --theme-name: "VIVAS Premium";
+  --color-bg-primary: #0A0A0F;
+  --accent-primary: #E8B94A;
+  --accent-primary-rgb: 232, 185, 74;
+  --accent-secondary: #2451D9;
+  --accent-secondary-rgb: 36, 81, 217;
+  --accent-secondary-light: #5B7FE8;
+  --accent-secondary-contrast: white;
+  --accent-gold: #E8B94A;
+  --accent-gold-light: #F5D78A;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+}
+
+:root[data-theme="vinho-ouro"] {
+  --theme-name: "Vinho & Ouro Velho";
+  --color-bg-primary: #170A10;
+  --accent-primary: #D4A054;
+  --accent-primary-rgb: 212, 160, 84;
+  --accent-secondary: #A62148;
+  --accent-secondary-rgb: 166, 33, 72;
+  --accent-secondary-light: #C93A63;
+  --accent-secondary-contrast: white;
+  --accent-gold: #D4A054;
+  --accent-gold-light: #E6C083;
+  --text-primary: #FBF0E8;
+  --text-secondary: #C7A79C;
+}
+
+:root[data-theme="esmeralda-bronze"] {
+  --theme-name: "Esmeralda & Bronze";
+  --color-bg-primary: #081512;
+  --accent-primary: #C99356;
+  --accent-primary-rgb: 201, 147, 86;
+  --accent-secondary: #12B67A;
+  --accent-secondary-rgb: 18, 182, 122;
+  --accent-secondary-light: #3ED097;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #C99356;
+  --accent-gold-light: #DDB37F;
+  --text-primary: #F1FBF6;
+  --text-secondary: #8FB3A3;
+}
+
+:root[data-theme="escuridao"] {
+  --theme-name: "Escuridão";
+  --color-bg-primary: #050506;
+  --accent-primary: #E8EBF0;
+  --accent-primary-rgb: 232, 235, 240;
+  --accent-secondary: #6B7686;
+  --accent-secondary-rgb: 107, 118, 134;
+  --accent-secondary-light: #8B96A6;
+  --accent-secondary-contrast: white;
+  --accent-gold: #E8EBF0;
+  --accent-gold-light: #F5F7FA;
+  --text-primary: #F5F6F8;
+  --text-secondary: #7A8494;
+}
+
+:root[data-theme="profundezas-do-oceano"] {
+  --theme-name: "Profundezas do Oceano";
+  --color-bg-primary: #041B22;
+  --accent-primary: #00E5C7;
+  --accent-primary-rgb: 0, 229, 199;
+  --accent-secondary: #1670C9;
+  --accent-secondary-rgb: 22, 112, 201;
+  --accent-secondary-light: #4E97DB;
+  --accent-secondary-contrast: white;
+  --accent-gold: #00E5C7;
+  --accent-gold-light: #5CF0DC;
+  --text-primary: #E8FBF7;
+  --text-secondary: #5E9C99;
+}
+
+:root[data-theme="praia-de-domingo"] {
+  --theme-name: "Praia de Domingo";
+  --color-bg-primary: #1B140F;
+  --accent-primary: #FF8C5A;
+  --accent-primary-rgb: 255, 140, 90;
+  --accent-secondary: #2DD4BF;
+  --accent-secondary-rgb: 45, 212, 191;
+  --accent-secondary-light: #5EE2D2;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #FF8C5A;
+  --accent-gold-light: #FFB18A;
+  --text-primary: #FDF6EE;
+  --text-secondary: #C2A68C;
+}
+
+:root[data-theme="sol-do-meio-dia"] {
+  --theme-name: "Sol do Meio-Dia";
+  --color-bg-primary: #1A1006;
+  --accent-primary: #FFC94D;
+  --accent-primary-rgb: 255, 201, 77;
+  --accent-secondary: #D4530A;
+  --accent-secondary-rgb: 212, 83, 10;
+  --accent-secondary-light: #E67A2E;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #FFC94D;
+  --accent-gold-light: #FFDD8A;
+  --text-primary: #FFF8ED;
+  --text-secondary: #C9A876;
+}
+
+:root[data-theme="aurora-boreal"] {
+  --theme-name: "Aurora Boreal";
+  --color-bg-primary: #050A0C;
+  --accent-primary: #2EE6A8;
+  --accent-primary-rgb: 46, 230, 168;
+  --accent-secondary: #A855F7;
+  --accent-secondary-rgb: 168, 85, 247;
+  --accent-secondary-light: #C084FC;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #2EE6A8;
+  --accent-gold-light: #6EF0C4;
+  --text-primary: #EAFBF2;
+  --text-secondary: #6B8577;
+}
+
+:root[data-theme="tempestade"] {
+  --theme-name: "Tempestade";
+  --color-bg-primary: #0B0E16;
+  --accent-primary: #A8C4FF;
+  --accent-primary-rgb: 168, 196, 255;
+  --accent-secondary: #5B6B8C;
+  --accent-secondary-rgb: 91, 107, 140;
+  --accent-secondary-light: #8493B8;
+  --accent-secondary-contrast: white;
+  --accent-gold: #A8C4FF;
+  --accent-gold-light: #C9DBFF;
+  --text-primary: #EEF2FF;
+  --text-secondary: #8B98B4;
+}
+
+:root[data-theme="hacker"] {
+  --theme-name: "Hacker";
+  --color-bg-primary: #000000;
+  --accent-primary: #00FF66;
+  --accent-primary-rgb: 0, 255, 102;
+  --accent-secondary: #00B84A;
+  --accent-secondary-rgb: 0, 184, 74;
+  --accent-secondary-light: #3EFF8F;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #00FF66;
+  --accent-gold-light: #6BFFA8;
+  --text-primary: #D7FFE4;
+  --text-secondary: #4FBE7A;
+}
+
+/* Tema Hacker: fonte monoespaçada em todo o sistema (não só no login) —
+   "coisas simples" pedidas pelo dono pra sentir o tema mesmo fora da tela de
+   login, sem precisar de componente novo em cada tela (o resto — glow verde
+   em card/borda/scrollbar — já vem de graça dos tokens --accent-* acima). */
+:root[data-theme="hacker"] {
+  --font-sans: "Courier New", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Cores de DADO — fixas, não seguem o tema (gráficos, KPIs, status). */
+:root {
+  --data-blue: #3B82F6;
+  --data-green: #34D399;
+  --data-purple: #A78BFA;
+  --data-orange: #FB923C;
+  --data-red: #F87171;
+}
+
+/* -----------------------------------------------------------------------------
+   Base body: pure dark with soft radial glows
+   ----------------------------------------------------------------------------- */
+html, body, #root {
+  min-height: 100vh;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(var(--accent-secondary-rgb), 0.06), transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(var(--accent-primary-rgb), 0.04), transparent 50%);
+  background-attachment: fixed;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  font-family: var(--font-sans);
+}
+
+/* O preflight do Tailwind zera o cursor de <button> pra "default" — sem
+   isso, todo botão custom (fora do componente Button compartilhado, ex.:
+   os da sidebar/tema) fica com a setinha em vez da mãozinha. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Campos nativos (select/option) seguem o esquema de cor do SO por padrão —
+   em fundo escuro isso deixa a lista de opções branco-no-branco até passar o
+   mouse (só o hover força uma cor). `color-scheme: dark` avisa o navegador
+   pra desenhar select/option/scrollbar nativos já no estilo escuro; o
+   background/color explícitos em `option` cobrem os navegadores que ignoram
+   color-scheme nesse elemento (Chrome/Edge no Windows, notavelmente). */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #14161f;
+  color: var(--color-text-primary, #F8FAFC);
+}
+
+/* Scrollbar — dark, subtle. `::-webkit-scrollbar` só existe em navegadores
+   Chromium/WebKit — Firefox usa as propriedades padrão abaixo
+   (scrollbar-width/scrollbar-color), sem equivalente via pseudo-elemento.
+   Sem isso, no Firefox a sidebar (e qualquer outra lista com scroll) caía
+   pro scrollbar CINZA CLARO nativo do SO — destoando MUITO do tema escuro
+   (pedido do dono, 2026-09-06: "a barrinha... sempre se adaptar com a tela
+   de resolução para nunca ficar nada destorcido"). `html` propaga por
+   herança pra tudo (nav da sidebar incluído), sem precisar repetir em cada
+   elemento com overflow. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--accent-secondary-rgb), 0.28) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-secondary-rgb), 0.18);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-secondary-rgb), 0.32);
+}
+
+/* Pedido do dono (2026-09-06): "aqui o scroll já não está sendo mais
+   necessário mas mesmo assim ela ainda persiste" (print da sidebar, com
+   setinhas de subir/descer aparecendo mesmo sem nada cortado) — em algumas
+   combinações de SO/navegador (Windows com "sempre mostrar barra de
+   rolagem", entre outras) a faixa da barra reserva espaço e desenha os
+   botões de seta mesmo com overflow zero. Esconde a barra visualmente
+   nesse elemento especificamente, mantendo `overflow-y-auto` funcional por
+   trás (mouse/trackpad ainda rolam se algum dia precisar, só não aparece
+   nada na tela). */
+.sidebar-nav-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Edge legado/IE */
+}
+.sidebar-nav-scroll::-webkit-scrollbar {
+  display: none; /* Chrome/Edge/Safari */
+  width: 0;
+  height: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   Glassmorphism utilities
+   ----------------------------------------------------------------------------- */
+@layer components {
+  .glass-card {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--accent-secondary-rgb), 0.08),
+      rgba(var(--accent-secondary-rgb), 0.02)
+    );
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(var(--accent-secondary-rgb), 0.25);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 0 20px rgba(var(--accent-secondary-rgb), 0.06),
+      inset 0 1px 0 rgba(var(--accent-secondary-rgb), 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card-hover:hover,
+  .glass-card:hover {
+    border-color: rgba(var(--accent-secondary-rgb), 0.45);
+    box-shadow:
+      0 0 30px rgba(var(--accent-secondary-rgb), 0.12),
+      0 0 60px rgba(var(--accent-secondary-rgb), 0.04),
+      0 1px 0 rgba(var(--accent-primary-rgb), 0.35),
+      inset 0 1px 0 rgba(var(--accent-secondary-rgb), 0.2);
+  }
+
+  /* Fio dourado no topo do card no hover — o toque "premium" da marca,
+     usado com moderação (só aparece na interação, não no repouso). */
+  .glass-card {
+    position: relative;
+  }
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-primary-rgb), 0), transparent);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    transition: background 0.4s ease;
+    pointer-events: none;
+  }
+  .glass-card:hover::before {
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-primary-rgb), 0.55), transparent);
+  }
+
+  /* Números de destaque (dashboard) ganham um gradiente azul->dourado —
+     assinatura visual da marca nos pontos de maior atenção da tela. */
+  .text-stat-premium {
+    background: linear-gradient(135deg, var(--color-text-primary) 40%, var(--accent-gold-light));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Era fixo em azul-marinho (rgba(15,18,35,...)) — sidebar/header nunca
+     acompanhavam o tema escolhido (feedback do dono: "tem que mexer na
+     sidebar também"). Agora deriva do próprio --color-bg-primary do tema. */
+  .glass-surface {
+    background: color-mix(in srgb, var(--color-bg-primary) 60%, transparent);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(var(--accent-secondary-rgb), 0.12);
+  }
+
+  .text-display {
+    font-weight: 700;
+  }
+
+  .text-stat {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .text-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+  }
+
+  .text-body {
+    font-weight: 400;
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+  }
+
+  .text-muted {
+    color: var(--color-text-secondary);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Focus ring — accent-aware, accessible
+   ----------------------------------------------------------------------------- */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Entrada de mensagem nova migrada pro GSAP (MessageThread.tsx, skill
+   gsap-core/gsap-react) — era @keyframes CSS. */
+
+/* -----------------------------------------------------------------------------
+   Telas de auth (login/signup/setup). Entrada do card, inclinação da logo e
+   parallax da grade agora são GSAP (AuthShell.tsx, skill gsap-core/gsap-react)
+   — eram @keyframes CSS antes; ficam só as partes puramente estáticas aqui.
+   ----------------------------------------------------------------------------- */
+
+/* Card de login/cadastro — halo estático (não animado) em vez de borda com
+   "cobra" de cor passando. Uma borda fixa levemente mais clara + um brilho
+   suave por fora é o que lê como "premium" em produtos de verdade (Linear,
+   Stripe...) — uma borda colorida se movendo o tempo todo lê como efeito de
+   template genérico, não como refinamento. */
+.auth-card-premium {
+  border-color: rgba(var(--accent-primary-rgb), 0.25);
+  box-shadow:
+    0 0 60px rgba(var(--accent-primary-rgb), 0.08),
+    0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* Fundo interativo (canvas, por tema) das telas de auth agora vive inteiro em
+   components/auth/InteractiveBackground.tsx — sem CSS de apoio aqui (a antiga
+   grade + "holofote" foi removida por completo: efeito de círculo/glow
+   seguindo o cursor foi rejeitado explicitamente pelo dono, "fica feio"). O
+   componente já lida com prefers-reduced-motion internamente (desenha um
+   frame estático do mesmo padrão em vez de nada — ver comentário lá), então
+   não precisa de regra extra aqui. */
+
+/* Toast (sonner) sai mais rápido — pedido do dono: "quero que tenha pelo
+   menos uma animação saindo mas quero que seja algo rápido". O sonner já
+   anima transform/opacity na entrada/saída, só que na duração padrão dele
+   (.4s); aqui só encurtamos a DURAÇÃO da transição (longhand depois do
+   shorthand do próprio sonner, então só sobrescreve o tempo, sem mexer em
+   quais propriedades animam nem no easing) — evita reimplementar a mecânica
+   de transform que o sonner usa pra empilhar/posicionar os toasts. */
+[data-sonner-toast] {
+  transition-duration: 0.18s !important;
+}
+
+/* =============================================================================
+   VIVAS CONNECT · Command Deck
+   Reforma visual aplicada somente à camada de apresentação. Os tokens de tema
+   continuam sendo a fonte de cor para todas as organizações.
+   ============================================================================= */
+
+:root {
+  --vivas-surface-1: color-mix(in srgb, var(--color-bg-primary) 88%, white 12%);
+  --vivas-surface-2: color-mix(in srgb, var(--color-bg-primary) 82%, white 18%);
+  --vivas-surface-3: color-mix(in srgb, var(--color-bg-primary) 74%, white 26%);
+  --vivas-ink-soft: color-mix(in srgb, var(--color-text-primary) 62%, transparent);
+  --vivas-border: rgba(var(--accent-secondary-rgb), 0.18);
+  --vivas-border-strong: rgba(var(--accent-secondary-rgb), 0.34);
+  --vivas-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  background-image:
+    linear-gradient(rgba(var(--accent-secondary-rgb), 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-secondary-rgb), 0.025) 1px, transparent 1px),
+    radial-gradient(circle at 78% 12%, rgba(var(--accent-secondary-rgb), 0.12), transparent 26%),
+    radial-gradient(circle at 18% 88%, rgba(var(--accent-primary-rgb), 0.075), transparent 28%);
+  background-size: 32px 32px, 32px 32px, auto, auto;
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--color-bg-primary) 94%, black 6%), transparent 48%),
+    var(--color-bg-primary);
+}
+
+.app-shell::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: radial-gradient(rgba(255,255,255,.18) .55px, transparent .55px);
+  background-size: 7px 7px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
+}
+
+.app-ambient {
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(90px);
+  opacity: .13;
+}
+
+.app-ambient-primary {
+  right: -9rem;
+  top: 8%;
+  width: 24rem;
+  height: 24rem;
+  background: var(--accent-secondary);
+}
+
+.app-ambient-secondary {
+  bottom: -12rem;
+  left: 22%;
+  width: 30rem;
+  height: 30rem;
+  background: var(--accent-primary);
+  opacity: .08;
+}
+
+.app-stage {
+  position: relative;
+  z-index: 1;
+  padding: 14px 18px 0 16px;
+}
+
+.app-content-scroll {
+  padding: 28px 6px 40px;
+  scroll-behavior: smooth;
+}
+
+.app-content-frame {
+  width: min(100%, 1540px);
+  min-height: 100%;
+  margin-inline: auto;
+}
+
+.app-content-frame .max-w-7xl {
+  max-width: 90rem;
+}
+
+/* Estrutura lateral: faixa sólida, recortes e módulos em vez de vidro. */
+.app-sidebar {
+  position: relative;
+  z-index: 20;
+  background:
+    linear-gradient(180deg, rgba(var(--accent-secondary-rgb), .11), transparent 22%),
+    color-mix(in srgb, var(--color-bg-primary) 90%, black 10%);
+  border-right: 1px solid var(--vivas-border);
+  box-shadow: 20px 0 70px rgba(0, 0, 0, .24);
+}
+
+.app-sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--accent-primary), var(--accent-secondary) 48%, transparent 92%);
+  opacity: .8;
+}
+
+.sidebar-brand {
+  position: relative;
+  border-bottom: 1px solid var(--vivas-border);
+  background: linear-gradient(90deg, rgba(var(--accent-secondary-rgb), .08), transparent 66%);
+}
+
+.sidebar-brand::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  bottom: -1px;
+  width: 40px;
+  height: 2px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 12px rgba(var(--accent-primary-rgb), .65);
+}
+
+.sidebar-navigation {
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,.012));
+}
+
+.sidebar-group-rule {
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-secondary-rgb), .3), transparent);
+}
+
+.sidebar-group-label {
+  color: color-mix(in srgb, var(--color-text-secondary) 70%, transparent);
+}
+
+.sidebar-navitem {
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 5px 14px 14px 5px;
+}
+
+.sidebar-navitem:hover {
+  border-color: rgba(var(--accent-secondary-rgb), .12);
+  background: rgba(255,255,255,.025);
+}
+
+.sidebar-icon-frame {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px 10px 10px 4px;
+  border: 1px solid rgba(var(--accent-secondary-rgb), .14);
+  background: rgba(255,255,255,.02);
+  transition: color .25s ease, background .25s ease, border-color .25s ease, transform .25s ease;
+}
+
+.sidebar-navitem:hover .sidebar-icon-frame {
+  color: var(--accent-secondary-light);
+  transform: translateX(2px);
+}
+
+.sidebar-navitem-active {
+  border-color: rgba(var(--accent-secondary-rgb), .3);
+  background:
+    linear-gradient(90deg, rgba(var(--accent-secondary-rgb), .19), rgba(var(--accent-secondary-rgb), .045));
+  box-shadow: inset 3px 0 0 var(--accent-primary), 0 10px 24px rgba(0,0,0,.13);
+}
+
+.sidebar-navitem-active .sidebar-icon-frame {
+  color: var(--accent-primary);
+  border-color: rgba(var(--accent-primary-rgb), .28);
+  background: rgba(var(--accent-primary-rgb), .09);
+}
+
+.sidebar-footer {
+  border-top: 1px solid var(--vivas-border);
+  background: rgba(0,0,0,.12);
+}
+
+.sidebar-plan-card {
+  border: 1px solid var(--vivas-border);
+  border-radius: 6px 16px 16px 6px;
+  background: linear-gradient(110deg, rgba(var(--accent-secondary-rgb), .08), rgba(255,255,255,.018));
+}
+
+.sidebar-plan-card:hover {
+  border-color: rgba(var(--accent-primary-rgb), .42);
+  background: linear-gradient(110deg, rgba(var(--accent-primary-rgb), .1), rgba(var(--accent-secondary-rgb), .06));
+}
+
+.sidebar-toggle {
+  border: 1px solid var(--vivas-border-strong);
+  border-radius: 5px 12px 12px 5px;
+  background: var(--vivas-surface-1);
+  box-shadow: 0 10px 24px rgba(0,0,0,.32), inset 0 1px rgba(255,255,255,.05);
+}
+
+.mobile-command-drawer {
+  background: color-mix(in srgb, var(--color-bg-primary) 92%, black 8%);
+  border-right: 1px solid var(--vivas-border-strong);
+  box-shadow: 28px 0 80px rgba(0,0,0,.48);
+}
+
+.mobile-drawer-brand {
+  border-bottom: 1px solid var(--vivas-border);
+  background: rgba(var(--accent-secondary-rgb), .06);
+}
+
+/* Cabeçalho flutuante e contextual. */
+.app-header {
+  min-height: 68px;
+  padding: 9px 10px 9px 18px;
+  border: 1px solid var(--vivas-border);
+  border-radius: 6px 20px 20px 6px;
+  background:
+    linear-gradient(100deg, rgba(var(--accent-secondary-rgb), .08), transparent 38%),
+    color-mix(in srgb, var(--color-bg-primary) 83%, transparent);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow: 0 18px 48px rgba(0,0,0,.18), inset 3px 0 0 rgba(var(--accent-primary-rgb), .72);
+}
+
+.app-header-eyebrow {
+  margin-bottom: 1px;
+  color: var(--accent-primary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.app-header-actions {
+  border: 1px solid rgba(var(--accent-secondary-rgb), .14);
+  border-radius: 4px 15px 15px 4px;
+  background: rgba(255,255,255,.025);
+}
+
+.app-header-icon {
+  border-radius: 4px 11px 11px 4px;
+  transition: color .2s ease, background .2s ease;
+}
+
+.app-header-icon:hover {
+  background: rgba(var(--accent-secondary-rgb), .1);
+}
+
+.app-header-divider {
+  background: linear-gradient(to bottom, transparent, rgba(var(--accent-secondary-rgb), .22), transparent);
+}
+
+/* O mesmo sistema de superfície chega às telas internas sem mudar seus JSX. */
+.glass-card {
+  position: relative;
+  border: 1px solid var(--vivas-border);
+  border-radius: 6px 20px 20px 20px;
+  background:
+    linear-gradient(135deg, rgba(var(--accent-secondary-rgb), .055), transparent 42%),
+    var(--vivas-surface-1);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 16px 42px rgba(0,0,0,.18), inset 0 1px rgba(255,255,255,.035);
+}
+
+.glass-card::before {
+  left: 0;
+  right: auto;
+  width: 3px;
+  height: 100%;
+  border-radius: 0;
+  background: linear-gradient(to bottom, rgba(var(--accent-primary-rgb), .65), transparent 55%);
+  opacity: .38;
+}
+
+.glass-card:hover,
+.glass-card-hover:hover {
+  border-color: var(--vivas-border-strong);
+  box-shadow: 0 22px 54px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.055);
+}
+
+.glass-card:hover::before {
+  background: linear-gradient(to bottom, var(--accent-primary), var(--accent-secondary), transparent 76%);
+  opacity: .85;
+}
+
+.glass-surface {
+  background: color-mix(in srgb, var(--color-bg-primary) 88%, transparent);
+  border-color: var(--vivas-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.app-content-frame .glass-card.h-12.w-12 {
+  border-radius: 4px 15px 15px 4px;
+  border-color: rgba(var(--accent-primary-rgb), .28);
+  background: rgba(var(--accent-primary-rgb), .065);
+  box-shadow: inset 3px 0 0 var(--accent-primary), 0 10px 24px rgba(0,0,0,.16);
+}
+
+select,
+textarea {
+  border-radius: 4px 12px 12px 4px;
+}
+
+/* Dashboard: hierarquia editorial, métricas em módulos numerados. */
+.dashboard-page {
+  width: min(100%, 1420px);
+  padding: 10px 12px 24px;
+}
+
+.dashboard-intro {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 2px 24px;
+  border-bottom: 1px solid var(--vivas-border);
+}
+
+.dashboard-intro::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: min(240px, 42%);
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), transparent);
+}
+
+.dashboard-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--accent-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.dashboard-kicker span {
+  width: 22px;
+  height: 1px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(var(--accent-primary-rgb), .55);
+}
+
+.dashboard-title-mark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  place-items: center;
+  color: var(--accent-primary);
+  border: 1px solid rgba(var(--accent-primary-rgb), .35);
+  border-radius: 4px 16px 16px 4px;
+  background: rgba(var(--accent-primary-rgb), .08);
+  box-shadow: inset 3px 0 var(--accent-primary), 0 14px 30px rgba(0,0,0,.18);
+}
+
+.dashboard-intro h1 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: clamp(1.7rem, 3vw, 2.55rem);
+  font-weight: 800;
+  letter-spacing: -.045em;
+  line-height: 1.05;
+}
+
+.dashboard-intro p {
+  max-width: 680px;
+  margin: 7px 0 0;
+  color: var(--color-text-secondary);
+  font-size: .88rem;
+}
+
+.dashboard-refresh {
+  color: var(--color-text-primary);
+  border: 1px solid var(--vivas-border-strong);
+  border-radius: 4px 13px 13px 4px;
+  background: rgba(255,255,255,.025);
+  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+}
+
+.dashboard-refresh:hover {
+  transform: translateY(-1px);
+  border-color: rgba(var(--accent-primary-rgb), .48);
+  background: rgba(var(--accent-primary-rgb), .08);
+}
+
+.dashboard-toolbar {
+  padding: 10px;
+  border: 1px solid var(--vivas-border);
+  border-radius: 5px 17px 17px 5px;
+  background: var(--vivas-surface-1);
+  box-shadow: 0 12px 34px rgba(0,0,0,.14);
+}
+
+.dashboard-toolbar-label {
+  min-width: 128px;
+  padding-inline: 8px 14px;
+  border-right: 1px solid var(--vivas-border);
+}
+
+.dashboard-toolbar-label span,
+.metric-index,
+.dashboard-section-code {
+  display: block;
+  color: var(--accent-primary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.dashboard-toolbar-label strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.dashboard-periods {
+  border-radius: 3px 12px 12px 3px;
+  background: rgba(0,0,0,.12);
+}
+
+.dashboard-periods button {
+  border-radius: 3px 9px 9px 3px;
+}
+
+.dashboard-period-active {
+  color: var(--accent-primary-contrast);
+  background: var(--accent-primary);
+  box-shadow: 0 8px 18px rgba(var(--accent-primary-rgb), .2);
+}
+
+.dashboard-date-input {
+  color-scheme: dark;
+  border: 1px solid var(--vivas-border-strong);
+  border-radius: 4px 10px 10px 4px;
+  background: rgba(0,0,0,.15);
+}
+
+.dashboard-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.dashboard-section-heading > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  color: var(--accent-primary);
+  border: 1px solid rgba(var(--accent-primary-rgb), .28);
+  border-radius: 3px 11px 11px 3px;
+  background: rgba(var(--accent-primary-rgb), .06);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.dashboard-section-heading h2 {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.dashboard-section-heading p {
+  margin: 2px 0 0;
+  color: var(--color-text-secondary);
+  font-size: .72rem;
+}
+
+.dashboard-base-grid {
+  display: grid;
+  grid-template-columns: 1.25fr repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid var(--vivas-border);
+  border-radius: 5px 18px 18px 18px;
+  background:
+    linear-gradient(145deg, rgba(var(--accent-secondary-rgb), .055), transparent 42%),
+    var(--vivas-surface-1);
+  box-shadow: 0 15px 38px rgba(0,0,0,.16), inset 0 1px rgba(255,255,255,.035);
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  right: -36px;
+  bottom: -42px;
+  width: 100px;
+  height: 100px;
+  border: 1px solid rgba(var(--accent-secondary-rgb), .14);
+  border-radius: 50%;
+  box-shadow: 0 0 0 18px rgba(var(--accent-secondary-rgb), .025);
+  pointer-events: none;
+}
+
+.metric-card:hover {
+  border-color: var(--vivas-border-strong);
+  box-shadow: 0 22px 48px rgba(0,0,0,.23), inset 0 1px rgba(255,255,255,.05);
+}
+
+.metric-card-featured {
+  min-height: 190px;
+  border-color: rgba(var(--accent-primary-rgb), .32);
+  background:
+    linear-gradient(145deg, rgba(var(--accent-primary-rgb), .13), transparent 52%),
+    linear-gradient(110deg, var(--vivas-surface-2), var(--vivas-surface-1));
+  box-shadow: inset 4px 0 var(--accent-primary), 0 18px 48px rgba(0,0,0,.2);
+}
+
+.metric-icon {
+  color: var(--metric-color);
+  border: 1px solid color-mix(in srgb, var(--metric-color) 34%, transparent);
+  border-radius: 4px 12px 12px 4px;
+  background: color-mix(in srgb, var(--metric-color) 9%, transparent);
+}
+
+.tag-command-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--vivas-border);
+  border-radius: 5px 18px 18px 18px;
+  background: linear-gradient(110deg, var(--vivas-surface-2), var(--vivas-surface-1));
+  box-shadow: var(--vivas-shadow);
+}
+
+.tag-command-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), transparent 70%);
+}
+
+.tag-command-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  color: var(--accent-primary);
+  border: 1px solid rgba(var(--accent-primary-rgb), .28);
+  border-radius: 4px 11px 11px 4px;
+  background: rgba(var(--accent-primary-rgb), .07);
+}
+
+.tag-command-chip {
+  border-radius: 3px 10px 10px 3px;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-base-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .metric-card-featured {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-stage {
+    padding: 8px 8px 0;
+  }
+  .app-content-scroll {
+    padding: 18px 0 30px;
+  }
+  .app-header {
+    min-height: 62px;
+    padding-left: 7px;
+    border-radius: 5px 15px 15px 5px;
+  }
+  .app-header-actions {
+    border: 0;
+    background: transparent;
+  }
+  .dashboard-page {
+    padding-inline: 4px;
+  }
+  .dashboard-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .dashboard-refresh {
+    align-self: stretch;
+    justify-content: center;
+  }
+  .dashboard-toolbar-label {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--vivas-border);
+    padding-bottom: 8px;
+  }
+  .dashboard-base-grid {
+    grid-template-columns: 1fr;
+  }
+  .metric-card-featured {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-content-scroll {
+    scroll-behavior: auto;
+  }
+}
