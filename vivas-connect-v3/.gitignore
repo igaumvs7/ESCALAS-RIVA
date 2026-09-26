@@ -1,0 +1,31 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+.DS_Store
+
+# tests/.artifacts: saida gerada pelo Playwright a cada `npx playwright test`
+# (screenshots, traces, relatorio HTML, results.json) - nunca deveria ir pro
+# git, so nao tinha rodado localmente ate agora pra isso aparecer.
+tests/.artifacts/
+
+# .claude/skills/* (criado por `npx skills add`) são symlinks com CAMINHO
+# ABSOLUTO da máquina que instalou — quebrariam em qualquer outra máquina/CI.
+# O conteúdo de verdade das skills fica em .agents/skills/ (isso sim vai pro
+# git); skills-lock.json registra a origem pra reinstalar com `npx skills add`.
+.claude/skills/
+
+# webjs-worker: sessao do WhatsApp (credenciais Baileys) fica em disco -
+# nunca pode ir pro git.
+webjs-worker/.baileys_auth/
+
+# legacy-disparador-wpp: motor original (VIVAS ENVIA v1), mantido so como
+# referencia historica - sessao/dados de runtime nunca podem ir pro git.
+legacy-disparador-wpp/whatsapp-dispatcher/.wwebjs_auth/
+legacy-disparador-wpp/whatsapp-dispatcher/.wwebjs_cache/
+legacy-disparador-wpp/whatsapp-dispatcher/data/*.json
+legacy-disparador-wpp/whatsapp-dispatcher/data/uploads/
+legacy-disparador-wpp/whatsapp-dispatcher/data/logs/
+legacy-disparador-wpp/whatsapp-dispatcher/*.log

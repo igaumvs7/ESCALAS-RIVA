@@ -1,0 +1,21 @@
+{
+  "name": "vivas-webjs-worker",
+  "version": "2.0.0",
+  "private": true,
+  "description": "VIVAS ENVIA (canal gratis) - worker multi-tenant que mantem sessoes WhatsApp vivas por organizacao (via Baileys - conexao direta, sem navegador) e dispara campanhas com o motor anti-bloqueio (3 niveis de delay, limite diario, janela de horario). Roda separado do resto do sistema, num VPS ligado 24h - nao roda na Vercel/Supabase (sessao persistente nao cabe em serverless). Baileys usa ~60-80MB de RAM por sessao (vs ~400MB do whatsapp-web.js antigo, que abria um Chrome escondido por sessao) - o mesmo VPS aguenta bem mais clientes conectados ao mesmo tempo.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "@whiskeysockets/baileys": "^6.7.9",
+    "baileys-antiban": "^4.10.0",
+    "dotenv": "^16.4.5",
+    "pino": "^9.4.0",
+    "qrcode": "^1.5.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

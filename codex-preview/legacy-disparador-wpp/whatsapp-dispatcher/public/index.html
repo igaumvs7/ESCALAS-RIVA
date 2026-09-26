@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VIVAS ENVIA</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header>
+  <h1>VIVAS ENVIA</h1>
+  <div id="wa-status" class="badge badge-off">Desconectado</div>
+</header>
+
+<main>
+  <section class="card" id="qr-card">
+    <h2>1. Conectar WhatsApp</h2>
+    <p>Escaneie o QR code com o WhatsApp do celular (Aparelhos conectados &gt; Conectar aparelho).</p>
+    <img id="qr-img" alt="QR Code" />
+    <p id="qr-empty" class="muted">Aguardando geração do QR code...</p>
+    <button id="btn-logout" class="secondary">Desconectar sessão</button>
+  </section>
+
+  <section class="card">
+    <h2>2. Importar contatos</h2>
+    <p>Planilha com colunas <b>Nome</b>, <b>WhatsApp</b> e <b>Empreendimento de Interesse</b> (opcional).</p>
+    <a href="/api/contacts/template">Baixar planilha modelo</a>
+    <form id="upload-form">
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" required />
+      <button type="submit">Importar planilha</button>
+    </form>
+    <div id="upload-result"></div>
+    <div class="counts" id="contact-counts"></div>
+    <button id="btn-clear-contacts" class="danger">Limpar contatos importados</button>
+  </section>
+
+  <section class="card">
+    <h2>3. Mensagens (até 5 variações alternadas)</h2>
+    <p class="muted">
+      Use <code>{{nome}}</code> e <code>{{empreendimento}}</code> para personalizar, e
+      <code>{opção 1|opção 2}</code> para variar o texto dentro da própria mensagem.
+      Cadastre de 1 a 5 mensagens diferentes: com a rotação ativada, o sistema
+      <b>alterna entre elas</b> a cada envio para dificultar a detecção de mensagem
+      em massa (texto repetido é um dos principais gatilhos de bloqueio).
+    </p>
+    <label class="checkbox">
+      <input type="checkbox" id="templateRotationEnabled" />
+      Alternar entre as mensagens cadastradas (recomendado)
+    </label>
+    <div id="templates-list"></div>
+    <button type="button" id="btn-add-template" class="secondary">+ Adicionar variação de mensagem</button>
+  </section>
+
+  <section class="card">
+    <h2>4. Nome do cliente</h2>
+    <p class="muted">
+      Quando ativado, o sistema analisa o valor da coluna "Nome" da planilha e só
+      personaliza a mensagem se parecer um nome de pessoa de verdade. Se vier um
+      número, um texto genérico ("cliente", "N/A") ou algo sem sentido, a mensagem é
+      enviada sem o nome, para não soar estranho para o destinatário.
+    </p>
+    <label class="checkbox">
+      <input type="checkbox" id="nameValidationEnabled" />
+      Detectar e validar nome do cliente automaticamente
+    </label>
+  </section>
+
+  <section class="card">
+    <h2>5. Timers seguros (motor anti-bloqueio de 3 níveis)</h2>
+    <p class="muted">
+      O motor usa <b>3 tipos de delay que se alternam</b> em escalas diferentes,
+      imitando o ritmo de uso humano em vez de um robô. Veja o racional completo na
+      seção "Por que o WhatsApp bloqueia" mais abaixo. Os valores padrão já vêm
+      calibrados de forma conservadora — só ajuste se souber o que está fazendo.
+    </p>
+
+    <h3>Delay tipo 1 — curto (entre cada mensagem)</h3>
+    <div class="grid">
+      <label>Mínimo (segundos)
+        <input type="number" id="delayCurtoMinSeconds" min="5" />
+      </label>
+      <label>Máximo (segundos)
+        <input type="number" id="delayCurtoMaxSeconds" min="5" />
+      </label>
+    </div>
+
+    <h3>Delay tipo 2 — médio (a cada poucas mensagens)</h3>
+    <div class="grid">
+      <label>A cada quantas mensagens
+        <input type="number" id="delayMedioACadaMensagens" min="1" />
+      </label>
+      <label>Pausa mínima (minutos)
+        <input type="number" id="delayMedioMinMinutes" min="1" />
+      </label>
+      <label>Pausa máxima (minutos)
+        <input type="number" id="delayMedioMaxMinutes" min="1" />
+      </label>
+    </div>
+
+    <h3>Delay tipo 3 — longo (descanso maior, ciclo maior)</h3>
+    <div class="grid">
+      <label>A cada quantas mensagens
+        <input type="number" id="delayLongoACadaMensagens" min="1" />
+      </label>
+      <label>Pausa mínima (minutos)
+        <input type="number" id="delayLongoMinMinutes" min="1" />
+      </label>
+      <label>Pausa máxima (minutos)
+        <input type="number" id="delayLongoMaxMinutes" min="1" />
+      </label>
+    </div>
+
+    <h3>Limite diário e horário</h3>
+    <label class="checkbox">
+      <input type="checkbox" id="dailyLimitEnabled" />
+      Ativar limite diário de mensagens (fortemente recomendado)
+    </label>
+    <div class="grid">
+      <label>Limite diário de mensagens
+        <input type="number" id="dailyLimit" min="1" />
+      </label>
+      <label>Início do horário permitido (0-23)
+        <input type="number" id="workingHourStart" min="0" max="23" />
+      </label>
+      <label>Fim do horário permitido (0-23)
+        <input type="number" id="workingHourEnd" min="0" max="23" />
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" id="typingSimulationEnabled" />
+        Simular digitação antes de enviar
+      </label>
+    </div>
+    <button id="btn-save-settings">Salvar configurações</button>
+    <span id="settings-saved" class="muted"></span>
+  </section>
+
+  <section class="card">
+    <h2>6. Campanha</h2>
+    <div class="counts" id="campaign-counts"></div>
+    <div class="actions">
+      <button id="btn-start" class="primary">Iniciar / Retomar</button>
+      <button id="btn-pause" class="secondary">Pausar</button>
+      <button id="btn-stop" class="danger">Parar</button>
+      <a href="/api/contacts/report"><button type="button" class="secondary">Baixar relatório</button></a>
+    </div>
+    <p id="campaign-error" class="error"></p>
+  </section>
+
+  <section class="card">
+    <h2>Log de atividade</h2>
+    <div id="log-box"></div>
+  </section>
+
+  <section class="card info-card">
+    <h2>Por que o WhatsApp bloqueia números — e como este sistema ajuda</h2>
+    <p><b>Importante:</b> nenhum disparador — este ou qualquer outro que exista no
+      mercado — consegue garantir 100% que um número nunca será bloqueado. Quem
+      decide isso é o sistema de detecção do WhatsApp/Meta, que muda com o tempo e
+      não divulga suas regras exatas. O que dá para fazer é seguir o conjunto de
+      boas práticas conhecidas para reduzir o risco ao máximo, e é isso que o VIVAS
+      ENVIA foi construído para fazer.</p>
+
+    <h3>Os erros mais comuns que derrubam um número</h3>
+    <ul>
+      <li><b>Enviar em paralelo:</b> várias mensagens ao mesmo tempo é o padrão mais
+        fácil de detectar como automação.</li>
+      <li><b>Delay fixo e curto:</b> um timer sempre igual (ex: sempre 5 segundos)
+        cria um padrão robótico perfeitamente identificável.</li>
+      <li><b>Volume alto sem pausa:</b> centenas de mensagens seguidas sem
+        descanso.</li>
+      <li><b>Chip novo usado direto para disparo em massa:</b> um número que nunca
+        teve uso humano normal e já começa mandando centenas de mensagens é
+        extremamente suspeito.</li>
+      <li><b>Denúncias:</b> se muitos destinatários marcarem a conversa como spam ou
+        bloquearem o número, isso pesa contra ele — por isso a lista deve ser sempre
+        de gente que já tem relação com quem está mandando.</li>
+      <li><b>Mensagem idêntica para todo mundo:</b> textos 100% iguais em massa
+        ajudam a identificar o padrão de disparo automatizado.</li>
+    </ul>
+
+    <h3>Como o VIVAS ENVIA mitiga isso</h3>
+    <ul>
+      <li>Envio sempre sequencial, nunca em paralelo.</li>
+      <li>3 níveis de delay que se alternam (curto entre cada mensagem, médio a
+        cada poucas mensagens, longo em ciclos maiores) — imita variação humana em
+        vez de um timer único.</li>
+      <li>Rotação entre até 5 mensagens diferentes, além de variação de texto
+        (spintax) dentro de cada uma.</li>
+      <li>Limite diário de mensagens e janela de horário comercial.</li>
+      <li>Simulação de digitação antes de cada envio.</li>
+      <li>Validação do número antes de mandar (nunca tenta números inexistentes).</li>
+      <li>Parada automática se a sessão do WhatsApp cair, para não insistir enviando
+        sem estar conectado.</li>
+    </ul>
+
+    <h3>Cuidados que dependem de você</h3>
+    <ul>
+      <li>Use só com sua própria base de leads/clientes que já têm relação com você
+        — nunca liste fria comprada.</li>
+      <li><b>Chip novo precisa de aquecimento:</b> na primeira semana, use um limite
+        diário bem mais baixo (30–50 mensagens) e vá aumentando aos poucos. Use o
+        número normalmente no WhatsApp (conversas humanas de verdade) antes de
+        colocá-lo para disparar em massa.</li>
+      <li>Prefira usar o WhatsApp Business no número dos disparos.</li>
+      <li>Respeite quem pedir para parar de receber mensagens.</li>
+      <li>Para volumes realmente grandes (milhares por dia) de forma seguro e
+        suportada oficialmente, o caminho é a WhatsApp Business Platform (Cloud
+        API), oficial e paga.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "vivas-envia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VIVAS ENVIA - disparador profissional de mensagens em massa no WhatsApp com motor anti-bloqueio (3 niveis de delay, rotacao de mensagens, limite diario, simulacao de digitacao) e importacao de contatos via planilha Excel.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/run.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^2.2.0",
+    "qrcode": "^1.5.3",
+    "whatsapp-web.js": "^1.26.0",
+    "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

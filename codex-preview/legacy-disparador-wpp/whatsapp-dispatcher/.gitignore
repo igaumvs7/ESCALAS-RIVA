@@ -1,0 +1,10 @@
+node_modules/
+package-lock.json
+.wwebjs_auth/
+.wwebjs_cache/
+data/*.json
+data/uploads/
+data/logs/
+!data/.gitkeep
+.env
+*.log
