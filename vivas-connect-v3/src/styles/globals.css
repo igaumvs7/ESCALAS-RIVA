@@ -1,0 +1,573 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   VIVAS CONNECT · Design System (Dark Mode Glassmorphism, per CLAUDE.md)
+   DARK MODE ONLY. No light mode. No theme toggle.
+   ============================================================================= */
+
+@theme {
+  /* Base surface */
+  --color-bg-primary: #0A0A0F;
+  --color-bg-card: rgba(15, 18, 35, 0.6);
+
+  /* Accents (fixed VIVAS brand — no per-tenant override in self-hosted) */
+  --color-accent-primary: #E8B94A;
+  --color-accent-secondary: #3B82F6;
+  /* Dourado — toque premium (telas de auth por enquanto; ver globals.css) */
+  --color-accent-gold: #E8B94A;
+  --color-accent-gold-light: #F5D78A;
+
+  /* Text */
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-label: #CBD5E1;
+
+  /* Status */
+  --color-success: #10B981;
+  --color-error: #EF4444;
+
+  /* Borders */
+  --color-border-card: rgba(232, 185, 74, 0.15);
+  --color-border-soft: rgba(232, 185, 74, 0.12);
+  --color-border-divider: rgba(232, 185, 74, 0.08);
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Radii */
+  --radius-card: 16px;
+}
+
+/* -----------------------------------------------------------------------------
+   Sistema de TEMAS (paleta de cores, aba Configurações > Temas)
+   -----------------------------------------------------------------------------
+   Cada tema define o MESMO conjunto de tokens; trocar tema é só trocar o
+   atributo `data-theme` na <html> (ver ThemeProvider.tsx) — nenhum componente
+   precisa saber qual tema está ativo.
+
+   `--accent-primary`/`--accent-secondary` são as cores DOMINANTES do tema (o
+   que antes era só "azul" virou "a cor 1 e a cor 2 do tema escolhido").
+   As variantes "-rgb" (triplet R,G,B sem parênteses) existem pra permitir
+   `rgba(var(--accent-primary-rgb), 0.2)` em qualquer opacidade, já que CSS não
+   deixa extrair canais de um `#hex` em runtime.
+   `--accent-gold`/`--accent-gold-light` são mantidos por compatibilidade com
+   componentes antigos que já usavam essas variáveis diretamente (telas de
+   auth) — em todo tema eles apontam pro mesmo tom que accent-primary/-light.
+
+   Gráficos, números e indicadores de dado (sucesso/erro/status) NÃO seguem o
+   tema — usam cores fixas e variadas de propósito (ver --data-* abaixo), pra
+   não cansar a vista com uma paleta só em telas de muito dado.
+   ----------------------------------------------------------------------------- */
+/* Pedido do dono: preto + AZUL PREMIUM + branco como identidade principal,
+   dourado só como detalhe — o azul genérico (#3B82F6, tom "Bootstrap") virou
+   um azul-royal mais profundo e saturado. Dourado continua em accent-primary
+   (focus ring, indicador ativo, links) só como toque, não como cor de peso. */
+/* `--accent-primary-contrast`/`--accent-secondary-contrast`: cor de TEXTO
+   segura pra usar EM CIMA de um fundo `--accent-primary`/`--accent-secondary`
+   (pill selecionada, badge, bolha de mensagem enviada, etc.). Nunca usar
+   `text-white` fixo nesses casos — em vários temas o accent-primary é claro
+   (ex.: Escuridão `#E8EBF0`, Sol do Meio-Dia `#FFC94D`), e texto branco em
+   cima fica ilegível (contraste ~1.2–1.8:1, bug real reportado pelo dono:
+   "nos filtros, em alguns temas, não dá pra enxergar"). `-primary-contrast`
+   é sempre `--color-bg-primary` (o accent-primary é claro nos 8 temas, então
+   o fundo escuro do próprio tema sempre bate contraste ≥6.9:1 — não precisa
+   variar por tema). `-secondary-contrast` varia (branco OU o bg escuro,
+   o que der mais contraste em cada tema — calculado tema a tema abaixo). */
+:root {
+  --accent-primary-contrast: var(--color-bg-primary);
+}
+
+:root,
+:root[data-theme="vivas-premium"] {
+  --theme-name: "VIVAS Premium";
+  --color-bg-primary: #0A0A0F;
+  --accent-primary: #E8B94A;
+  --accent-primary-rgb: 232, 185, 74;
+  --accent-secondary: #2451D9;
+  --accent-secondary-rgb: 36, 81, 217;
+  --accent-secondary-light: #5B7FE8;
+  --accent-secondary-contrast: white;
+  --accent-gold: #E8B94A;
+  --accent-gold-light: #F5D78A;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+}
+
+:root[data-theme="vinho-ouro"] {
+  --theme-name: "Vinho & Ouro Velho";
+  --color-bg-primary: #170A10;
+  --accent-primary: #D4A054;
+  --accent-primary-rgb: 212, 160, 84;
+  --accent-secondary: #A62148;
+  --accent-secondary-rgb: 166, 33, 72;
+  --accent-secondary-light: #C93A63;
+  --accent-secondary-contrast: white;
+  --accent-gold: #D4A054;
+  --accent-gold-light: #E6C083;
+  --text-primary: #FBF0E8;
+  --text-secondary: #C7A79C;
+}
+
+:root[data-theme="esmeralda-bronze"] {
+  --theme-name: "Esmeralda & Bronze";
+  --color-bg-primary: #081512;
+  --accent-primary: #C99356;
+  --accent-primary-rgb: 201, 147, 86;
+  --accent-secondary: #12B67A;
+  --accent-secondary-rgb: 18, 182, 122;
+  --accent-secondary-light: #3ED097;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #C99356;
+  --accent-gold-light: #DDB37F;
+  --text-primary: #F1FBF6;
+  --text-secondary: #8FB3A3;
+}
+
+:root[data-theme="escuridao"] {
+  --theme-name: "Escuridão";
+  --color-bg-primary: #050506;
+  --accent-primary: #E8EBF0;
+  --accent-primary-rgb: 232, 235, 240;
+  --accent-secondary: #6B7686;
+  --accent-secondary-rgb: 107, 118, 134;
+  --accent-secondary-light: #8B96A6;
+  --accent-secondary-contrast: white;
+  --accent-gold: #E8EBF0;
+  --accent-gold-light: #F5F7FA;
+  --text-primary: #F5F6F8;
+  --text-secondary: #7A8494;
+}
+
+:root[data-theme="profundezas-do-oceano"] {
+  --theme-name: "Profundezas do Oceano";
+  --color-bg-primary: #041B22;
+  --accent-primary: #00E5C7;
+  --accent-primary-rgb: 0, 229, 199;
+  --accent-secondary: #1670C9;
+  --accent-secondary-rgb: 22, 112, 201;
+  --accent-secondary-light: #4E97DB;
+  --accent-secondary-contrast: white;
+  --accent-gold: #00E5C7;
+  --accent-gold-light: #5CF0DC;
+  --text-primary: #E8FBF7;
+  --text-secondary: #5E9C99;
+}
+
+:root[data-theme="praia-de-domingo"] {
+  --theme-name: "Praia de Domingo";
+  --color-bg-primary: #1B140F;
+  --accent-primary: #FF8C5A;
+  --accent-primary-rgb: 255, 140, 90;
+  --accent-secondary: #2DD4BF;
+  --accent-secondary-rgb: 45, 212, 191;
+  --accent-secondary-light: #5EE2D2;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #FF8C5A;
+  --accent-gold-light: #FFB18A;
+  --text-primary: #FDF6EE;
+  --text-secondary: #C2A68C;
+}
+
+:root[data-theme="sol-do-meio-dia"] {
+  --theme-name: "Sol do Meio-Dia";
+  --color-bg-primary: #1A1006;
+  --accent-primary: #FFC94D;
+  --accent-primary-rgb: 255, 201, 77;
+  --accent-secondary: #D4530A;
+  --accent-secondary-rgb: 212, 83, 10;
+  --accent-secondary-light: #E67A2E;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #FFC94D;
+  --accent-gold-light: #FFDD8A;
+  --text-primary: #FFF8ED;
+  --text-secondary: #C9A876;
+}
+
+:root[data-theme="aurora-boreal"] {
+  --theme-name: "Aurora Boreal";
+  --color-bg-primary: #050A0C;
+  --accent-primary: #2EE6A8;
+  --accent-primary-rgb: 46, 230, 168;
+  --accent-secondary: #A855F7;
+  --accent-secondary-rgb: 168, 85, 247;
+  --accent-secondary-light: #C084FC;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #2EE6A8;
+  --accent-gold-light: #6EF0C4;
+  --text-primary: #EAFBF2;
+  --text-secondary: #6B8577;
+}
+
+:root[data-theme="tempestade"] {
+  --theme-name: "Tempestade";
+  --color-bg-primary: #0B0E16;
+  --accent-primary: #A8C4FF;
+  --accent-primary-rgb: 168, 196, 255;
+  --accent-secondary: #5B6B8C;
+  --accent-secondary-rgb: 91, 107, 140;
+  --accent-secondary-light: #8493B8;
+  --accent-secondary-contrast: white;
+  --accent-gold: #A8C4FF;
+  --accent-gold-light: #C9DBFF;
+  --text-primary: #EEF2FF;
+  --text-secondary: #8B98B4;
+}
+
+:root[data-theme="hacker"] {
+  --theme-name: "Hacker";
+  --color-bg-primary: #000000;
+  --accent-primary: #00FF66;
+  --accent-primary-rgb: 0, 255, 102;
+  --accent-secondary: #00B84A;
+  --accent-secondary-rgb: 0, 184, 74;
+  --accent-secondary-light: #3EFF8F;
+  --accent-secondary-contrast: var(--color-bg-primary);
+  --accent-gold: #00FF66;
+  --accent-gold-light: #6BFFA8;
+  --text-primary: #D7FFE4;
+  --text-secondary: #4FBE7A;
+}
+
+/* Tema Hacker: fonte monoespaçada em todo o sistema (não só no login) —
+   "coisas simples" pedidas pelo dono pra sentir o tema mesmo fora da tela de
+   login, sem precisar de componente novo em cada tela (o resto — glow verde
+   em card/borda/scrollbar — já vem de graça dos tokens --accent-* acima). */
+:root[data-theme="hacker"] {
+  --font-sans: "Courier New", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Cores de DADO — fixas, não seguem o tema (gráficos, KPIs, status). */
+:root {
+  --data-blue: #3B82F6;
+  --data-green: #34D399;
+  --data-purple: #A78BFA;
+  --data-orange: #FB923C;
+  --data-red: #F87171;
+}
+
+/* -----------------------------------------------------------------------------
+   Base body: pure dark with soft radial glows
+   ----------------------------------------------------------------------------- */
+html, body, #root {
+  min-height: 100vh;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(var(--accent-secondary-rgb), 0.06), transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(var(--accent-primary-rgb), 0.04), transparent 50%);
+  background-attachment: fixed;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  font-family: var(--font-sans);
+}
+
+/* O preflight do Tailwind zera o cursor de <button> pra "default" — sem
+   isso, todo botão custom (fora do componente Button compartilhado, ex.:
+   os da sidebar/tema) fica com a setinha em vez da mãozinha. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Campos nativos (select/option) seguem o esquema de cor do SO por padrão —
+   em fundo escuro isso deixa a lista de opções branco-no-branco até passar o
+   mouse (só o hover força uma cor). `color-scheme: dark` avisa o navegador
+   pra desenhar select/option/scrollbar nativos já no estilo escuro; o
+   background/color explícitos em `option` cobrem os navegadores que ignoram
+   color-scheme nesse elemento (Chrome/Edge no Windows, notavelmente). */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #14161f;
+  color: var(--color-text-primary, #F8FAFC);
+}
+
+/* Scrollbar — dark, subtle. `::-webkit-scrollbar` só existe em navegadores
+   Chromium/WebKit — Firefox usa as propriedades padrão abaixo
+   (scrollbar-width/scrollbar-color), sem equivalente via pseudo-elemento.
+   Sem isso, no Firefox a sidebar (e qualquer outra lista com scroll) caía
+   pro scrollbar CINZA CLARO nativo do SO — destoando MUITO do tema escuro
+   (pedido do dono, 2026-09-06: "a barrinha... sempre se adaptar com a tela
+   de resolução para nunca ficar nada destorcido"). `html` propaga por
+   herança pra tudo (nav da sidebar incluído), sem precisar repetir em cada
+   elemento com overflow. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--accent-secondary-rgb), 0.28) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-secondary-rgb), 0.18);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-secondary-rgb), 0.32);
+}
+
+/* Pedido do dono (2026-09-06): "aqui o scroll já não está sendo mais
+   necessário mas mesmo assim ela ainda persiste" (print da sidebar, com
+   setinhas de subir/descer aparecendo mesmo sem nada cortado) — em algumas
+   combinações de SO/navegador (Windows com "sempre mostrar barra de
+   rolagem", entre outras) a faixa da barra reserva espaço e desenha os
+   botões de seta mesmo com overflow zero. Esconde a barra visualmente
+   nesse elemento especificamente, mantendo `overflow-y-auto` funcional por
+   trás (mouse/trackpad ainda rolam se algum dia precisar, só não aparece
+   nada na tela). */
+.sidebar-nav-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Edge legado/IE */
+}
+.sidebar-nav-scroll::-webkit-scrollbar {
+  display: none; /* Chrome/Edge/Safari */
+  width: 0;
+  height: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   Glassmorphism utilities
+   ----------------------------------------------------------------------------- */
+@layer components {
+  .glass-card {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--accent-secondary-rgb), 0.08),
+      rgba(var(--accent-secondary-rgb), 0.02)
+    );
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(var(--accent-secondary-rgb), 0.25);
+    border-radius: var(--radius-card);
+    box-shadow:
+      0 0 20px rgba(var(--accent-secondary-rgb), 0.06),
+      inset 0 1px 0 rgba(var(--accent-secondary-rgb), 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card-hover:hover,
+  .glass-card:hover {
+    border-color: rgba(var(--accent-secondary-rgb), 0.45);
+    box-shadow:
+      0 0 30px rgba(var(--accent-secondary-rgb), 0.12),
+      0 0 60px rgba(var(--accent-secondary-rgb), 0.04),
+      0 1px 0 rgba(var(--accent-primary-rgb), 0.35),
+      inset 0 1px 0 rgba(var(--accent-secondary-rgb), 0.2);
+  }
+
+  /* Fio dourado no topo do card no hover — o toque "premium" da marca,
+     usado com moderação (só aparece na interação, não no repouso). */
+  .glass-card {
+    position: relative;
+  }
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-primary-rgb), 0), transparent);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    transition: background 0.4s ease;
+    pointer-events: none;
+  }
+  .glass-card:hover::before {
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-primary-rgb), 0.55), transparent);
+  }
+
+  /* Números de destaque (dashboard) ganham um gradiente azul->dourado —
+     assinatura visual da marca nos pontos de maior atenção da tela. */
+  .text-stat-premium {
+    background: linear-gradient(135deg, var(--color-text-primary) 40%, var(--accent-gold-light));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Era fixo em azul-marinho (rgba(15,18,35,...)) — sidebar/header nunca
+     acompanhavam o tema escolhido (feedback do dono: "tem que mexer na
+     sidebar também"). Agora deriva do próprio --color-bg-primary do tema. */
+  .glass-surface {
+    background: color-mix(in srgb, var(--color-bg-primary) 60%, transparent);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(var(--accent-secondary-rgb), 0.12);
+  }
+
+  .text-display {
+    font-weight: 700;
+  }
+
+  .text-stat {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .text-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+  }
+
+  .text-body {
+    font-weight: 400;
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+  }
+
+  .text-muted {
+    color: var(--color-text-secondary);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Focus ring — accent-aware, accessible
+   ----------------------------------------------------------------------------- */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Entrada de mensagem nova migrada pro GSAP (MessageThread.tsx, skill
+   gsap-core/gsap-react) — era @keyframes CSS. */
+
+/* -----------------------------------------------------------------------------
+   Telas de auth (login/signup/setup). Entrada do card, inclinação da logo e
+   parallax da grade agora são GSAP (AuthShell.tsx, skill gsap-core/gsap-react)
+   — eram @keyframes CSS antes; ficam só as partes puramente estáticas aqui.
+   ----------------------------------------------------------------------------- */
+
+/* Card de login/cadastro — halo estático (não animado) em vez de borda com
+   "cobra" de cor passando. Uma borda fixa levemente mais clara + um brilho
+   suave por fora é o que lê como "premium" em produtos de verdade (Linear,
+   Stripe...) — uma borda colorida se movendo o tempo todo lê como efeito de
+   template genérico, não como refinamento. */
+.auth-card-premium {
+  border-color: rgba(var(--accent-primary-rgb), 0.25);
+  box-shadow:
+    0 0 60px rgba(var(--accent-primary-rgb), 0.08),
+    0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* Fundo interativo (canvas, por tema) das telas de auth agora vive inteiro em
+   components/auth/InteractiveBackground.tsx — sem CSS de apoio aqui (a antiga
+   grade + "holofote" foi removida por completo: efeito de círculo/glow
+   seguindo o cursor foi rejeitado explicitamente pelo dono, "fica feio"). O
+   componente já lida com prefers-reduced-motion internamente (desenha um
+   frame estático do mesmo padrão em vez de nada — ver comentário lá), então
+   não precisa de regra extra aqui. */
+
+/* Toast (sonner) sai mais rápido — pedido do dono: "quero que tenha pelo
+   menos uma animação saindo mas quero que seja algo rápido". O sonner já
+   anima transform/opacity na entrada/saída, só que na duração padrão dele
+   (.4s); aqui só encurtamos a DURAÇÃO da transição (longhand depois do
+   shorthand do próprio sonner, então só sobrescreve o tempo, sem mexer em
+   quais propriedades animam nem no easing) — evita reimplementar a mecânica
+   de transform que o sonner usa pra empilhar/posicionar os toasts. */
+[data-sonner-toast] {
+  transition-duration: 0.18s !important;
+}
+
+/* -----------------------------------------------------------------------------
+   V3 Layout — icon-only purple sidebar + light shell (test layout)
+   ----------------------------------------------------------------------------- */
+:root {
+  --sidebar-v3-bg: #5847EB;
+  --sidebar-v3-bg-dark: #4535C9;
+  --v3-shell-bg: #FBFBFF;
+  --v3-card-bg: #FFFFFF;
+  --v3-text-primary: #1A1A2E;
+  --v3-text-secondary: #6B7280;
+  --v3-border: #E5E7EB;
+}
+
+.sidebar-v3 {
+  background: linear-gradient(180deg, var(--sidebar-v3-bg) 0%, var(--sidebar-v3-bg-dark) 100%);
+  border-radius: 0 26px 26px 0;
+  box-shadow: 4px 0 24px rgba(88, 71, 235, 0.18);
+}
+
+.sidebar-v3-btn {
+  position: relative;
+}
+
+.sidebar-v3-tooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--v3-text-primary);
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 50;
+}
+
+.sidebar-v3-btn:hover .sidebar-v3-tooltip {
+  opacity: 1;
+}
+
+.v3-shell-bg {
+  background-color: var(--v3-shell-bg);
+}
+
+.v3-header {
+  background: var(--v3-card-bg);
+  border-bottom: 1px solid var(--v3-border);
+}
+
+.v3-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--v3-text-secondary);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.v3-tab:hover {
+  color: var(--v3-text-primary);
+  background: rgba(88, 71, 235, 0.06);
+}
+
+.v3-tab-active {
+  color: #fff;
+  background: var(--sidebar-v3-bg);
+  box-shadow: 0 2px 8px rgba(88, 71, 235, 0.25);
+}
+
+.v3-tab-active:hover {
+  color: #fff;
+  background: var(--sidebar-v3-bg);
+}

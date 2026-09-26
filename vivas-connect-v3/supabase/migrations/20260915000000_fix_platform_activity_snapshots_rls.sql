@@ -1,0 +1,24 @@
+-- ============================================================================
+-- FIX DE SEGURANÇA (auditoria 2026-09-15, pedido do dono: "o SQL de todo o
+-- meu sistema está protegido? Faça testes"): whatsapp_hub.
+-- platform_activity_snapshots foi criada (migration 20260825140000) sem
+-- `ENABLE ROW LEVEL SECURITY` — única tabela do schema nesse estado. Como o
+-- Supabase concede GRANT amplo (INSERT/UPDATE/DELETE/SELECT) a `authenticated`
+-- por padrão em toda tabela nova e confia 100% na RLS pra travar isso, essa
+-- tabela ficou de fato ABERTA: qualquer usuário logado de QUALQUER org (não
+-- precisa ser super admin) conseguia ler, inserir linha falsa ou apagar todo
+-- o histórico via `supabase.schema('whatsapp_hub').from('platform_activity_
+-- snapshots')` direto do navegador. Confirmado com um teste real (INSERT como
+-- role authenticated comum, dentro de uma transação revertida em seguida).
+--
+-- Só quem deveria mexer aqui é o cron `capture_activity_snapshot()` (grava) e
+-- a RPC `platform_admin_metrics()` (lê a média) — as duas são SECURITY
+-- DEFINER, então continuam funcionando normalmente mesmo sem NENHUMA policy
+-- (RLS habilitada sem policy = acesso zero pra anon/authenticated, mesmo
+-- schema já usa esse padrão em _bootstrap_state/app_settings/org_settings).
+--
+-- Já aplicado direto em produção via Supabase MCP em 2026-09-15 — este
+-- arquivo só registra a mudança no histórico do repositório.
+-- ============================================================================
+
+ALTER TABLE whatsapp_hub.platform_activity_snapshots ENABLE ROW LEVEL SECURITY;
