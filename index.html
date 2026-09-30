@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escalas Riva Vendas</title>
+<title>Escalas</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -575,11 +575,20 @@ tbody tr:hover td { background: #FAFBFF; }
 <!-- ─── HEADER ─────────────────────────────────────────────── -->
 <div id="header" class="no-print">
   <div class="logo-area">
-    <div class="logo-icon">RV</div>
+    <div class="logo-icon" id="hdr-logo-icon">RV</div>
     <div class="logo-text">
-      <div class="logo-nome">RIVA VENDAS</div>
+      <div class="logo-nome" id="hdr-logo-nome">RIVA VENDAS</div>
       <div class="logo-sub">Sistema de Escalas</div>
     </div>
+    <!-- 2026-09-13 (pedido do dono): "isso que eu fiz tudo da RIVA (RV) na
+         DIRECIONAL (DV)... não pode ter as coisas da RIVA nem as mini logos".
+         Um sistema só, dados 100% separados por empresa (ver EMPRESAS/
+         trocarEmpresa_ mais abaixo) — nada de Riva aparece enquanto
+         Direcional estiver selecionada, e vice-versa. -->
+    <select id="hdr-empresa-sel" onchange="trocarEmpresa_(this.value)" title="Trocar de empresa — os dados de cada uma ficam completamente separados" style="margin-left:14px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;background:#fff;color:var(--azul);border:none;cursor:pointer">
+      <option value="RIVA">🏢 RIVA VENDAS</option>
+      <option value="DIRECIONAL">🏢 DIRECIONAL VENDAS</option>
+    </select>
   </div>
   <div class="header-center">
     <span class="header-mes-label">Período:</span>
@@ -587,7 +596,7 @@ tbody tr:hover td { background: #FAFBFF; }
   </div>
   <div class="header-actions">
     <span id="save-indicator" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.45);min-width:80px;text-align:right">—</span>
-    <button class="btn btn-secondary btn-sm" onclick="abrirModalImprimir()">🖨️ Imprimir / PDF</button>
+    <button class="btn btn-secondary btn-sm" onclick="abrirModalImprimir()">🖨️ Gerar PDF</button>
     <button class="btn btn-primary" onclick="confirmarGerarEscalas()">⚡ Gerar Escalas</button>
   </div>
 </div>
@@ -608,9 +617,9 @@ tbody tr:hover td { background: #FAFBFF; }
 <!-- ─── PRINT HEADER (global, aparece só na impressão) ─────── -->
 <div id="print-header">
   <div class="print-logo">
-    <div class="print-logo-icon">RV</div>
+    <div class="print-logo-icon" id="print-logo-icon">RV</div>
     <div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul)" id="print-logo-nome">RIVA VENDAS</div>
       <div style="font-size:13px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>
     </div>
   </div>
@@ -717,6 +726,7 @@ tbody tr:hover td { background: #FAFBFF; }
         <div class="card-title" id="lbl-vgv">VGV de Referência</div>
         <div class="info-box">VGV total de cada gerente no mês anterior. Usado para distribuição proporcional e para o BLIP (por VGV).</div>
         <div id="tabela-vgv"></div>
+        <div class="warn-box" id="aviso-pct-manual" style="display:none;margin-top:10px"></div>
         <div class="sep"></div>
         <div class="row">
           <span style="font-size:14px;font-weight:700;color:var(--azul)">Total VGV:</span>
@@ -753,6 +763,17 @@ tbody tr:hover td { background: #FAFBFF; }
       <div class="card-title">⚡ Configurar 10% Ativo — Por Local</div>
       <div class="info-box" style="margin-bottom:14px">Escolha quais locais participam do bônus de 10% para gerentes com bônus ativo (zerados/novatos). Locais desmarcados distribuem igualmente entre todos.</div>
       <div id="config-10pct-lista"></div>
+    </div>
+
+    <!-- TIMES DOS REGIONAIS (2026-09-13) -->
+    <div class="card" style="margin-top:18px">
+      <div class="card-title">👥 Time de cada Gerente Regional</div>
+      <div class="info-box" style="margin-bottom:14px">
+        Cadastre aqui os <strong>Gerentes de Vendas</strong> que trabalham para cada regional. Eles
+        <strong>não entram na escala principal</strong> — servem para, depois de gerada a escala dos
+        regionais, dividir as vagas de um regional entre o time dele (botão no nome dele, na aba Escalas Geradas).
+      </div>
+      <div id="times-lista"></div>
     </div>
   </div>
 
@@ -879,19 +900,19 @@ tbody tr:hover td { background: #FAFBFF; }
 <!-- ─── MODAL IMPRESSÃO POR LOCAL ──────────────────────────── -->
 <div class="modal-overlay" id="modal-imprimir" style="display:none" onclick="fecharModalImprimir(event)">
   <div class="modal-box" style="max-width:420px" onclick="event.stopPropagation()">
-    <div class="modal-title">🖨️ Imprimir / Gerar PDF</div>
-    <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:14px">Escolha quais locais deseja incluir na impressão:</div>
+    <div class="modal-title">🖨️ Gerar PDF</div>
+    <div style="font-size:13px;color:var(--cinza-texto);margin-bottom:14px">Escolha quais locais deseja incluir no PDF:</div>
     <div id="print-locais-list"></div>
     <div style="margin-top:10px;display:flex;gap:8px;margin-bottom:16px">
       <button class="btn btn-xs btn-outline" onclick="togglePrintLocais(true)">Todos</button>
       <button class="btn btn-xs btn-outline" onclick="togglePrintLocais(false)">Nenhum</button>
     </div>
     <div class="info-box" style="font-size:12px;margin-bottom:16px">
-      💡 Cada local será impresso em uma <strong>página separada</strong>, com cabeçalho completo (Riva Vendas, período, nome do local). Selecione só os locais desejados.
+      💡 Cada local vira uma <strong>página separada</strong>, sempre em formato paisagem, com cabeçalho completo (empresa, período, nome do local). Selecione só os locais desejados.
     </div>
     <div class="row" style="justify-content:flex-end;gap:8px">
       <button class="btn btn-outline" onclick="fecharModalImprimir()">Cancelar</button>
-      <button class="btn btn-primary" onclick="executarImpressao()">🖨️ Imprimir / PDF</button>
+      <button class="btn btn-primary" onclick="executarImpressao()">🖨️ Baixar PDF</button>
     </div>
   </div>
 </div>
@@ -966,6 +987,20 @@ tbody tr:hover td { background: #FAFBFF; }
       <div id="blip-preview-dist" style="margin-top:10px;font-size:12px;color:#7A5A00"></div>
     </div>
 
+    <!-- 1 REGIONAL POR TURNO — pedido do dono (2026-09-30): "o turno ser de
+    apenas 1 regional, ex: amanhã a tarde a Riva inteira tem 2 vagas, as 2
+    vai ser de 1 regional". Travado NA HORA DE GERAR (aqui), não por local:
+    quando marcado, TODAS as vagas daquele turno em TODOS os locais (exceto
+    BLIP e Dia Todo, que têm lógica própria) somam numa bolsa só e são
+    sorteadas, o mais igual possível, entre o time de vendas do regional
+    escolhido. Turno deixado "Livre" continua concorrendo entre todos, como
+    sempre. -->
+    <div style="background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#9A3412;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">🗂️ 1 Regional por Turno <span style="font-size:10px;font-weight:400;text-transform:none">(opcional)</span></div>
+      <div style="font-size:11px;color:#7A5A00;margin-bottom:8px">Trava um turno inteiro (todos os locais juntos) só para o time de 1 regional — sorteado, o mais igual possível entre eles. Deixe "Livre" para manter o comportamento normal.</div>
+      <div id="regional-por-turno-global" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+    </div>
+
     <div style="background:#F8F9FC;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
       <div style="font-size:12px;font-weight:700;color:var(--azul);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">✅ Locais a Gerar</div>
       <div id="locais-check-list"></div>
@@ -1008,8 +1043,81 @@ tbody tr:hover td { background: #FAFBFF; }
 <script>
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
 const CLOUD_SPREADSHEET_URL='https://docs.google.com/spreadsheets/d/12jTIthOgHc1GI7D6DdkyD_kqhtDC7-aaR12Pgn9_F40/edit';
+// CLOUD_WEBAPP_URL e CLOUD_RESPONSAVEL sao COMPARTILHADOS entre as empresas
+// de proposito -- e o MESMO Apps Script/planilha por baixo (so a pasta do
+// Drive e diferente, e o Apps Script escolhe pelo campo "empresa" que a
+// gente manda em cada envio) -- nao tem por que configurar isso duas vezes.
 const CLOUD_WEBAPP_STORAGE_KEY='riva_banco_webapp_url';
 const CLOUD_RESPONSAVEL_STORAGE_KEY='riva_banco_responsavel';
+
+// ─── EMPRESAS (2026-09-13, pedido do dono) ─────────────────────────────────
+// "Isso que eu fiz tudo da RIVA (RV) na DIRECIONAL (DV)... não pode ter as
+// coisas da RIVA nem as mini logos." Um sistema só (1 link), dados 100%
+// separados por empresa: cada uma tem sua própria chave de localStorage
+// (gerentes, locais, escalas, fila de domingos, histórico — tudo), e a marca
+// (nome + sigla do logo) troca em tela e no PDF conforme a selecionada.
+// STORAGE_KEY da RIVA fica EXATAMENTE igual ao de sempre ('riva_escalas_
+// dados_v6') de propósito — quem já usa o sistema não perde nada ao
+// atualizar a página.
+const EMPRESAS = {
+  RIVA: { nome: 'RIVA VENDAS', sigla: 'RV', storageKey: 'riva_escalas_dados_v6' },
+  DIRECIONAL: { nome: 'DIRECIONAL VENDAS', sigla: 'DV', storageKey: 'direcional_escalas_dados_v1' }
+};
+const EMPRESA_ATUAL_STORAGE_KEY='riva_empresa_atual';
+let empresaAtualId = localStorage.getItem(EMPRESA_ATUAL_STORAGE_KEY) || 'RIVA';
+if(!EMPRESAS[empresaAtualId]) empresaAtualId='RIVA';
+
+function empresaAtual(){ return EMPRESAS[empresaAtualId] || EMPRESAS.RIVA; }
+function storageKeyAtual(){ return empresaAtual().storageKey; }
+
+// Atualiza logo/nome em tela e no cabeçalho de impressão pra bater com a
+// empresa selecionada — chamado ao carregar a página e sempre que troca.
+function aplicarBranding(){
+  const emp=empresaAtual();
+  const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
+  set('hdr-logo-icon',emp.sigla);
+  set('hdr-logo-nome',emp.nome);
+  set('print-logo-icon',emp.sigla);
+  set('print-logo-nome',emp.nome);
+  const sel=document.getElementById('hdr-empresa-sel');
+  if(sel) sel.value=empresaAtualId;
+  document.title='Escalas '+emp.nome;
+}
+
+// Troca de empresa: salva tudo da empresa ATUAL antes de sair (nada se
+// perde), troca a "gaveta" de dados, e recarrega a tela do zero. Se for a
+// primeira vez que essa empresa é usada nesse navegador, começa com um
+// cadastro em branco — de propósito, pra não vir nada da Riva junto.
+function trocarEmpresa_(novaId){
+  if(!EMPRESAS[novaId] || novaId===empresaAtualId) return;
+  salvarDados(); // garante que a empresa que está saindo não perde nada
+  empresaAtualId=novaId;
+  localStorage.setItem(EMPRESA_ATUAL_STORAGE_KEY,novaId);
+  const havia=carregarDados();
+  aplicarBranding();
+  if(!havia) zerarEstadoParaEmpresaNova_();
+  historicoBancoCache=[]; // é da outra empresa, não reaproveita
+  calSemanasExtras=0;
+  mudarMes();
+  renderPainel();
+  if(S.escala){renderEscalasVisu();renderRelatorio();}
+  showToast(`Empresa trocada para ${empresaAtual().nome}${havia?'':' — cadastro novo, comece em Locais & Padrões'}.`,'info',6000);
+}
+
+// Cadastro em branco pra uma empresa nova (nunca usada nesse navegador) —
+// NÃO herda os exemplos de locais/gerentes que só fazem sentido pra RIVA
+// (Shopping Parangaba, René, Cahú...). Extraído de trocarEmpresa_ porque
+// também precisa rodar no BOOT da página: se o navegador está com
+// Direcional selecionada mas ainda sem nada salvo, sem isso o "S" inicial
+// (que sempre nasce com o exemplo da Riva, seed do arquivo) vazaria pra tela
+// da Direcional só de dar F5 antes de configurar qualquer coisa.
+function zerarEstadoParaEmpresaNova_(){
+  S.gerentes=[];S.locais=[];S.vgv={};S.ajustes={};S.escala=null;
+  S.historicoEscalas=[];S.filaDomingos=[];S.vagasManual={};S.vagasManualTotal=0;
+  S.locais10pct=null;S.pctManual={};S.times={};S.vgvTime={};S.pctTime={};
+  S.modoTime={};S.historicoDomingos={};S.filaDomingosTime={};
+  autoSave();
+}
 const MESES = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DSEM = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const TURNOS_LABEL = {m:'Manhã', t:'Tarde', n:'Noite'};
@@ -1036,7 +1144,11 @@ let S = {
      padrao:{0:{m:1,t:1},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
      fechados:[], modo:'igual',
      horarios:{m:'', t:'', n:''}},
-    {id:4, nome:'Estande da Riva', turnos:['m','t'], diatodo:false,
+    // Nome precisa conter "loja": a fila de domingos só liga pra locais cujo
+    // nome bate com isso (isLojaLocal, em gerarEscalasInterno). Renomeado de
+    // "Estande da Riva" em 2026-09-13 a pedido do dono, justamente porque a
+    // fila de domingos não funcionava com o nome antigo.
+    {id:4, nome:'Loja', turnos:['m','t'], diatodo:false,
      padrao:{0:{m:2,t:2},1:{m:2,t:2},2:{m:2,t:2},3:{m:2,t:2},4:{m:2,t:2},5:{m:2,t:2},6:{m:2,t:2}},
      fechados:[], modo:'igual',
      horarios:{m:'', t:'', n:''}},
@@ -1070,7 +1182,28 @@ let S = {
   filaDomingos: [], // [{gid, nome}] — ordem da fila de domingos da LOJA
   vagasManual: {}, // {gid: qtd} — vagas manuais por gerente
   vagasManualTotal: 0,
-  locais10pct: null // null = todos; array de ids = locais com 10% ativo
+  locais10pct: null, // null = todos; array de ids = locais com 10% ativo
+  pctManual: {}, // {gid: 0-100} — % direto por gerente, alternativa ao VGV pra locais no modo "Por %"
+  // ── Times dos regionais (2026-09-13, pedido do dono) ────────────────────
+  // Cada Gerente Regional (René, Cahú, Jessyca...) tem o time de Gerentes de
+  // Vendas dele. Guardado SEPARADO de S.gerentes de propósito: se ficasse na
+  // mesma lista, os vendedores entrariam na escala principal junto com os
+  // regionais. Aqui eles só existem pra subdividir as vagas que o regional
+  // recebeu (ver gerarEscalaDoTime_).
+  times: {},           // {gerenteRegionalId: [{id,nome,novato,inativo}]}
+  vgvTime: {},         // {vendedorId: valor}
+  pctTime: {},         // {vendedorId: 0-100}
+  modoTime: {},        // {gerenteRegionalId: 'igual'|'vgv'|'pct'}
+  // Histórico de domingos NUNCA zera sozinho (2026-09-13, pedido do dono).
+  // {chave: {gid, tipo:'regional'|'vendedor', regionalId?}} — chave é
+  // local+data(+time do regional, pro nível vendedor), NÃO um contador solto:
+  // regenerar o mesmo mês sobrescreve as mesmas chaves, nunca soma em dobro.
+  // contarDomingos(id) deriva o total contando as entradas com esse gid.
+  historicoDomingos: {},
+  // Fila de domingos EDITÁVEL por time (2026-09-14, pedido do dono) — mesma
+  // ideia de S.filaDomingos, mas uma fila própria por regional, só com o
+  // time dele. {regionalId: [{gid,nome}, ...]}
+  filaDomingosTime: {}
 };
 
 let abaAtual = 0;
@@ -1151,6 +1284,12 @@ function irAbaHistorico(){
   document.getElementById('aba-ajuda').style.display='none';
   document.getElementById('aba-fila-dom').style.display='none';
   renderHistorico();
+  // Histórico persistente entre máquinas (2026-09-12): sempre que abre esta
+  // aba, busca no banco (Google Sheets/Drive) o que foi enviado de QUALQUER
+  // computador — não só o que está salvo neste navegador. Silencioso: se
+  // falhar (sem internet, banco não configurado), a lista local continua
+  // funcionando normalmente, só não mostra a seção "No banco".
+  carregarHistoricoDoBanco();
 }
 
 function irAbaAjuda(){
@@ -1187,6 +1326,21 @@ function getLocLoja(){
   return S.locais.find(l=>l.nome.toLowerCase().includes('loja'))||null;
 }
 
+// ── Histórico de domingos que NUNCA zera sozinho (2026-09-13) ──────────────
+// Guarda QUAL domingo específico cada pessoa pegou (chave = local+data, ou
+// local+data+time pro nível de vendedor), não um contador solto. Isso é o
+// que torna seguro gerar o MESMO mês de novo: regenerar setembro sobrescreve
+// as mesmas chaves de setembro, nunca soma em cima — sem isso, cada "Gerar
+// Escalas" a mais inflaria o histórico de verdade.
+function contarDomingos(id){
+  if(!S.historicoDomingos) return 0;
+  return Object.values(S.historicoDomingos).filter(e=>String(e.gid)===String(id)).length;
+}
+function registrarDomingo_(chave,gid,extra){
+  if(!S.historicoDomingos) S.historicoDomingos={};
+  S.historicoDomingos[chave]=Object.assign({gid},extra||{});
+}
+
 function inicializarFilaDomingos(){
   // Sincroniza fila com gerentes ativos: adiciona novos ao fim, remove inativos
   const ger=gerentesAtivos();
@@ -1198,6 +1352,99 @@ function inicializarFilaDomingos(){
   ger.forEach(g=>{if(!filaIds.has(g.id)) S.filaDomingos.push({gid:g.id,nome:g.nome});});
   // Atualiza nomes (podem ter mudado)
   S.filaDomingos.forEach(item=>{const g=ger.find(x=>x.id===item.gid);if(g)item.nome=g.nome;});
+}
+
+// ── Fila de domingos por TIME (2026-09-14, pedido do dono) ────────────────
+// Mesmo mecanismo de S.filaDomingos, só que uma fila própria por regional.
+function inicializarFilaDomingosTime(regionalId){
+  if(!S.filaDomingosTime) S.filaDomingosTime={};
+  if(!S.filaDomingosTime[regionalId]) S.filaDomingosTime[regionalId]=[];
+  const time=timeAtivo(regionalId);
+  const timeIds=new Set(time.map(v=>v.id));
+  S.filaDomingosTime[regionalId]=S.filaDomingosTime[regionalId].filter(item=>timeIds.has(item.gid));
+  const filaIds=new Set(S.filaDomingosTime[regionalId].map(item=>item.gid));
+  time.forEach(v=>{if(!filaIds.has(v.id)) S.filaDomingosTime[regionalId].push({gid:v.id,nome:v.nome});});
+  S.filaDomingosTime[regionalId].forEach(item=>{const v=time.find(x=>x.id===item.gid);if(v)item.nome=v.nome;});
+}
+
+function renderFilaTimeGeral(){
+  const cont=document.getElementById('fila-dom-time-geral');
+  if(!cont) return;
+  cont.innerHTML='';
+  const regionais=S.gerentes.filter(g=>!g.inativo).filter(g=>timeAtivo(g.id).length>0);
+  if(regionais.length===0){
+    cont.innerHTML='<div style="font-size:12px;color:var(--cinza-texto);padding:8px 0">Nenhum time cadastrado ainda — cadastre em Gerentes &amp; VGV → Time de cada Gerente Regional.</div>';
+    return;
+  }
+  regionais.forEach(reg=>{
+    inicializarFilaDomingosTime(reg.id);
+    const box=document.createElement('div');
+    box.className='card';
+    box.style.marginBottom='14px';
+    box.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="card-title" style="margin-bottom:0">Time de ${escaparHtml(reg.nome)}</div>
+        <button class="btn btn-xs btn-danger" onclick="resetarFilaTime(${argJs_(reg.id)})">🔄 Resetar ordem</button>
+      </div>
+      <div id="fila-dom-time-lista-${reg.id}" style="display:flex;flex-direction:column;gap:6px"></div>`;
+    cont.appendChild(box);
+    renderFilaTimeLista(reg.id);
+  });
+}
+
+function renderFilaTimeLista(regionalId){
+  const lista=document.getElementById('fila-dom-time-lista-'+regionalId);
+  if(!lista) return;
+  lista.innerHTML='';
+  let dragSrc=null;
+  const fila=S.filaDomingosTime[regionalId]||[];
+
+  fila.forEach((item,idx)=>{
+    const total=contarDomingos(item.gid);
+    const row=document.createElement('div');
+    row.draggable=true;
+    row.dataset.idx=idx;
+    row.style.cssText=`display:flex;align-items:center;gap:10px;padding:8px 12px;background:${total>0?'var(--verde-claro)':'#fff'};border:1.5px solid ${total>0?'#86EFAC':'var(--cinza-borda)'};border-radius:8px;cursor:grab;transition:all 0.15s;user-select:none`;
+    row.innerHTML=`
+      <span style="font-size:16px;color:var(--cinza-texto);cursor:grab">⠿</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--cinza-texto);min-width:22px;text-align:center">${idx+1}</span>
+      <span style="flex:1;font-size:13px;font-weight:700;color:var(--texto)">${escaparHtml(item.nome)}</span>
+      <span class="badge ${total>0?'badge-verde':'badge-cinza'}" style="font-size:10px">${total} domingo${total!==1?'s':''} (desde sempre)</span>
+      <button class="btn btn-xs btn-outline" onclick="moverFilaTimeUp(${argJs_(regionalId)},${idx})" ${idx===0?'disabled':''} style="padding:2px 6px">↑</button>
+      <button class="btn btn-xs btn-outline" onclick="moverFilaTimeDown(${argJs_(regionalId)},${idx})" ${idx===fila.length-1?'disabled':''} style="padding:2px 6px">↓</button>`;
+
+    row.addEventListener('dragstart',e=>{dragSrc=idx;row.style.opacity='0.4';e.dataTransfer.effectAllowed='move';});
+    row.addEventListener('dragend',()=>{row.style.opacity='1';});
+    row.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(dragSrc===null||dragSrc===idx) return;
+      const arr=S.filaDomingosTime[regionalId];
+      const [moved]=arr.splice(dragSrc,1);
+      arr.splice(idx,0,moved);
+      autoSave();
+      renderFilaTimeLista(regionalId);
+    });
+
+    lista.appendChild(row);
+  });
+}
+
+function moverFilaTimeUp(regionalId,idx){
+  if(idx===0) return;
+  const arr=S.filaDomingosTime[regionalId];
+  [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];
+  autoSave(); renderFilaTimeLista(regionalId);
+}
+function moverFilaTimeDown(regionalId,idx){
+  const arr=S.filaDomingosTime[regionalId];
+  if(idx>=arr.length-1) return;
+  [arr[idx],arr[idx+1]]=[arr[idx+1],arr[idx]];
+  autoSave(); renderFilaTimeLista(regionalId);
+}
+function resetarFilaTime(regionalId){
+  if(!confirm('Resetar a ordem da fila deste time para a ordem atual do cadastro?')) return;
+  S.filaDomingosTime[regionalId]=timeAtivo(regionalId).map(v=>({gid:v.id,nome:v.nome}));
+  autoSave(); renderFilaTimeLista(regionalId);
 }
 
 function renderFilaDomingos(){
@@ -1252,10 +1499,153 @@ function renderFilaDomingos(){
         <div class="card-title">📅 Domingos de ${MESES[S.mes]}</div>
         <div style="display:flex;flex-direction:column;gap:6px" id="fila-dom-preview"></div>
       </div>
+
+      <!-- 2026-09-14 (pedido do dono): "eu quero poder mexer na fila dos
+           GERENTES DE VENDAS DE CADA UM também" — uma fila própria, editável
+           (arrastar/subir/descer), por regional. Usada como desempate na
+           hora de gerar a escala do time (ver gerarEscalaDoTime_). -->
+      <div style="margin-top:16px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:var(--azul);margin-bottom:8px">🌅 Fila de Domingos — por Time</div>
+        <div id="fila-dom-time-geral"></div>
+      </div>
+
+      <!-- 2026-09-13 (pedido do dono): "tem que ter uma contagem geral, de
+           todos" — diferente do card acima (só o mês selecionado), este NUNCA
+           zera sozinho, é a soma desde que o histórico começou a ser
+           guardado, e junta regionais e vendedores de TODOS os times num
+           lugar só. -->
+      <div class="card" style="margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:0">📊 Histórico geral de domingos (desde sempre)</div>
+          <div class="row" style="gap:6px">
+            <button class="btn btn-xs btn-verde" onclick="recuperarDomingosDaEscalaAtual()" title="Escalas geradas antes deste histórico existir não entram sozinhas — use este botão pra somá-las">📥 Recuperar domingos da escala atual</button>
+            <button class="btn btn-xs btn-outline" onclick="zerarHistoricoDomingos()">🗑 Zerar histórico</button>
+          </div>
+        </div>
+        <div class="info-box" style="margin-bottom:12px">Essa contagem <strong>nunca zera sozinha</strong> — soma mês após mês. É ela (não a fila do mês) que decide quem está "devendo" domingo há mais tempo. Escalas geradas <strong>antes</strong> deste histórico existir (13/09/2026) precisam ser recuperadas manualmente: abra a escala no Histórico, volte aqui e clique em "Recuperar domingos da escala atual".</div>
+        <div id="historico-dom-geral"></div>
+      </div>
     </div>`;
 
   renderFilaLista(domPorGer, domingos, locLoja);
   renderFilaPreview(domPorGer, domingos, locLoja);
+  renderFilaTimeGeral();
+  renderHistoricoDomingosGeral();
+}
+
+// 2026-09-14 (pedido do dono): "mostrar o nome de todos que já pegaram
+// domingo mesmo que eu remova a pessoa do sistema". Antes, esta tela partia
+// da lista ATUAL de gerentes/vendedores ativos — removendo alguém, o nome
+// dele sumia do histórico, mesmo com o domingo contando pra sempre por
+// baixo. Agora lê direto do que foi REGISTRADO (S.historicoDomingos), que
+// desde 2026-09-14 guarda o nome junto — sobrevive à remoção.
+function renderHistoricoDomingosGeral(){
+  const cont=document.getElementById('historico-dom-geral');
+  if(!cont) return;
+  cont.innerHTML='';
+
+  const entradas=Object.values(S.historicoDomingos||{});
+  if(entradas.length===0){
+    cont.insertAdjacentHTML('beforeend','<div style="font-size:12px;color:var(--cinza-texto);padding:8px 0">Nenhum domingo registrado ainda. Se você já gerou e enviou escalas ANTES desse histórico existir, use o botão "📥 Recuperar domingos da escala atual" acima.</div>');
+    return;
+  }
+
+  // Agrupa por regional (tipo 'regional') e, dentro de cada um, os
+  // vendedores do time dele (tipo 'vendedor' com esse regionalId) — via
+  // nomeRegional salvo na hora, não a lista atual (regional removido
+  // continua aparecendo como cabeçalho do grupo dele).
+  const porRegional={}; // regionalId -> {nome, total, vendedores:{vid:{nome,total}}}
+  entradas.forEach(e=>{
+    if(e.tipo==='regional'){
+      if(!porRegional[e.gid]) porRegional[e.gid]={nome:e.nome||'(sem nome)',total:0,vendedores:{}};
+      porRegional[e.gid].total++;
+      porRegional[e.gid].nome=e.nome||porRegional[e.gid].nome;
+    } else if(e.tipo==='vendedor'){
+      const rid=e.regionalId??'sem-regional';
+      if(!porRegional[rid]) porRegional[rid]={nome:e.nomeRegional||'(regional removido)',total:0,vendedores:{}};
+      if(!porRegional[rid].vendedores[e.gid]) porRegional[rid].vendedores[e.gid]={nome:e.nome||'(sem nome)',total:0};
+      porRegional[rid].vendedores[e.gid].total++;
+      porRegional[rid].vendedores[e.gid].nome=e.nome||porRegional[rid].vendedores[e.gid].nome;
+    }
+  });
+
+  const aindaExiste=id=>S.gerentes.some(g=>String(g.id)===String(id));
+
+  Object.entries(porRegional)
+    .sort((a,b)=>b[1].total-a[1].total)
+    .forEach(([rid,dados])=>{
+      const removido=!aindaExiste(rid);
+      const vendedores=Object.values(dados.vendedores).sort((a,b)=>a.total-b.total);
+      const box=document.createElement('div');
+      box.style.cssText='border:1.5px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px';
+      box.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${vendedores.length?'8px':'0'}">
+          <span style="font-weight:700;font-size:13px">${escaparHtml(dados.nome)}${removido?' <span class="badge badge-cinza" style="font-size:9px">removido</span>':''}</span>
+          <span class="badge ${dados.total>0?'badge-azul':'badge-cinza'}">${dados.total} domingo${dados.total!==1?'s':''} (regional)</span>
+        </div>`;
+      if(vendedores.length){
+        const lista=document.createElement('div');
+        lista.style.cssText='display:flex;flex-direction:column;gap:4px;padding-left:10px;border-left:2px solid var(--cinza-borda)';
+        vendedores.forEach(v=>{
+          const linha=document.createElement('div');
+          linha.style.cssText='display:flex;align-items:center;justify-content:space-between;font-size:12px';
+          linha.innerHTML=`<span>${escaparHtml(v.nome)}</span><span class="badge ${v.total>0?'badge-verde':'badge-cinza'}" style="font-size:10px">${v.total} domingo${v.total!==1?'s':''}</span>`;
+          lista.appendChild(linha);
+        });
+        box.appendChild(lista);
+      }
+      cont.appendChild(box);
+    });
+}
+
+// BUG REAL (2026-09-14, reportado pelo dono): "já gerei escalas e até já
+// enviei ao banco mas a quantidade [...] ainda estão em 0". Esse histórico
+// só começou a existir em 2026-09-13 — ele conta o domingo no momento em
+// que a escala é GERADA, não quando é enviada ao banco. Escalas geradas
+// ANTES dessa data nunca passaram por esse código, então o histórico
+// legitimamente não sabe delas. Este botão varre a escala JÁ GERADA que
+// está na tela agora (e, se existirem, as escalas de time já geradas no
+// Histórico) e registra os domingos dela — mesma chave/mesma lógica de
+// sempre, então clicar de novo depois não duplica nada.
+function recuperarDomingosDaEscalaAtual(){
+  if(!S.escala){showToast('Gere ou abra uma escala primeiro (aba Escalas Geradas).','warning');return;}
+  const loc=S.locais.find(l=>l.nome.toLowerCase().includes('loja'));
+  if(!loc){showToast('Nenhum local "Loja" encontrado.','warning');return;}
+  const agenda=S.escala.agenda?.[loc.id]||{};
+  let qtd=0;
+  const ehTime=!!S.escala.filtroDe;
+  const regionalDoTime=ehTime?S.gerentes.find(g=>g.nome===S.escala.filtroDe):null;
+  Object.keys(agenda).forEach(ds=>{
+    if(new Date(ds+'T12:00').getDay()!==0) return;
+    const dia=agenda[ds];
+    if(!dia||dia.fechado) return;
+    // Todo domingo na Loja é 1 pessoa só — pega o primeiro nome não-nulo
+    // que aparecer em qualquer turno desse dia.
+    let quem=null;
+    Object.keys(dia).forEach(tr=>{
+      if(quem||tr==='_diatodo'||!Array.isArray(dia[tr])) return;
+      const achou=dia[tr].find(g=>g);
+      if(achou) quem=achou;
+    });
+    if(!quem) return;
+    if(ehTime&&regionalDoTime){
+      registrarDomingo_(loc.id+'_'+ds+'|time'+regionalDoTime.id,quem.id,{tipo:'vendedor',regionalId:regionalDoTime.id,nome:quem.nome,nomeRegional:regionalDoTime.nome});
+    } else {
+      registrarDomingo_(loc.id+'_'+ds+'|regional',quem.id,{tipo:'regional',nome:quem.nome});
+    }
+    qtd++;
+  });
+  autoSave();
+  renderHistoricoDomingosGeral();
+  if(qtd>0) showToast(`${qtd} domingo${qtd!==1?'s':''} recuperado${qtd!==1?'s':''} da escala atual!`,'success');
+  else showToast('Essa escala não tem nenhum domingo na Loja pra recuperar.','info');
+}
+
+function zerarHistoricoDomingos(){
+  if(!confirm('Zerar TODO o histórico de domingos (regionais e times)? Isso não pode ser desfeito — use só se for começar do zero de propósito.')) return;
+  S.historicoDomingos={};
+  autoSave();
+  renderHistoricoDomingosGeral();
+  showToast('Histórico de domingos zerado.','info');
 }
 
 function renderFilaLista(domPorGer, domingos, locLoja){
@@ -1464,7 +1854,7 @@ function renderAjuda(){
         <li>Clique em qualquer nome de gerente (chip colorido) para <strong>editar manualmente</strong> aquela vaga — trocar o gerente ou alterar o número de vagas naquele dia.</li>
         <li>A linha <strong>★ DIA TODO</strong> indica que o mesmo gerente está em todos os turnos daquele dia (ex: Lumina).</li>
         <li>No rodapé de cada local aparece o <strong>contador de vagas por gerente</strong>.</li>
-        <li>Use o botão <strong>"🖨️ Selecionar e Imprimir"</strong> para escolher quais locais incluir no PDF.</li>
+        <li>Use o botão <strong>"🖨️ Selecionar e Baixar PDF"</strong> para escolher quais locais incluir no PDF (sempre em paisagem).</li>
       </ul>
     `)}
 
@@ -1516,9 +1906,9 @@ function renderAjuda(){
     <!-- Rodapé de crédito -->
     <div style="margin-top:32px;padding:18px 20px;background:var(--azul);border-radius:var(--radius);color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:38px;height:38px;background:var(--vermelho);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px">RV</div>
+        <div style="width:38px;height:38px;background:var(--vermelho);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px">${empresaAtual().sigla}</div>
         <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.5px">Sistema de Escalas · Riva Vendas</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:0.5px">Sistema de Escalas · ${empresaAtual().nome}</div>
           <div style="font-size:11px;opacity:0.65;margin-top:2px">Desenvolvido especialmente para a equipe de vendas</div>
         </div>
       </div>
@@ -1549,7 +1939,19 @@ function mudarMes(){
   const anoAnt=S.mes===1?S.ano-1:S.ano;
   const lblVgv=document.getElementById('lbl-vgv');
   if(lblVgv) lblVgv.textContent='VGV de Referência — '+MESES[mesAnt]+' '+anoAnt;
-  S.escala=null; S.ajustes={};
+  // BUG REAL (2026-09-12, reportado pelo dono): trocar de mês apagava TODOS
+  // os overrides do Calendário de Vagas de TODOS os locais e TODAS as datas
+  // — não só do mês que estava saindo. Como `S.ajustes` guarda a chave com a
+  // data completa (ex. 'pad_locId_2026-09-14'), nunca havia motivo real pra
+  // zerar isso ao trocar de mês — são datas diferentes, chaves diferentes,
+  // não colidem. Esse zerado também quebrava o caso de uma escala atravessar
+  // virada de mês (ex. Lumina 14/09→03/10): configurar os dias de outubro
+  // exigia navegar pra outubro, o que apagava tudo que já tinha sido
+  // ajustado em setembro. `S.escala` (o resultado JÁ GERADO) continua
+  // limpando ao trocar de mês, de propósito — isso é o esperado, você gera
+  // uma escala nova por mês.
+  S.escala=null;
+  calSemanasExtras=0;
   autoSave();
   if(abaAtual===0) renderPainel();
   if(abaAtual===2) renderCalendarioVagas();
@@ -1580,6 +1982,7 @@ function renderPainel(){
       <select style="width:auto;font-size:12px" onchange="S.locais.find(x=>x.id===${l.id}).modo=this.value;autoSave();renderPainel()">
         <option value="igual"${l.modo==='igual'?' selected':''}>Igualitário</option>
         <option value="vgv"${l.modo==='vgv'?' selected':''}>Por VGV</option>
+        <option value="pct"${l.modo==='pct'?' selected':''}>Por %</option>
       </select>`}`;
     pm.appendChild(r);
   });
@@ -1686,7 +2089,7 @@ function renderPainelRelatorioRapido(){
       const vgv=S.vgv[g.id]||0;
       const pctVGV=totalVGV>0?Math.round(vgv/totalVGV*100):0;
       html+=`<tr>
-        <td style="font-weight:700">${g.nome}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}${g.inativo?` <span class="badge badge-cinza" style="font-size:9px">Inativo</span>`:''}</td>
+        <td style="font-weight:700">${g.nome}${cargoBadge(g)}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}${g.inativo?` <span class="badge badge-cinza" style="font-size:9px">Inativo</span>`:''}</td>
         <td><strong style="font-size:16px;font-family:'Barlow Condensed',sans-serif;color:var(--azul)">${cnt}</strong></td>
         <td style="font-size:12px;color:var(--cinza-texto)">${vgv>0?fmtR(vgv)+' ('+pctVGV+'%)':'—'}</td>
         ${S.locais.map(l=>`<td style="text-align:center;font-size:13px;font-weight:600">${contPorLocal[g.id]?.[l.nome]||0}</td>`).join('')}
@@ -1910,10 +2313,52 @@ function renderCalendarioVagas(){
     const t=document.createElement('div');
     t.className='cal-local-tab'+(l.id===calLocalAtivo?' active':'');
     t.textContent=l.nome;
-    t.onclick=()=>{calLocalAtivo=l.id;renderCalendarioVagas();};
+    t.onclick=()=>{calLocalAtivo=l.id;calSemanasExtras=0;renderCalendarioVagas();};
     tabs.appendChild(t);
   });
   renderCalMes();
+}
+
+// 2026-09-12 (pedido do dono): escalas como a do Lumina atravessam virada de
+// mês (ex. 14/09 → 03/10) — pra configurar os 3 dias de outubro, o único
+// jeito era trocar o mês inteiro no seletor lá em cima, o que tirava a
+// visão de setembro da tela. Quantas semanas extras do PRÓXIMO mês aparecem
+// no final da grade, além do mês selecionado — cresce clicando no botão
+// "+ mostrar mais dias", reseta ao trocar de local ou de mês.
+let calSemanasExtras=0;
+
+// Constrói 1 célula do calendário — extraído pra ser usado tanto pros dias
+// do mês selecionado quanto pros dias extras do próximo mês (mesmo template
+// nos dois casos, incluindo o clique, que já funciona com qualquer `ds`
+// independente do mês selecionado no topo).
+function construirCelulaDiaVagas_(loc,d,ehProximoMes){
+  const ds=toDS(d);
+  const fechado=(loc.fechados||[]).includes(ds);
+  const override=S.ajustes['pad_'+loc.id+'_'+ds];
+  const vagas=vagasDia(loc,d);
+  const cell=document.createElement('div');
+  cell.className='cal-dia'+(fechado?' fechado':'')+(override?' tem-override':'')+(ehProximoMes?' prox-mes':'');
+  if(ehProximoMes) cell.style.opacity='0.72';
+  cell.onclick=()=>abrirModalDia(loc.id,ds,d.getDate(),d.getDay());
+  const num=document.createElement('div');num.className='cal-dia-num';
+  num.textContent=ehProximoMes?`${d.getDate()}/${MESES[d.getMonth()+1].slice(0,3)}`:d.getDate();
+  cell.appendChild(num);
+  const dsem=document.createElement('div');dsem.className='cal-dia-dsem';dsem.textContent=DSEM[d.getDay()];cell.appendChild(dsem);
+  if(fechado){
+    const fch=document.createElement('div');fch.style.cssText='font-size:10px;color:var(--vermelho);font-weight:700;margin-top:2px';fch.textContent='FECHADO';cell.appendChild(fch);
+  } else if(vagas){
+    const vDiv=document.createElement('div');vDiv.className='cal-dia-vagas';
+    loc.turnos.forEach(tr=>{
+      const p=document.createElement('div');p.className='vaga-pill vaga-'+tr;
+      p.innerHTML=`<span>${TURNOS_LABEL[tr]}</span><strong>${vagas[tr]||0}</strong>`;
+      vDiv.appendChild(p);
+    });
+    cell.appendChild(vDiv);
+  }
+  if(override){
+    const ov=document.createElement('div');ov.style.cssText='font-size:9px;color:var(--azul-claro);font-weight:700;margin-top:2px;text-align:right';ov.textContent='✏️ override';cell.appendChild(ov);
+  }
+  return cell;
 }
 
 function renderCalMes(){
@@ -1942,32 +2387,46 @@ function renderCalMes(){
     const v=document.createElement('div');v.className='cal-dia vazio';grid.appendChild(v);
   }
   dias.forEach(d=>{
-    const ds=toDS(d);
-    const fechado=(loc.fechados||[]).includes(ds);
-    const override=S.ajustes['pad_'+loc.id+'_'+ds];
-    const vagas=vagasDia(loc,d);
-    const cell=document.createElement('div');
-    cell.className='cal-dia'+(fechado?' fechado':'')+(override?' tem-override':'');
-    cell.onclick=()=>abrirModalDia(loc.id,ds,d.getDate(),d.getDay());
-    const num=document.createElement('div');num.className='cal-dia-num';num.textContent=d.getDate();cell.appendChild(num);
-    const dsem=document.createElement('div');dsem.className='cal-dia-dsem';dsem.textContent=DSEM[d.getDay()];cell.appendChild(dsem);
-    if(fechado){
-      const fch=document.createElement('div');fch.style.cssText='font-size:10px;color:var(--vermelho);font-weight:700;margin-top:2px';fch.textContent='FECHADO';cell.appendChild(fch);
-    } else if(vagas){
-      const vDiv=document.createElement('div');vDiv.className='cal-dia-vagas';
-      loc.turnos.forEach(tr=>{
-        const p=document.createElement('div');p.className='vaga-pill vaga-'+tr;
-        p.innerHTML=`<span>${TURNOS_LABEL[tr]}</span><strong>${vagas[tr]||0}</strong>`;
-        vDiv.appendChild(p);
-      });
-      cell.appendChild(vDiv);
-    }
-    if(override){
-      const ov=document.createElement('div');ov.style.cssText='font-size:9px;color:var(--azul-claro);font-weight:700;margin-top:2px;text-align:right';ov.textContent='✏️ override';cell.appendChild(ov);
-    }
-    grid.appendChild(cell);
+    grid.appendChild(construirCelulaDiaVagas_(loc,d,false));
   });
+
+  // Dias extras do próximo mês (só aparecem se o dono clicar "+ mostrar
+  // mais dias" — não some nada do mês atual, só ACRESCENTA no final).
+  if(calSemanasExtras>0){
+    const sep=document.createElement('div');
+    sep.style.cssText='grid-column:1/-1;font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 4px;padding-top:8px;border-top:1px dashed var(--cinza-borda)';
+    const proxMesNum=S.mes===12?1:S.mes+1;
+    const proxAno=S.mes===12?S.ano+1:S.ano;
+    sep.textContent=`Início de ${MESES[proxMesNum]} ${proxAno} (dias extras)`;
+    grid.appendChild(sep);
+
+    const ultimoDia=dias[dias.length-1];
+    const totalExtras=calSemanasExtras*7;
+    for(let i=1;i<=totalExtras;i++){
+      const d=new Date(ultimoDia.getFullYear(),ultimoDia.getMonth(),ultimoDia.getDate()+i,12,0,0);
+      grid.appendChild(construirCelulaDiaVagas_(loc,d,true));
+    }
+  }
+
   cont.appendChild(grid);
+
+  const btnMais=document.createElement('button');
+  btnMais.type='button';
+  btnMais.className='btn btn-outline btn-sm';
+  btnMais.style.marginTop='14px';
+  btnMais.textContent=`+ Mostrar mais 7 dias (${MESES[S.mes===12?1:S.mes+1]})`;
+  btnMais.title='Útil quando a escala deste local atravessa a virada do mês (ex. Lumina 14/09 → 03/10) — mostra os primeiros dias do mês seguinte aqui embaixo, sem trocar de mês lá em cima.';
+  btnMais.onclick=()=>{calSemanasExtras++;renderCalMes();};
+  cont.appendChild(btnMais);
+  if(calSemanasExtras>0){
+    const btnMenos=document.createElement('button');
+    btnMenos.type='button';
+    btnMenos.className='btn btn-outline btn-sm';
+    btnMenos.style.cssText='margin-top:14px;margin-left:8px';
+    btnMenos.textContent='− Esconder dias extras';
+    btnMenos.onclick=()=>{calSemanasExtras=0;renderCalMes();};
+    cont.appendChild(btnMenos);
+  }
 }
 
 // ─── MODAL DIA ─────────────────────────────────────────────────────────────
@@ -1975,7 +2434,11 @@ function abrirModalDia(lid,ds,diaNum,diaWeek){
   const loc=S.locais.find(x=>x.id===lid);
   if(!loc) return;
   modalDiaCtx={lid,ds,diaNum};
-  document.getElementById('modal-dia-title').innerHTML=`Vagas — <span style="color:var(--vermelho)">${diaNum} de ${MESES[S.mes]} (${DSEM[diaWeek]})</span>`;
+  // Mês vem da própria data (ds), não de S.mes — com os "dias extras do
+  // próximo mês" (Calendário de Vagas), a célula clicada pode ser de um mês
+  // diferente do que está selecionado lá em cima.
+  const mesDoDs=Number(ds.split('-')[1]);
+  document.getElementById('modal-dia-title').innerHTML=`Vagas — <span style="color:var(--vermelho)">${diaNum} de ${MESES[mesDoDs]} (${DSEM[diaWeek]})</span>`;
   const body=document.getElementById('modal-dia-body');
   body.innerHTML='';
   const override=S.ajustes['pad_'+lid+'_'+ds];
@@ -2094,6 +2557,11 @@ function renderGerentesVGV(){
         <option${g.regional==='René'?' selected':''}>René</option>
         <option${g.regional==='Cahú'?' selected':''}>Cahú</option>
       </select>
+      <select title="Cargo — aparece no relatório pra diferenciar quem é Regional de quem é Vendas" style="width:auto;font-weight:600;color:${g.cargo==='regional'?'#1A4A9C':g.cargo==='vendas'?'#7A5A00':'var(--cinza-texto)'}" onchange="S.gerentes.find(x=>x.id===${g.id}).cargo=this.value||null;renderGerentesVGV();autoSave()">
+        <option value=""${!g.cargo?' selected':''}>— Cargo? —</option>
+        <option value="regional"${g.cargo==='regional'?' selected':''}>🏢 Gerente Regional</option>
+        <option value="vendas"${g.cargo==='vendas'?' selected':''}>💼 Gerente de Vendas</option>
+      </select>
       <label title="Gerente Novato — recebe 10% das vagas do BLIP" style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;padding:4px 8px;border-radius:var(--radius-sm);background:${g.novato?'#FEF9C3':'var(--cinza-fundo)'};border:1.5px solid ${g.novato?'#F59E0B':'var(--cinza-borda)'};color:${g.novato?'#92400E':'var(--cinza-texto)'}">
         <input type="checkbox" ${g.novato?'checked':''} onchange="S.gerentes.find(x=>x.id===${g.id}).novato=this.checked;renderGerentesVGV();autoSave()" style="width:13px;height:13px;margin:0">
         🌟 Novato
@@ -2109,9 +2577,11 @@ function renderGerentesVGV(){
   const tv=document.getElementById('tabela-vgv');
   tv.innerHTML='';
   const t=document.createElement('table');
-  t.innerHTML='<thead><tr><th>Gerente</th><th>Regional</th><th>VGV (R$)</th><th>%</th><th>Status</th></tr></thead>';
+  t.innerHTML='<thead><tr><th>Gerente</th><th>Regional</th><th>VGV (R$)</th><th>% do VGV</th><th>% Direto (locais "Por %")</th><th>Status</th></tr></thead>';
   const tb=document.createElement('tbody');
+  if(!S.pctManual) S.pctManual={};
   const totalVGV=S.gerentes.filter(g=>!g.inativo).reduce((s,g)=>s+(S.vgv[g.id]||0),0);
+  const totalPctManual=S.gerentes.filter(g=>!g.inativo).reduce((s,g)=>s+(S.pctManual[g.id]||0),0);
   S.gerentes.forEach(g=>{
     const v=S.vgv[g.id]||0;
     const pct=totalVGV>0?Math.round(v/totalVGV*100):0;
@@ -2121,18 +2591,148 @@ function renderGerentesVGV(){
       <td><span class="badge ${g.regional==='René'?'badge-azul':'badge-verde'}">${g.regional}</span></td>
       <td><input type="number" value="${v}" min="0" style="width:130px" onchange="setVGV(${g.id},+this.value)" ${g.inativo?'disabled':''}></td>
       <td style="font-size:12px;min-width:36px;font-weight:600">${g.inativo?'—':pct+'%'}</td>
+      <td><input type="number" value="${S.pctManual[g.id]||0}" min="0" max="100" style="width:90px" onchange="setPctManual(${g.id},+this.value)" ${g.inativo?'disabled':''}> %</td>
       <td>${g.inativo?'<span class="badge badge-cinza">Inativo</span>':g.novato?'<span class="badge badge-amarelo">Novato</span>':'<span class="badge badge-verde">Ativo</span>'}</td>`;
     tb.appendChild(tr);
   });
   t.appendChild(tb);tv.appendChild(t);
   document.getElementById('total-vgv').textContent=fmtR(totalVGV);
+  // Aviso se o % direto não soma 100 — não trava nada (o cálculo usa proporção
+  // automaticamente, igual já fazia com VGV), só ajuda a conferir de cabeça.
+  const avisoPct=document.getElementById('aviso-pct-manual');
+  if(avisoPct){
+    if(totalPctManual>0 && totalPctManual!==100){
+      avisoPct.style.display='';
+      avisoPct.textContent=`⚠️ A soma do % Direto está em ${totalPctManual}% (não precisa ser 100% — o sistema divide pela proporção entre quem tem valor preenchido, mas confira se não esqueceu ninguém).`;
+    } else {
+      avisoPct.style.display='none';
+    }
+  }
   renderVagasManuais();
   renderConfig10pct();
+  renderTimes();
 }
 
 function setVGV(id,val){S.vgv[id]=val;renderGerentesVGV();autoSave();}
+function setPctManual(id,val){if(!S.pctManual)S.pctManual={};S.pctManual[id]=Math.max(0,Math.min(100,val));renderGerentesVGV();autoSave();}
 function removerGerente(id){if(confirm('Remover gerente?')){S.gerentes=S.gerentes.filter(x=>x.id!==id);renderGerentesVGV();autoSave();}}
-function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regional:'René',novato:false,inativo:false});renderGerentesVGV();autoSave();showToast('Gerente adicionado!','success');}
+function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regional:'René',cargo:null,novato:false,inativo:false});renderGerentesVGV();autoSave();showToast('Gerente adicionado!','success');}
+
+// Badge de cargo (2026-09-12, pedido do dono): usado nos relatórios pra
+// diferenciar Gerente Regional de Gerente de Vendas — mesma pessoa, mesma
+// lista, só rotulada certo em vez de aparecer genericamente "Gerente".
+// ─── TIMES DOS REGIONAIS (2026-09-13) ────────────────────────────────────────
+// Cada Gerente Regional tem seu time de Gerentes de Vendas. Ficam fora de
+// S.gerentes de propósito (senão entrariam na escala principal); só são
+// usados pra subdividir as vagas do regional (ver gerarEscalaDoTime_).
+// BUG REAL (2026-09-13): os ids dos vendedores são STRING ('v1757...'), e o
+// código montava o onclick/onchange com JSON.stringify, que devolve a string
+// entre ASPAS DUPLAS. Como o atributo HTML também usa aspas duplas
+// (onchange="..."), o atributo fechava no meio do id e o comando inteiro
+// quebrava — nenhum nome era salvo, e a lista voltava pro padrão a cada
+// render. Este helper emite o argumento entre aspas SIMPLES, que convivem
+// bem dentro do atributo.
+function argJs_(v){
+  if(typeof v==='number') return String(v);
+  return "'"+String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"'";
+}
+
+function timeDoRegional(regionalId){
+  if(!S.times) S.times={};
+  if(!S.times[regionalId]) S.times[regionalId]=[];
+  return S.times[regionalId];
+}
+function timeAtivo(regionalId){
+  return timeDoRegional(regionalId).filter(v=>!v.inativo);
+}
+function addVendedor(regionalId){
+  timeDoRegional(regionalId).push({id:'v'+Date.now()+Math.floor(Math.random()*1000),nome:'Novo Gerente de Vendas',novato:false,inativo:false});
+  renderTimes();autoSave();showToast('Gerente de vendas adicionado!','success');
+}
+function removerVendedor(regionalId,vid){
+  if(!confirm('Remover esse gerente de vendas do time?')) return;
+  S.times[regionalId]=timeDoRegional(regionalId).filter(v=>String(v.id)!==String(vid));
+  delete (S.vgvTime||{})[vid];delete (S.pctTime||{})[vid];
+  renderTimes();autoSave();
+}
+function setVendedorCampo(regionalId,vid,campo,valor){
+  const v=timeDoRegional(regionalId).find(x=>String(x.id)===String(vid));
+  if(!v) return;
+  v[campo]=valor;
+  renderTimes();autoSave();
+}
+function setVgvTime(vid,val){if(!S.vgvTime)S.vgvTime={};S.vgvTime[vid]=Math.max(0,val||0);renderTimes();autoSave();}
+function setPctTime(vid,val){if(!S.pctTime)S.pctTime={};S.pctTime[vid]=Math.max(0,Math.min(100,val||0));renderTimes();autoSave();}
+function setModoTime(regionalId,modo){if(!S.modoTime)S.modoTime={};S.modoTime[regionalId]=modo;renderTimes();autoSave();}
+
+function renderTimes(){
+  const cont=document.getElementById('times-lista');
+  if(!cont) return;
+  cont.innerHTML='';
+  const regionais=S.gerentes.filter(g=>!g.inativo);
+  if(regionais.length===0){
+    cont.innerHTML='<div class="warn-box">Cadastre primeiro os gerentes acima.</div>';
+    return;
+  }
+  regionais.forEach(reg=>{
+    const time=timeDoRegional(reg.id);
+    const modo=(S.modoTime||{})[reg.id]||'igual';
+    const box=document.createElement('div');
+    box.style.cssText='border:1.5px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px';
+    const totalVgvT=timeAtivo(reg.id).reduce((s,v)=>s+((S.vgvTime||{})[v.id]||0),0);
+    const totalPctT=timeAtivo(reg.id).reduce((s,v)=>s+((S.pctTime||{})[v.id]||0),0);
+    box.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:var(--azul)">
+          ${escaparHtml(reg.nome)}${cargoBadge(reg)}
+          <span style="font-size:12px;font-weight:600;color:var(--cinza-texto);font-family:Barlow">— ${timeAtivo(reg.id).length} no time</span>
+        </div>
+        <div class="row" style="gap:8px">
+          <label style="font-size:12px;font-weight:600;color:var(--cinza-texto)">Dividir por:</label>
+          <select style="width:auto;font-size:12px" onchange="setModoTime(${argJs_(reg.id)},this.value)">
+            <option value="igual"${modo==='igual'?' selected':''}>Igualitário</option>
+            <option value="vgv"${modo==='vgv'?' selected':''}>Por VGV</option>
+            <option value="pct"${modo==='pct'?' selected':''}>Por %</option>
+          </select>
+          <button class="btn btn-verde btn-sm" onclick="addVendedor(${argJs_(reg.id)})">+ Gerente de Vendas</button>
+        </div>
+      </div>`;
+    if(time.length===0){
+      box.insertAdjacentHTML('beforeend','<div style="font-size:12px;color:var(--cinza-texto);padding:6px 0">Nenhum gerente de vendas cadastrado para este regional ainda.</div>');
+    } else {
+      const tb=document.createElement('div');
+      time.forEach(v=>{
+        const linha=document.createElement('div');
+        linha.style.cssText=`display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px;border-radius:6px;background:${v.inativo?'#F9FAFB':'var(--cinza-fundo)'}`;
+        if(v.inativo) linha.style.opacity='0.55';
+        const rid=argJs_(reg.id), vid=argJs_(v.id);
+        linha.innerHTML=`
+          <input type="text" value="${escaparHtml(v.nome)}" style="flex:1;font-weight:600;font-size:13px" onchange="setVendedorCampo(${rid},${vid},'nome',this.value)">
+          ${modo==='vgv'?`<input type="number" min="0" value="${(S.vgvTime||{})[v.id]||0}" title="VGV deste gerente de vendas" style="width:110px;font-size:13px" onchange="setVgvTime(${vid},+this.value)" ${v.inativo?'disabled':''}>`:''}
+          ${modo==='pct'?`<input type="number" min="0" max="100" value="${(S.pctTime||{})[v.id]||0}" title="% deste gerente de vendas" style="width:70px;font-size:13px" onchange="setPctTime(${vid},+this.value)" ${v.inativo?'disabled':''}> %`:''}
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;padding:3px 7px;border-radius:var(--radius-sm);background:${v.inativo?'#ECEEF2':'#fff'};border:1.5px solid ${v.inativo?'#9CA3AF':'var(--cinza-borda)'};color:${v.inativo?'#374151':'var(--cinza-texto)'}">
+            <input type="checkbox" ${v.inativo?'checked':''} onchange="setVendedorCampo(${rid},${vid},'inativo',this.checked)" style="width:12px;height:12px;margin:0">
+            🚫 Inativo
+          </label>
+          <button class="btn btn-danger btn-xs" onclick="removerVendedor(${rid},${vid})">✕</button>`;
+        tb.appendChild(linha);
+      });
+      box.appendChild(tb);
+      if(modo==='vgv'&&totalVgvT>0){
+        box.insertAdjacentHTML('beforeend',`<div style="font-size:11px;color:var(--cinza-texto);margin-top:6px">Total VGV do time: <strong>${fmtR(totalVgvT)}</strong></div>`);
+      }
+      if(modo==='pct'&&totalPctT>0&&totalPctT!==100){
+        box.insertAdjacentHTML('beforeend',`<div class="warn-box" style="margin-top:8px;font-size:11px">⚠️ A soma do % deste time está em ${totalPctT}%. Não precisa fechar 100% (o sistema usa a proporção), mas confira se não faltou alguém.</div>`);
+      }
+    }
+    cont.appendChild(box);
+  });
+}
+
+function cargoBadge(g){
+  if(g.cargo==='regional') return '<span class="badge badge-azul" style="font-size:9px;margin-left:4px">🏢 Regional</span>';
+  if(g.cargo==='vendas') return '<span class="badge badge-amarelo" style="font-size:9px;margin-left:4px">💼 Vendas</span>';
+  return '';
+}
 
 // ─── CALENDÁRIO VISUAL DE PERÍODO ────────────────────────────────────────────
 function confirmarGerarEscalas(){
@@ -2163,6 +2763,7 @@ function confirmarGerarEscalas(){
   });
   const overrides=Object.keys(S.ajustes).filter(k=>k.startsWith('pad_')||k.startsWith('diatodo_')).length;
   document.getElementById('confirmar-desc').innerHTML=`Gerentes ativos: <strong>${gerentesAtivos().length}</strong> &nbsp;|&nbsp; Locais: <strong>${S.locais.length}</strong>${overrides>0?`<br><span style="color:var(--azul-claro)">📅 ${overrides} configurações de calendário salvas</span>`:''}`;
+  renderRegionalPorTurnoGlobal();
   renderCalPeriodo();
   document.getElementById('modal-confirmar').style.display='flex';
   // Inicializar painel BLIP
@@ -2308,6 +2909,40 @@ function atualizarPreviewPeriodo(){
 function toggleTodosLocais(val){S.locais.forEach(l=>{const ck=document.getElementById('loc-ck-'+l.id);if(ck)ck.checked=val;});}
 function fecharModalConfirmar(e){if(!e||e.target===document.getElementById('modal-confirmar'))document.getElementById('modal-confirmar').style.display='none';}
 
+// Regionais com pelo menos 1 vendedor ativo no time — únicos elegíveis pra
+// travar um turno (sem time, não tem quem escalar).
+function regionaisComTime(){
+  return S.gerentes.filter(g=>!g.inativo && timeAtivo(g.id).length>0);
+}
+// Monta os selects de "1 Regional por Turno" no modal de gerar escala — um
+// por turno que exista em algum local (Manhã/Tarde/Noite). Lembra a última
+// escolha (S.regionalPorTurnoGlobal), pra não ter que reconfigurar toda vez.
+function renderRegionalPorTurnoGlobal(){
+  const cont=document.getElementById('regional-por-turno-global');
+  if(!cont) return;
+  const turnosExistentes=['m','t','n'].filter(tr=>S.locais.some(l=>l.turnos.includes(tr)));
+  const salvo=S.regionalPorTurnoGlobal||{};
+  const regionais=regionaisComTime();
+  if(regionais.length===0){
+    cont.innerHTML='<div style="font-size:11px;color:var(--cinza-texto)">Nenhum regional com time cadastrado ainda (Gerentes & VGV → Time de cada Gerente Regional).</div>';
+    return;
+  }
+  cont.innerHTML=turnosExistentes.map(tr=>`
+    <div style="flex:1;min-width:150px">
+      <label style="font-size:10px;font-weight:700;color:#7A5A00;display:block;margin-bottom:3px">${TURNOS_LABEL[tr]}</label>
+      <select id="regglobal-${tr}" style="width:100%;font-size:12px" onchange="setRegionalTurnoGlobal('${tr}',this.value)">
+        <option value="">Livre (todos concorrem)</option>
+        ${regionais.map(r=>`<option value="${r.id}" ${String(salvo[tr]||'')===String(r.id)?'selected':''}>${escaparHtml(r.nome)}</option>`).join('')}
+      </select>
+    </div>`).join('');
+}
+function setRegionalTurnoGlobal(turno,regionalId){
+  if(!S.regionalPorTurnoGlobal) S.regionalPorTurnoGlobal={};
+  if(regionalId) S.regionalPorTurnoGlobal[turno]=regionalId;
+  else delete S.regionalPorTurnoGlobal[turno];
+  autoSave();
+}
+
 // ─── GERAR ESCALAS ────────────────────────────────────────────────────────────
 function executarGerarEscalas(){
   if(!periodoSel.ini){showToast('Selecione o período no calendário!','warning');return;}
@@ -2377,6 +3012,271 @@ function diasEntre(dsIni,dsFim){
 // ─── ALGORITMO DE DISTRIBUIÇÃO ───────────────────────────────────────────────
 // Sorteia totalmente aleatório (Math.random), sem pool.
 // Regra anti-consecutivos: a mesma pessoa não pode cair 3x seguidas na mesma vaga/turno.
+// ── Escolha de quem fica com cada vaga — regra ÚNICA do sistema ───────────
+// 2026-09-12 (pedido do dono): "o Rene ficou com 2 dias só pra ele, 6 vagas
+// num dia e mais 6 no outro, mesmo o % geral do mês batendo certinho".
+// Causa raiz: BLIP e locais normais sorteavam ALEATORIAMENTE entre quem
+// ainda tinha crédito, e a trava "anti-repetição" só olhava pro mesmo canal
+// (mesmo turno+assento, comparando só com o dia anterior) — nada impedia a
+// MESMA pessoa de ganhar TODOS os 6 turnos/assentos do MESMO dia, nem vários
+// dias seguidos. O total do mês fechava certo (33/33/33) porque cada sorteio
+// individual era só aleatório dentro de quem tinha saldo — mas "aleatório"
+// não é a mesma coisa que "bem espalhado".
+//
+// Sempre escolhe quem tem MAIS crédito restante (o Dia Todo já fazia isso
+// certo — virou a base), e ANTES disso, sempre que possível, prioriza quem
+// AINDA NÃO trabalhou nesse dia — é essa regra que impede 1 pessoa varrer o
+// dia inteiro. Só cai pra quem já trabalhou hoje se não sobrar mais ninguém
+// com crédito livre nesse dia (evita deixar vaga vazia à toa).
+//
+// 2026-09-13: movida pra fora de gerarEscalasInterno pra ser reaproveitada
+// também na escala por time (gerarEscalaDoTime_), garantindo que a subdivisão
+// do regional entre os vendedores dele use exatamente a mesma qualidade de
+// distribuição da escala principal.
+function escolherPorCredito_(candidatos, creditosMap, ultimosDoisIds, diaAtualDs, diaTrabalhadoHojeMap){
+  const comCredito=candidatos.filter(g=>(creditosMap[g.id]||0)>0);
+  if(comCredito.length===0) return null;
+
+  let pool=comCredito;
+  if(diaAtualDs && diaTrabalhadoHojeMap){
+    const semTrabalharHoje=comCredito.filter(g=>!diaTrabalhadoHojeMap[g.id]);
+    if(semTrabalharHoje.length>0) pool=semTrabalharHoje;
+  }
+
+  // Anti-trinca: evita a MESMA pessoa 3x seguidas na sequência geral —
+  // desempate de segurança, a regra do "não trabalhou hoje" acima já resolve
+  // o caso mais comum.
+  const [u1,u2]=ultimosDoisIds||[null,null];
+  let elegiv=pool;
+  if(u1!==null&&u2!==null&&u1===u2){
+    const semUltimo=pool.filter(g=>g.id!==u1);
+    if(semUltimo.length>0) elegiv=semUltimo;
+  }
+
+  const maxCred=Math.max(...elegiv.map(g=>creditosMap[g.id]||0));
+  const prioritarios=elegiv.filter(g=>(creditosMap[g.id]||0)===maxCred);
+  const escolhido=prioritarios[Math.floor(Math.random()*prioritarios.length)];
+  if(escolhido){
+    creditosMap[escolhido.id]=Math.max(0,(creditosMap[escolhido.id]||0)-1);
+    if(diaAtualDs && diaTrabalhadoHojeMap) diaTrabalhadoHojeMap[escolhido.id]=true;
+  }
+  return escolhido||null;
+}
+
+// Reparte `totalVagas` entre `lista` conforme os pesos (VGV, % direto, ou
+// igual). Mesma matemática (Largest Remainder) usada na escala principal.
+function repartirPorPeso_(lista, totalVagas, pesoMap){
+  if(!lista.length||totalVagas<=0) return {};
+  const totalPeso=lista.reduce((s,g)=>s+((pesoMap||{})[g.id]||0),0);
+  if(totalPeso===0){
+    const base=Math.floor(totalVagas/lista.length);
+    const resto=totalVagas%lista.length;
+    const r={};
+    const emb=[...lista].sort(()=>Math.random()-0.5);
+    emb.forEach((g,i)=>r[g.id]=base+(i<resto?1:0));
+    return r;
+  }
+  const exatos=lista.map(g=>{
+    const exato=((pesoMap||{})[g.id]||0)/totalPeso*totalVagas;
+    return{id:g.id,floor:Math.floor(exato),decimal:exato-Math.floor(exato)};
+  });
+  const r={};
+  exatos.forEach(e=>r[e.id]=e.floor);
+  let faltam=totalVagas-exatos.reduce((s,e)=>s+e.floor,0);
+  exatos.sort((a,b)=>b.decimal-a.decimal);
+  for(let i=0;i<faltam;i++) r[exatos[i].id]++;
+  return r;
+}
+
+// ─── ESCALA POR TIME (2026-09-13, pedido do dono) ────────────────────────────
+// Depois de gerar a escala principal (a dos REGIONAIS), o dono clica no nome
+// de um regional no rodapé e gera uma escala NOVA, separada, só com as vagas
+// daquele regional — subdivididas entre os Gerentes de Vendas do time dele.
+// A escala principal continua intacta.
+//
+// Regras herdadas da escala principal, de propósito:
+//  - mesma matemática de repartição (Igualitário / VGV / % — repartirPorPeso_);
+//  - mesma escolha vaga a vaga (escolherPorCredito_): prioriza quem ainda não
+//    trabalhou no dia, depois quem tem mais crédito — sem empilhar o dia todo
+//    numa pessoa só;
+//  - domingo na Loja continua sendo do MESMO vendedor o dia inteiro, com
+//    rodízio entre os do time (o dono pediu isso explicitamente: a fila de
+//    domingos passa a ser só da equipe daquele regional).
+function gerarEscalaDoTime_(regionalId){
+  if(!S.escala) return {erro:'Gere a escala principal primeiro.'};
+  const reg=S.gerentes.find(g=>String(g.id)===String(regionalId));
+  if(!reg) return {erro:'Gerente regional não encontrado.'};
+  const time=timeAtivo(regionalId);
+  if(time.length===0) return {erro:`Nenhum gerente de vendas ativo no time de ${reg.nome}. Cadastre em Gerentes & VGV → Time de cada Gerente Regional.`};
+
+  // 1) Todas as vagas que esse regional recebeu na escala principal
+  const slots=[];
+  Object.keys(S.escala.agenda||{}).forEach(locId=>{
+    const porData=S.escala.agenda[locId]||{};
+    Object.keys(porData).forEach(ds=>{
+      const dia=porData[ds];
+      if(!dia||dia.fechado) return;
+      Object.keys(dia).forEach(tr=>{
+        if(tr==='_diatodo'||!Array.isArray(dia[tr])) return;
+        dia[tr].forEach((g,seat)=>{
+          if(g&&String(g.id)===String(regionalId)) slots.push({locId,ds,tr,seat});
+        });
+      });
+    });
+  });
+  if(slots.length===0) return {erro:`${reg.nome} não tem nenhuma vaga na escala atual.`};
+
+  // 2) Quantas vagas cada vendedor recebe (mesma matemática da principal)
+  const modo=(S.modoTime||{})[regionalId]||'igual';
+  const pesoMap = modo==='vgv' ? (S.vgvTime||{}) : modo==='pct' ? (S.pctTime||{}) : {};
+  const creditos=repartirPorPeso_(time, slots.length, pesoMap);
+
+  // 3) Domingo na Loja: o dia inteiro do mesmo vendedor, com rodízio no time.
+  // 2026-09-13: histórico PERMANENTE (contarDomingos), separado por regional
+  // (chave leva o regionalId) — o vendedor do time do René não compete com o
+  // vendedor do time do Cahú, cada time tem seu próprio rodízio.
+  const locaisPorId={};S.locais.forEach(l=>locaisPorId[l.id]=l);
+  const atribuido={}; // "locId|ds|tr|seat" -> vendedor
+  const domingosLoja={};
+  slots.forEach(s=>{
+    const loc=locaisPorId[s.locId];
+    if(!loc||!loc.nome.toLowerCase().includes('loja')) return;
+    if(new Date(s.ds+'T12:00').getDay()!==0) return;
+    (domingosLoja[s.ds]=domingosLoja[s.ds]||[]).push(s);
+  });
+  // Mesma correção do bug de regeneração da escala principal: limpa as
+  // entradas desse período+time ANTES de decidir, nunca sobrescreve aos
+  // poucos no meio do cálculo (senão regenerar a escala do time trocaria
+  // quem pegou qual domingo mesmo com a soma total ficando igual).
+  Object.keys(domingosLoja).forEach(ds=>{
+    delete S.historicoDomingos[domingosLoja[ds][0].locId+'_'+ds+'|time'+regionalId];
+  });
+  // 2026-09-14: fila EDITÁVEL do time (arrastar/subir/descer, aba Fila
+  // Domingos) decide o desempate — mesmo padrão da escala principal, que
+  // usa a ordem de S.filaDomingos. Sem isso, o desempate era só a ordem de
+  // cadastro do time, sem o dono conseguir ajustar manualmente.
+  inicializarFilaDomingosTime(regionalId);
+  const filaTime=S.filaDomingosTime[regionalId]||[];
+  Object.keys(domingosLoja).sort().forEach(ds=>{
+    const doDia=domingosLoja[ds];
+    const elegiveis=time.filter(v=>(creditos[v.id]||0)>=doDia.length);
+    const pool=elegiveis.length?elegiveis:time.filter(v=>(creditos[v.id]||0)>0);
+    if(!pool.length) return;
+    const min=Math.min(...pool.map(v=>contarDomingos(v.id)));
+    let escolhido=null;
+    for(let fi=0;fi<filaTime.length;fi++){
+      const cand=pool.find(v=>v.id===filaTime[fi].gid);
+      if(cand&&contarDomingos(cand.id)===min){escolhido=cand;break;}
+    }
+    if(!escolhido) escolhido=pool.filter(v=>contarDomingos(v.id)===min)[0]; // fallback: alguém no pool que a fila não cobre (recém adicionado)
+    if(!escolhido) return;
+    // Chave = local+data+time-do-regional: separado da chave '|regional' da
+    // escala principal (mesma data, fato diferente — "quem do TIME pegou",
+    // não "qual regional pegou"), e regenerar sobrescreve, não soma.
+    // doDia[0].locId (não "s" — fora de escopo aqui, só existe dentro do
+    // doDia.forEach logo abaixo; erro que eu mesmo cometi e corrigi antes de
+    // subir).
+    // Guarda o NOME junto (2026-09-14, pedido do dono: "mostrar o nome de
+    // todos que já pegaram domingo mesmo que eu remova a pessoa") — sem
+    // isso, remover o vendedor ou o regional depois faria o nome sumir do
+    // histórico, mesmo com o domingo registrado pra sempre.
+    registrarDomingo_(doDia[0].locId+'_'+ds+'|time'+regionalId,escolhido.id,{tipo:'vendedor',regionalId,nome:escolhido.nome,nomeRegional:reg.nome});
+    doDia.forEach(s=>{
+      atribuido[s.locId+'|'+s.ds+'|'+s.tr+'|'+s.seat]=escolhido;
+      creditos[escolhido.id]=Math.max(0,(creditos[escolhido.id]||0)-1);
+    });
+  });
+
+  // 4) Resto das vagas, em ordem de data, com a regra padrão do sistema
+  const restantes=slots.filter(s=>!atribuido[s.locId+'|'+s.ds+'|'+s.tr+'|'+s.seat])
+    .sort((a,b)=>a.ds.localeCompare(b.ds)||String(a.locId).localeCompare(String(b.locId)));
+  let ultimos=[null,null];
+  let diaAtual=null;
+  let trabalhouHoje={};
+  restantes.forEach(s=>{
+    if(s.ds!==diaAtual){trabalhouHoje={};diaAtual=s.ds;}
+    let esc=escolherPorCredito_(time,creditos,ultimos,s.ds,trabalhouHoje);
+    if(!esc){
+      // Créditos acabaram (sobra de arredondamento). Completa com quem
+      // trabalhou MENOS até agora — mas, igual à regra principal, priorizando
+      // quem ainda não trabalhou nesse dia, pra não empilhar duas vagas do
+      // mesmo dia na mesma pessoa quando dá pra evitar.
+      const cont={};time.forEach(v=>cont[v.id]=0);
+      Object.values(atribuido).forEach(v=>{if(v)cont[v.id]=(cont[v.id]||0)+1;});
+      const livresHoje=time.filter(v=>!trabalhouHoje[v.id]);
+      const pool=livresHoje.length?livresHoje:time;
+      const menos=Math.min(...pool.map(v=>cont[v.id]||0));
+      esc=pool.filter(v=>(cont[v.id]||0)===menos)[0]||null;
+      if(esc) trabalhouHoje[esc.id]=true;
+    }
+    if(esc) ultimos=[ultimos[1],esc.id];
+    atribuido[s.locId+'|'+s.ds+'|'+s.tr+'|'+s.seat]=esc;
+  });
+
+  // 5) Monta a agenda da escala do time — só com as vagas desse regional,
+  // compactadas (sem buracos onde estavam os outros regionais). A contagem de
+  // assentos vem da PRÓPRIA agenda, não do vagasDia do local (por isso a flag
+  // vagasDaAgenda, lida em renderEscalasVisu).
+  const agenda={};
+  slots.forEach(s=>{
+    agenda[s.locId]=agenda[s.locId]||{};
+    agenda[s.locId][s.ds]=agenda[s.locId][s.ds]||{_diatodo:null};
+    const alvo=agenda[s.locId][s.ds];
+    alvo[s.tr]=alvo[s.tr]||[];
+    alvo[s.tr].push(atribuido[s.locId+'|'+s.ds+'|'+s.tr+'|'+s.seat]||null);
+  });
+
+  const base=S.escala;
+  return {escala:{
+    id:Date.now(),
+    nome:`${base.nome||base.periodoNome} — Filtro: ${reg.nome.toUpperCase()}`,
+    periodoNome:base.periodoNome,
+    filtroDe:reg.nome,
+    vagasDaAgenda:true,
+    geradoEm:new Date().toLocaleString('pt-BR'),
+    agenda,
+    periodoIni:base.periodoIni,
+    periodoFim:base.periodoFim,
+    periodoPorLocal:base.periodoPorLocal,
+    zeradosPorLocal:{},
+    banco:{status:'local'}
+  }};
+}
+
+// Clique no nome do regional no rodapé da escala → gera a escala do time dele.
+function abrirModalTime(regionalId){
+  const reg=S.gerentes.find(g=>String(g.id)===String(regionalId));
+  if(!reg) return;
+  const time=timeAtivo(regionalId);
+  if(time.length===0){
+    showToast(`Nenhum gerente de vendas no time de ${reg.nome}. Cadastre em Gerentes & VGV.`,'warning',7000);
+    irAba(3);
+    return;
+  }
+  const modo=(S.modoTime||{})[regionalId]||'igual';
+  const modoLabel=modo==='vgv'?'Por VGV':modo==='pct'?'Por %':'Igualitário';
+  const ok=confirm(
+    `Gerar a escala do time de ${reg.nome}?\n\n`+
+    `Time (${time.length}): ${time.map(v=>v.nome).join(', ')}\n`+
+    `Divisão: ${modoLabel}\n\n`+
+    `Isso cria uma escala NOVA e separada, só com as vagas do ${reg.nome}, `+
+    `divididas entre o time dele. A escala principal continua intacta.`
+  );
+  if(!ok) return;
+
+  const r=gerarEscalaDoTime_(regionalId);
+  if(r.erro){showToast(r.erro,'error',7000);return;}
+
+  if(!S.historicoEscalas) S.historicoEscalas=[];
+  S.historicoEscalas.unshift({...r.escala});
+  S.escala=r.escala;
+  document.getElementById('print-mes-titulo').textContent=r.escala.nome;
+  document.getElementById('print-data-geracao').textContent='Gerado em: '+r.escala.geradoEm;
+  renderEscalasVisu();renderRelatorio();irAba(4);
+  autoSave();
+  showToast(`Escala do time de ${reg.nome} gerada! Está no Histórico também.`,'success',7000);
+}
+
 function gerarEscalasInterno(){
   const dsIni=S._periodoGlobalIni;
   const dsFim=S._periodoGlobalFim;
@@ -2393,12 +3293,90 @@ function gerarEscalasInterno(){
   const novatos=ger.filter(g=>g.novato);
   const locBlip=S.locais.find(l=>l.nome.toLowerCase().includes('blip'));
 
+  // ── 1 Regional por Turno (GLOBAL, 2026-09-30, pedido do dono: "o turno
+  // ser de apenas 1 regional, ex: amanhã a tarde a Riva inteira tem 2
+  // vagas, as 2 vai ser de 1 regional"). Diferente da trava por local: aqui
+  // TODAS as vagas daquele turno, em TODOS os locais (exceto BLIP e Dia
+  // Todo — lógica própria deles, incompatível com "por turno"), formam UMA
+  // bolsa só, sorteada e dividida o mais igual possível entre o time de
+  // vendas do regional escolhido. Regional sem time ativo cai de volta pro
+  // turno livre, por segurança (nunca deixa vaga sem ninguém pra escalar).
+  const regPorTurnoGlobal=S.regionalPorTurnoGlobal||{};
+  const turnosTravadosGlobal={}; // {tr: regionalId}
+  Object.keys(regPorTurnoGlobal).forEach(tr=>{
+    const rid=regPorTurnoGlobal[tr];
+    if(rid&&timeAtivo(rid).length>0) turnosTravadosGlobal[tr]=rid;
+  });
+  const poolPorTurnoGlobal={};
+  const creditosPorTurnoGlobal={};
+  // "diaTrabalhadoHoje" chaveado por DATA (não por ordem de iteração) — assim
+  // funciona certo mesmo cruzando vários locais no mesmo dia, em qualquer
+  // ordem que sejam processados abaixo: {tr: {ds: {vendedorId:true}}}.
+  const diaTrabalhadoHojeGlobal={};
+  const ultimosPorTurnoGlobal={};
+  Object.keys(turnosTravadosGlobal).forEach(tr=>{
+    let totalVagasTurno=0;
+    S.locais.forEach(l=>{
+      if(!locaisSel.includes(l.id)) return;
+      if(l.diatodo) return;
+      if(locBlip&&l.id===locBlip.id) return;
+      if(!l.turnos.includes(tr)) return;
+      const pLoc=periodoPorLocal[l.id];
+      const lIni=pLoc?.ini||dsIni, lFim=pLoc?.fim||dsFim;
+      diasEntre(lIni,lFim).forEach(d=>{const v=vagasDia(l,d);if(v) totalVagasTurno+=v[tr]||0;});
+    });
+    poolPorTurnoGlobal[tr]=timeAtivo(turnosTravadosGlobal[tr]);
+    creditosPorTurnoGlobal[tr]=repartirPorPeso_(poolPorTurnoGlobal[tr],totalVagasTurno,{});
+    diaTrabalhadoHojeGlobal[tr]={};
+    ultimosPorTurnoGlobal[tr]=[null,null];
+  });
+  // Escolhe quem do time pega o slot travado. Créditos esgotados (sobra de
+  // arredondamento): completa com quem trabalhou MENOS no turno até agora,
+  // mesma regra de fallback usada na escala do time (gerarEscalaDoTime_).
+  function escolherDoTurnoGlobal_(tr,ds,atribGlobalCont){
+    const pool=poolPorTurnoGlobal[tr];
+    if(!pool||pool.length===0) return null;
+    if(!diaTrabalhadoHojeGlobal[tr][ds]) diaTrabalhadoHojeGlobal[tr][ds]={};
+    const ultimos=ultimosPorTurnoGlobal[tr];
+    let escolhido=escolherPorCredito_(pool,creditosPorTurnoGlobal[tr],ultimos,ds,diaTrabalhadoHojeGlobal[tr][ds]);
+    if(!escolhido){
+      const livresHoje=pool.filter(v=>!diaTrabalhadoHojeGlobal[tr][ds][v.id]);
+      const cand=livresHoje.length?livresHoje:pool;
+      const menos=Math.min(...cand.map(v=>atribGlobalCont[v.id]||0));
+      const empatados=cand.filter(v=>(atribGlobalCont[v.id]||0)===menos);
+      escolhido=empatados[Math.floor(Math.random()*empatados.length)]||null;
+      if(escolhido) diaTrabalhadoHojeGlobal[tr][ds][escolhido.id]=true;
+    }
+    if(escolhido){
+      ultimosPorTurnoGlobal[tr]=[ultimos[1],escolhido.id];
+      atribGlobalCont[escolhido.id]=(atribGlobalCont[escolhido.id]||0)+1;
+    }
+    return escolhido;
+  }
+  const contAtribPorTurnoGlobal={};
+  Object.keys(turnosTravadosGlobal).forEach(tr=>{contAtribPorTurnoGlobal[tr]={};});
+
   // ── Calcular créditos VGV para o BLIP ─────────────────────────────────────
   // Gerentes que venderam: têm VGV > 0. Os novatos têm reserva de 10%.
   // Cada gerente não-novato com VGV recebe vagas proporcionais ao seu VGV.
   function calcularVagasVGV(listaGer, totalVagas){
-    const totalVGVLista=listaGer.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
-    if(totalVGVLista===0){
+    return calcularVagasPorPeso_(listaGer, totalVagas, S.vgv);
+  }
+
+  // ── Por % Direto (2026-09-12, pedido do dono): mesma matemática do VGV
+  // (Largest Remainder Method — garante soma exata e respeita decimais), só
+  // que a "força" de cada gerente vem do % digitado à mão (S.pctManual) em
+  // vez do valor de VGV em R$. Serve pra quando a distribuição não deve
+  // seguir venda do mês anterior, e sim um percentual combinado direto.
+  function calcularVagasPct(listaGer, totalVagas){
+    return calcularVagasPorPeso_(listaGer, totalVagas, S.pctManual||{});
+  }
+
+  // Função genérica por trás de VGV e % Direto — mesmo algoritmo, só muda de
+  // onde vem o "peso" de cada gerente.
+  function calcularVagasPorPeso_(listaGer, totalVagas, pesoMap){
+    const totalPeso=listaGer.reduce((s,g)=>s+(pesoMap[g.id]||0),0);
+    if(totalPeso===0){
       const base=Math.floor(totalVagas/listaGer.length);
       const resto=totalVagas%listaGer.length;
       const result={};
@@ -2407,7 +3385,7 @@ function gerarEscalasInterno(){
     }
     // Largest Remainder Method - garante que soma = totalVagas e respeita decimais
     const exatos=listaGer.map(g=>{
-      const exato=(S.vgv[g.id]||0)/totalVGVLista*totalVagas;
+      const exato=(pesoMap[g.id]||0)/totalPeso*totalVagas;
       return{id:g.id,floor:Math.floor(exato),decimal:exato-Math.floor(exato)};
     });
     const result={};
@@ -2418,23 +3396,8 @@ function gerarEscalasInterno(){
     return result;
   }
 
-  // ── Função sorteia 1 de um array, evitando 3x consecutivos ───────────────
-  function sortearAntiConsec(arr, ultimosDois){
-    if(!arr||arr.length===0) return null;
-    if(arr.length===1) return arr[0]; // sem escolha
-    // Exclui quem apareceu nas últimas 2 posições iguais (anti-trinca)
-    const [u1,u2]=ultimosDois||[null,null];
-    let elegiv=arr;
-    if(u1!==null&&u2!==null&&u1===u2){
-      elegiv=arr.filter(g=>g.id!==u1);
-      if(elegiv.length===0) elegiv=arr; // fallback
-    }
-    return elegiv[Math.floor(Math.random()*elegiv.length)];
-  }
-
   const agenda={};
   S._zeradosPorLocal={};
-  let _domPorGerLoja={};
 
   S.locais.forEach(loc=>{
     if(!locaisSel.includes(loc.id)) return;
@@ -2487,29 +3450,24 @@ function gerarEscalasInterno(){
         }
       }
 
-      // Montar fila ordenada por créditos (maior → menor), embaralhar empates
-      function montarFilaBlip(){
-        const comCredito=ger.filter(g=>(creditosBlip[g.id]||0)>0);
-        // Embaralha antes de ordenar para desempate aleatório
-        for(let i=comCredito.length-1;i>0;i--){
-          const j=Math.floor(Math.random()*(i+1));
-          [comCredito[i],comCredito[j]]=[comCredito[j],comCredito[i]];
-        }
-        comCredito.sort((a,b)=>(creditosBlip[b.id]||0)-(creditosBlip[a.id]||0));
-        return comCredito;
-      }
-
       // Índice para round-robin fallback (quando todos os créditos se esgotam)
       let blipFallbackIdx=0;
 
-      // Distribuir vagas dia a dia usando fila de créditos + anti-consecutivos
-      const ultimosBlip={}; // {locId_turno: [gid, gid]}
+      // Distribuir vagas dia a dia — mesma regra de escolherPorCredito_ usada
+      // em todo o resto do sistema (ver comentário na definição dela): sempre
+      // prioriza quem AINDA NÃO trabalhou nesse dia, depois quem tem mais
+      // crédito. Um canal SÓ pro local inteiro (não mais por turno+assento) —
+      // é isso que impede a mesma pessoa varrer todos os turnos do mesmo dia.
+      const ultimosBlip={locId:[null,null]};
+      let diaAtualBlip=null;
+      let diaTrabalhadoHojeBlip={};
       dias.forEach(dia=>{
         const ds=toDS(dia);
         const diatodoKey='diatodo_'+loc.id+'_'+ds;
         const gidDiaTodoManual=S.ajustes[diatodoKey]||null;
         const v=vagasDia(loc,dia);
         if(!v){agenda[loc.id][ds]={fechado:true};return;}
+        if(ds!==diaAtualBlip){diaTrabalhadoHojeBlip={};diaAtualBlip=ds;}
         const daySlots={_diatodo:null};
         loc.turnos.forEach(tr=>{
           const n=v[tr]||0;
@@ -2519,16 +3477,10 @@ function gerarEscalasInterno(){
             if(S.ajustes[aKey]!==undefined){
               daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);
             } else {
-              const chave=loc.id+'_'+tr+'_'+s;
-              const ultimos=ultimosBlip[chave]||[null,null];
-              const fila=montarFilaBlip();
-              let escolhido;
-              if(fila.length>0){
-                escolhido=sortearAntiConsec(fila,ultimos.map(id=>ger.find(g=>g.id===id)||{id:id}));
-                if(escolhido){
-                  creditosBlip[escolhido.id]=Math.max(0,(creditosBlip[escolhido.id]||0)-1);
-                  ultimosBlip[chave]=[ultimos[1],escolhido.id];
-                }
+              const ultimos=ultimosBlip.locId;
+              let escolhido=escolherPorCredito_(ger,creditosBlip,ultimos,ds,diaTrabalhadoHojeBlip);
+              if(escolhido){
+                ultimosBlip.locId=[ultimos[1],escolhido.id];
               } else {
                 // Créditos esgotados: round-robin entre todos os gerentes ativos (garante sem vaga vazia)
                 const [uid1,uid2]=ultimos;
@@ -2539,7 +3491,7 @@ function gerarEscalasInterno(){
                 }
                 escolhido=candidatos[blipFallbackIdx%candidatos.length];
                 blipFallbackIdx++;
-                if(escolhido) ultimosBlip[chave]=[ultimos[1],escolhido.id];
+                if(escolhido) ultimosBlip.locId=[ultimos[1],escolhido.id];
               }
               daySlots[tr].push(escolhido||null);
             }
@@ -2550,16 +3502,29 @@ function gerarEscalasInterno(){
       return;
     }
 
-    // ── IGUALITÁRIO ou POR VGV (outros locais) ────────────────────────────
+    // ── IGUALITÁRIO, POR VGV ou POR % DIRETO (outros locais) ──────────────
     const modoVGV=loc.modo==='vgv'&&totalVGV>0;
-    // Verificar se 10% está ativo para este local (só relevante no modo VGV)
+    const totalPctManualAtivo=ger.reduce((s,g)=>s+((S.pctManual||{})[g.id]||0),0);
+    const modoPct=loc.modo==='pct'&&totalPctManualAtivo>0;
+    // Verificar se 10% está ativo para este local (só relevante no modo VGV —
+    // o bônus de 10% pra novato/zerado é uma regra específica de VGV, não se
+    // aplica a % Direto, que já é um percentual combinado manualmente)
     const dez10ativo=modoVGV&&(!S.locais10pct||S.locais10pct.includes(loc.id));
 
-    // ── Calcular total de vagas deste local no período ────────────────────
+    // Turnos travados pela opção global "1 Regional por Turno" que valem
+    // pra ESTE local (só os que ele tem, e só se não for Dia Todo — Dia
+    // Todo não tem conceito de turno independente).
+    const turnosTravados=loc.diatodo?{}:Object.fromEntries(
+      loc.turnos.filter(tr=>turnosTravadosGlobal[tr]).map(tr=>[tr,turnosTravadosGlobal[tr]])
+    );
+    const turnosLivres=loc.turnos.filter(tr=>!turnosTravados[tr]);
+
+    // ── Calcular total de vagas deste local no período (só turnos LIVRES —
+    // os travados já saíram pra bolsa global, calculada antes do loop) ────
     let totalVagasLoc=0;
     dias.forEach(d=>{
       const v=vagasDia(loc,d);
-      if(v) loc.turnos.forEach(tr=>totalVagasLoc+=v[tr]||0);
+      if(v) turnosLivres.forEach(tr=>totalVagasLoc+=v[tr]||0);
     });
 
     // ── Verificar se há vagas manuais definidas ───────────────────────────
@@ -2595,12 +3560,16 @@ function gerarEscalasInterno(){
         const emb=[...ger].sort(()=>Math.random()-0.5);
         emb.forEach((g,i)=>creditos[g.id]=base+(i<resto?1:0));
       }
-    } else if(!modoVGV){
+    } else if(!modoVGV && !modoPct){
       // ── IGUALITÁRIO PURO: floor + resto máximo +1, sem aleatoriedade acumulada ──
       const base=Math.floor(unidadeCredito/ger.length);
       const resto=unidadeCredito%ger.length;
       const emb=[...ger].sort(()=>Math.random()-0.5);
       emb.forEach((g,i)=>creditos[g.id]=base+(i<resto?1:0));
+    } else if(modoPct){
+      // ── POR % DIRETO — sem bônus de 10%/zerados (isso é regra de VGV) ────
+      const dist=calcularVagasPct(ger, unidadeCredito);
+      ger.forEach(g=>creditos[g.id]=(creditos[g.id]||0)+(dist[g.id]||0));
     } else {
       // ── POR VGV (com possível reserva de 10% para zerados) ────────────
       // Dia Todo usa dias como unidade; locais normais usam vagas/turnos.
@@ -2630,29 +3599,12 @@ function gerarEscalasInterno(){
       }
     }
 
-    // ── Função: sorteia da fila de créditos com anti-consecutivo ──────────
-    // Sempre escolhe entre os que têm MAIS créditos (desempate aleatório).
-    // Anti-consecutivo nunca sacrifica equilíbrio: se só restar 1 elegível com crédito, usa ele mesmo que seja consecutivo.
+    // ── Dia Todo: mesma regra de escolherPorCredito_ (ver comentário na
+    // definição dela). Não precisa da checagem "já trabalhou hoje" porque
+    // aqui só existe 1 escolha por dia (é a pessoa do dia inteiro) — não tem
+    // como repetir DENTRO do mesmo dia por construção.
     function sortearCredito(ultimosDoisIds){
-      const comCredito=ger.filter(g=>(creditos[g.id]||0)>0);
-      if(comCredito.length===0) return null;
-
-      // Anti-consecutivo: se as últimas 2 são iguais, tenta excluir
-      const [u1,u2]=ultimosDoisIds||[null,null];
-      let elegiv=comCredito;
-      if(u1!==null&&u2!==null&&u1===u2){
-        const semUltimo=comCredito.filter(g=>g.id!==u1);
-        if(semUltimo.length>0) elegiv=semUltimo;
-        // se semUltimo.length===0, usa comCredito (equilíbrio tem prioridade)
-      }
-
-      // Escolhe sempre quem tem MAIS créditos — garante equilíbrio estrito
-      const maxCred=Math.max(...elegiv.map(g=>creditos[g.id]||0));
-      const prioritarios=elegiv.filter(g=>(creditos[g.id]||0)===maxCred);
-      // Desempate aleatório entre os que têm o mesmo máximo
-      const escolhido=prioritarios[Math.floor(Math.random()*prioritarios.length)];
-      if(escolhido) creditos[escolhido.id]=Math.max(0,(creditos[escolhido.id]||0)-1);
-      return escolhido||null;
+      return escolherPorCredito_(ger,creditos,ultimosDoisIds,null,null);
     }
 
     const ultimosLoc={};
@@ -2665,7 +3617,18 @@ function gerarEscalasInterno(){
       const atrib={};
       if(isLojaLocal){
         inicializarFilaDomingos();
-        if(!_domPorGerLoja) _domPorGerLoja={};
+        // BUG REAL encontrado ao testar (2026-09-13): regenerar o MESMO mês
+        // duas vezes dava a MESMA soma total mas trocava QUEM pegou qual
+        // domingo — porque contarDomingos() via as entradas ANTIGAS desse
+        // mesmo período ainda paradas em S.historicoDomingos enquanto a
+        // segunda rodada ia decidindo, contaminando a escolha com dado que
+        // estava prestes a ser substituído. Corrigido: apaga as entradas
+        // desse local+período ANTES de começar a decidir, nunca vai
+        // sobrescrevendo aos poucos no meio do cálculo.
+        dias.forEach(dia=>{
+          if(dia.getDay()!==0) return;
+          delete S.historicoDomingos[loc.id+'_'+toDS(dia)+'|regional'];
+        });
         dias.forEach(dia=>{
           if(dia.getDay()!==0) return;
           const ds=toDS(dia);
@@ -2679,13 +3642,23 @@ function gerarEscalasInterno(){
           let domGer=null;
           for(let fi=0;fi<S.filaDomingos.length;fi++){
             const g=ger.find(x=>x.id===S.filaDomingos[fi].gid);if(!g) continue;
-            const min=Math.min(...S.filaDomingos.map(x=>_domPorGerLoja[x.gid]||0));
-            if((_domPorGerLoja[g.id]||0)===min){domGer=g;break;}
+            // 2026-09-13: usa o HISTÓRICO PERMANENTE (contarDomingos), não um
+            // contador que zera a cada geração — senão setembro esquece o
+            // que aconteceu em agosto e a fila fica injusta ao longo dos
+            // meses (pedido explícito do dono: "tem que ter uma contagem
+            // geral, de todos").
+            const min=Math.min(...S.filaDomingos.map(x=>contarDomingos(x.gid)));
+            if(contarDomingos(g.id)===min){domGer=g;break;}
           }
           if(!domGer) return;
-          _domPorGerLoja[domGer.id]=(_domPorGerLoja[domGer.id]||0)+1;
-          // Todos os slots do domingo = domGer, debitar créditos
-          loc.turnos.forEach(tr=>{
+          // Chave = local+data: regenerar o MESMO mês sobrescreve a mesma
+          // chave (não soma em dobro). Ver contarDomingos/registrarDomingo_.
+          // Guarda o NOME junto (sobrevive à remoção da pessoa depois).
+          registrarDomingo_(loc.id+'_'+ds+'|regional',domGer.id,{tipo:'regional',nome:domGer.nome});
+          // Todos os slots do domingo = domGer, debitar créditos. Só turnos
+          // LIVRES — turno travado pela opção global já tem dono fixo (o
+          // time daquele regional), não participa da fila geral de domingo.
+          turnosLivres.forEach(tr=>{
             const n=v[tr]||0;
             for(let s=0;s<n;s++){
               if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
@@ -2696,34 +3669,47 @@ function gerarEscalasInterno(){
         });
       }
 
-      // 2) Coletar slots restantes e distribuir com pool
-      const slotsRest=[];
+      // 2) Distribuir os slots restantes, um de cada vez, em ordem cronológica
+      // (dia → turno → assento). Mesma regra de escolherPorCredito_ do resto
+      // do sistema (ver comentário na definição dela): prioriza quem AINDA
+      // NÃO trabalhou nesse dia, depois quem tem mais crédito restante — é
+      // isso que impede a mesma pessoa varrer o local inteiro por 1-2 dias
+      // seguidos, mesmo com o total do mês batendo certo no final.
+      //
+      // ANTES disso: a composição certa (fichas = créditos de cada um) era
+      // só EMBARALHADA e andada em sequência — estatisticamente dava a soma
+      // certa no fim do mês, mas "aleatório" não é a mesma coisa que "bem
+      // espalhado", e podia (e dava, na prática) empilhar 6 vagas do mesmo
+      // dia inteiro pra 1 só pessoa.
+      const ultimosNormal={locId:[null,null]};
+      let diaAtualNormal=null;
+      let diaTrabalhadoHojeNormal={};
       dias.forEach(dia=>{
         const ds=toDS(dia);const v=vagasDia(loc,dia);if(!v) return;
-        loc.turnos.forEach(tr=>{
+        if(ds!==diaAtualNormal){diaTrabalhadoHojeNormal={};diaAtualNormal=ds;}
+        turnosLivres.forEach(tr=>{
           const n=v[tr]||0;
           for(let s=0;s<n;s++){
             if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
             if(atrib[ds+'_'+tr+'_'+s]!==undefined) continue;
-            slotsRest.push({ds,dia,tr,seat:s});
+            const ultimos=ultimosNormal.locId;
+            const escolhido=escolherPorCredito_(ger,creditos,ultimos,ds,diaTrabalhadoHojeNormal);
+            if(escolhido) ultimosNormal.locId=[ultimos[1],escolhido.id];
+            atrib[ds+'_'+tr+'_'+s]=escolhido;
           }
         });
-      });
-      // Pool = fichas dos créditos restantes
-      const pool=[];
-      ger.forEach(g=>{for(let i=0;i<(creditos[g.id]||0);i++) pool.push(g);});
-      for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-      const ultDiaTr={};
-      slotsRest.forEach((slot,i)=>{
-        if(i>=pool.length){atrib[slot.ds+'_'+slot.tr+'_'+slot.seat]=null;return;}
-        const ch=slot.ds+'_'+slot.tr;const ult=ultDiaTr[ch];
-        if(ult&&pool[i]&&pool[i].id===ult.id){
-          for(let t=i+1;t<Math.min(pool.length,i+ger.length*2);t++){
-            if(pool[t].id!==ult.id){[pool[i],pool[t]]=[pool[t],pool[i]];break;}
+        // Turnos travados pela opção global "1 Regional por Turno": a bolsa
+        // de créditos e o "trabalhou hoje" são COMPARTILHADOS entre todos os
+        // locais (calculados fora do loop de locais, antes deste bloco) —
+        // por isso usa escolherDoTurnoGlobal_, não a lógica local acima.
+        Object.keys(turnosTravados).forEach(tr=>{
+          const n=v[tr]||0;
+          for(let s=0;s<n;s++){
+            if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
+            if(atrib[ds+'_'+tr+'_'+s]!==undefined) continue;
+            atrib[ds+'_'+tr+'_'+s]=escolherDoTurnoGlobal_(tr,ds,contAtribPorTurnoGlobal[tr]);
           }
-        }
-        atrib[slot.ds+'_'+slot.tr+'_'+slot.seat]=pool[i]||null;
-        ultDiaTr[ch]=pool[i]||null;
+        });
       });
 
       // 3) Montar agenda com atrib
@@ -2738,7 +3724,14 @@ function gerarEscalasInterno(){
           const n=v[tr]||0;daySlots[tr]=[];
           for(let s=0;s<n;s++){
             const aKey=loc.id+'_'+ds+'_'+tr+'_'+s;
-            if(S.ajustes[aKey]!==undefined){daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);}
+            if(S.ajustes[aKey]!==undefined){
+              // Ajuste manual: procura primeiro no pool geral (caso normal);
+              // turno travado pela opção global pode ter sido ajustado pra
+              // um vendedor do time (id que não existe em `ger`) — procura lá também.
+              const achado=ger.find(x=>x.id===S.ajustes[aKey])
+                ||(turnosTravados[tr]?(poolPorTurnoGlobal[tr]||[]).find(x=>String(x.id)===String(S.ajustes[aKey])):null);
+              daySlots[tr].push(achado||null);
+            }
             else{daySlots[tr].push(atrib[ds+'_'+tr+'_'+s]||null);}
           }
         });
@@ -2797,9 +3790,13 @@ function renderEscalasVisu(){
   cabHdr.style.marginBottom='20px';
   cabHdr.innerHTML=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--azul)">
     Escalas &nbsp;<span style="font-size:18px;color:var(--vermelho)">${fmtDS(periodoIni)} → ${fmtDS(periodoFim)}</span>
+    ${S.escala.filtroDe?`<div style="font-size:15px;font-weight:700;color:var(--azul-claro);font-family:Barlow;margin-top:2px">🔎 Filtro: ${escaparHtml(S.escala.filtroDe.toUpperCase())} — time de vendas</div>`:''}
   </div>
-  <button class="btn btn-primary btn-sm no-print" onclick="abrirModalImprimir()">🖨️ Selecionar e Imprimir</button>`;
+  <button class="btn btn-primary btn-sm no-print" onclick="abrirModalImprimir()">🖨️ Selecionar e Baixar PDF</button>`;
   cont.appendChild(cabHdr);
+  if(!S.escala.filtroDe){
+    cont.insertAdjacentHTML('beforeend','<div class="info-box no-print" style="margin-bottom:16px">💡 Clique no <strong>nome de um gerente</strong> no rodapé de qualquer local para dividir as vagas dele entre o time de vendas dele (gera uma escala nova, separada — esta aqui continua intacta).</div>');
+  }
 
   S.locais.forEach((loc,li)=>{
     if(!agenda[loc.id]||Object.keys(agenda[loc.id]).length===0) return;
@@ -2818,10 +3815,10 @@ function renderEscalasVisu(){
     printHdr.className='print-bloco-header';
     printHdr.innerHTML=`
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">RV</div>
+        <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">${empresaAtual().sigla}</div>
         <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
-          <div style="font-size:9px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">${empresaAtual().nome}</div>
+          <div style="font-size:9px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>${S.escala.filtroDe?`<div style="font-size:9px;font-weight:800;color:var(--azul-claro)">🔎 Filtro: ${S.escala.filtroDe.toUpperCase()}</div>`:''}
         </div>
       </div>
       <div style="text-align:center">
@@ -2852,7 +3849,7 @@ function renderEscalasVisu(){
     hdr.innerHTML=`<span>📍 ${loc.nome}</span>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         ${zeradosBadge}
-        <span style="font-size:12px;font-weight:600;opacity:.85">${fmtDS(locIni)} → ${fmtDS(locFim)} · ${loc.modo==='vgv'?'Por VGV':'Igualitário'}${loc.diatodo?' · Dia Todo':''}</span>
+        <span style="font-size:12px;font-weight:600;opacity:.85">${fmtDS(locIni)} → ${fmtDS(locFim)} · ${loc.modo==='vgv'?'Por VGV':loc.modo==='pct'?'Por %':'Igualitário'}${loc.diatodo?' · Dia Todo':''}</span>
       </div>`;
     bloco.appendChild(hdr);
 
@@ -2912,7 +3909,17 @@ function renderEscalasVisu(){
       const tbodyP=document.createElement('tbody');
       loc.turnos.forEach(tr=>{
         let maxSeats=0;
-        diasParte.forEach(d=>{const v=vagasDia(loc,d);if(v)maxSeats=Math.max(maxSeats,v[tr]||0);});
+        // Escala por time (vagasDaAgenda): a quantidade de assentos vem da
+        // PRÓPRIA agenda, não do padrão do local — senão apareceriam linhas
+        // vazias no lugar das vagas que são dos outros regionais.
+        diasParte.forEach(d=>{
+          if(S.escala.vagasDaAgenda){
+            const dd=agenda[loc.id]?.[toDS(d)];
+            if(dd&&!dd.fechado) maxSeats=Math.max(maxSeats,(dd[tr]||[]).length);
+            return;
+          }
+          const v=vagasDia(loc,d);if(v)maxSeats=Math.max(maxSeats,v[tr]||0);
+        });
         if(maxSeats===0) return;
         for(let seat=0;seat<maxSeats;seat++){
           const row=document.createElement('tr');
@@ -2923,14 +3930,22 @@ function renderEscalasVisu(){
             const ds=toDS(d);
             const td=document.createElement('td');
             const dayData=agenda[loc.id]?.[ds];
-            if(!dayData||dayData.fechado){
+            // Na escala de time (vagasDaAgenda), dia sem dado significa
+            // "esse regional não tinha vaga aqui nesse dia" — e não que o
+            // local estava fechado. Fica em branco, sem o selo FECHADO
+            // (2026-09-13, reportado pelo dono com print). Só mostra FECHADO
+            // quando o dia está realmente marcado como fechado.
+            const semVagaDoTime=S.escala.vagasDaAgenda&&!dayData;
+            if(semVagaDoTime){
+              td.style.borderColor='transparent';
+            } else if(!dayData||dayData.fechado){
               if(seat===0){td.innerHTML='<span class="chip chip-fechado">FECHADO</span>';}
               else{td.style.borderColor='transparent';}
             } else {
               const gIdDiaTodo=dayData._diatodo;
               const slots=dayData[tr]||[];
               const vagas=vagasDia(loc,d);
-              const nVagas=vagas?vagas[tr]||0:0;
+              const nVagas=S.escala.vagasDaAgenda?slots.length:(vagas?vagas[tr]||0:0);
               if(seat<nVagas){
                 const g=slots[seat];
                 const btnEl=document.createElement('button');
@@ -2984,10 +3999,10 @@ function renderEscalasVisu(){
       printHdr2.className='print-bloco-header';
       printHdr2.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">RV</div>
+          <div style="width:28px;height:28px;background:var(--vermelho);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;color:#fff">${empresaAtual().sigla}</div>
           <div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">RIVA VENDAS</div>
-            <div style="font-size:9px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--azul)">${empresaAtual().nome}</div>
+            <div style="font-size:9px;color:var(--cinza-texto)">Sistema de Escalas de Plantão</div>${S.escala.filtroDe?`<div style="font-size:9px;font-weight:800;color:var(--azul-claro)">🔎 Filtro: ${S.escala.filtroDe.toUpperCase()}</div>`:''}
           </div>
         </div>
         <div style="text-align:center">
@@ -3025,7 +4040,18 @@ function renderEscalasVisu(){
     const rod=document.createElement('div');rod.className='rodape-cnt no-print';
     Object.entries(cnt).sort((a,b)=>b[1]-a[1]).forEach(([nome,n])=>{
       const it=document.createElement('div');it.className='cnt-item';
-      it.innerHTML=`<span style="font-weight:600">${nome}</span><span class="cnt-num">${n}</span>`;
+      // Nome clicável (2026-09-13): abre a divisão das vagas DESSE regional
+      // entre o time de vendas dele. Só na escala principal — numa escala que
+      // já é de time, não faz sentido subdividir de novo.
+      const reg=!S.escala.filtroDe ? S.gerentes.find(g=>g.nome===nome) : null;
+      if(reg){
+        it.style.cursor='pointer';
+        it.title=`Dividir as ${n} vagas de ${nome} entre o time de vendas dele`;
+        it.onclick=()=>abrirModalTime(reg.id);
+        it.innerHTML=`<span style="font-weight:600;text-decoration:underline;text-decoration-style:dotted">${nome}</span><span class="cnt-num">${n}</span>`;
+      } else {
+        it.innerHTML=`<span style="font-weight:600">${nome}</span><span class="cnt-num">${n}</span>`;
+      }
       rod.appendChild(it);
     });
     const totalIt=document.createElement('div');totalIt.className='cnt-item cnt-total';
@@ -3049,7 +4075,7 @@ function renderEscalasVisu(){
     // Rodapé decorativo de impressão
     const rodDeco=document.createElement('div');
     rodDeco.className='print-rodape-deco';
-    rodDeco.innerHTML=`<span class="deco-dot-azul"></span><span style="letter-spacing:0.5px">RIVA VENDAS · Sistema de Escalas</span><span class="deco-dot-verm"></span>`;
+    rodDeco.innerHTML=`<span class="deco-dot-azul"></span><span style="letter-spacing:0.5px">${empresaAtual().nome} · Sistema de Escalas</span><span class="deco-dot-verm"></span>`;
     bloco.appendChild(rodDeco);
 
     cont.appendChild(bloco);
@@ -3076,24 +4102,39 @@ function abrirModalImprimir(){
 function fecharModalImprimir(e){if(!e||e.target===document.getElementById('modal-imprimir'))document.getElementById('modal-imprimir').style.display='none';}
 function togglePrintLocais(val){S.locais.forEach(l=>{const ck=document.getElementById('print-ck-'+l.id);if(ck)ck.checked=val;});}
 
-function executarImpressao(){
-  document.querySelectorAll('.escala-bloco').forEach(bloco=>{
-    const lid=+bloco.dataset.locId;
-    const ck=document.getElementById('print-ck-'+lid);
-    if(ck&&!ck.checked)bloco.classList.add('print-oculto');
-    else bloco.classList.remove('print-oculto');
+async function executarImpressao(){
+  // BUG REAL (2026-09-14, reportado pelo dono com print do PDF em anexo):
+  // este botão usava window.print() + @page{size:A4 landscape} e dependia
+  // do driver de impressora escolhido no diálogo do sistema respeitar essa
+  // orientação. Quando o destino não é o "Salvar como PDF" nativo do Chrome
+  // (ex.: "Microsoft Print to PDF" direto pelo diálogo do Windows), o driver
+  // ignora o @page e usa retrato por padrão — o conteúdo (desenhado pensando
+  // em paisagem) sai rotacionado/espremido, exatamente o "de lado" relatado.
+  // Fix: gera o PDF pelo MESMO motor já validado do "Enviar ao banco" /
+  // "Baixar PDF" (html2canvas + jsPDF com orientation:'landscape' forçado no
+  // próprio arquivo) — não depende de driver nenhum, sempre paisagem de
+  // verdade. Só filtra pelos locais marcados no modal.
+  if(!S.escala) return;
+  const selecionados=new Set();
+  S.locais.forEach(l=>{
+    const ck=document.getElementById('print-ck-'+l.id);
+    if(ck&&ck.checked) selecionados.add(l.id);
   });
-  irAba(4);
   document.getElementById('modal-imprimir').style.display='none';
-  const tituloOriginal=document.title;
-  document.title=nomeArquivoSeguro(S.escala?.nome||'Escala Riva');
-  setTimeout(()=>{
-    window.print();
-    setTimeout(()=>{
-      document.title=tituloOriginal;
-      document.querySelectorAll('.escala-bloco').forEach(b=>b.classList.remove('print-oculto'));
-    },1000);
-  },200);
+  if(selecionados.size===0){ showToast('Selecione pelo menos um local.','warning'); return; }
+  showToast('Gerando PDF em paisagem...','info',4000);
+  try{
+    const blob=await gerarPdfEscalaBlob(S.escala,selecionados);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=nomeArquivoSeguro(S.escala?.nome||'Escala')+'.pdf';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    showToast('PDF gerado em paisagem — pronto para enviar!','success');
+  }catch(e){
+    console.error(e);
+    showToast(e.message||'Não foi possível gerar o PDF.','error',6000);
+  }
 }
 
 // ─── MODAL EDIÇÃO CÉLULA ──────────────────────────────────────────────────────
@@ -3118,15 +4159,25 @@ function abrirModal(lid,ds,turno,seat,gidAtual,diaNum,tr){
   const loc=S.locais.find(x=>x.id===lid);
   const v=vagasDia(loc,{getDay:()=>dsemIdx,toISOString:()=>ds+'T00:00:00.000Z'})||{m:0,t:0,n:0};
   const lbl2=document.createElement('div');
-  lbl2.style.cssText='font-size:12px;font-weight:600;color:var(--cinza-texto);margin-bottom:8px';
-  lbl2.textContent=`Alterar vagas neste dia (${ds}):`;
+  lbl2.style.cssText='font-size:12px;font-weight:600;color:var(--cinza-texto);margin-bottom:2px';
+  lbl2.textContent=`Vagas neste dia (${ds}):`;
   body.appendChild(lbl2);
-  const rowV=document.createElement('div');rowV.className='row';rowV.style.gap='14px';
+  // 2026-09-12 (pedido do dono): "às vezes a escala já está certa, só falta
+  // adicionar uma vaga". Essa capacidade já existia (mudar o número aqui e
+  // salvar cria uma cadeira vazia extra SÓ neste dia, sem mexer no resto da
+  // escala) — só não estava óbvia. Agora tem texto explicando e um botão
+  // "+1 vaga" pra não precisar nem digitar.
+  const lblAjuda=document.createElement('div');
+  lblAjuda.style.cssText='font-size:11px;color:var(--cinza-texto);margin-bottom:8px;line-height:1.4';
+  lblAjuda.textContent='Aumente o número de um turno pra abrir uma cadeira extra só neste dia (o resto da escala não muda). Diminua pra fechar uma vaga vazia.';
+  body.appendChild(lblAjuda);
+  const rowV=document.createElement('div');rowV.className='row';rowV.style.gap='14px';rowV.style.flexWrap='wrap';
   loc.turnos.forEach(t=>{
-    const d=document.createElement('div');d.className='row';d.style.gap='6px';
+    const d=document.createElement('div');d.className='row';d.style.gap='6px';d.style.alignItems='center';
     const classes={m:'turno-badge-m',t:'turno-badge-t',n:'turno-badge-n'};
     d.innerHTML=`<span class="badge ${classes[t]}" style="font-size:11px">${TURNOS_LABEL[t]}</span>
-      <input type="number" id="vd-${t}" value="${v[t]||0}" min="0" max="8" style="width:52px">`;
+      <input type="number" id="vd-${t}" value="${v[t]||0}" min="0" max="8" style="width:52px">
+      <button type="button" class="btn btn-outline btn-xs" title="Adiciona 1 vaga extra neste turno, só hoje" onclick="const el=document.getElementById('vd-${t}');el.value=(+el.value||0)+1">+1 vaga</button>`;
     rowV.appendChild(d);
   });
   body.appendChild(rowV);
@@ -3184,19 +4235,25 @@ function salvarModal(){
 }
 
 // ─── PERSISTÊNCIA ─────────────────────────────────────────────────────────────
-const STORAGE_KEY='riva_escalas_dados_v6';
-
+// 2026-09-13: STORAGE_KEY virou storageKeyAtual() — cada empresa tem sua
+// própria "gaveta" no localStorage (ver EMPRESAS mais acima). A da RIVA
+// continua sendo exatamente 'riva_escalas_dados_v6' de propósito, pra não
+// perder o que já estava salvo antes dessa mudança.
 function salvarDados(){
   try{
-    const dados={mes:S.mes,ano:S.ano,locais:S.locais,gerentes:S.gerentes,vgv:S.vgv,ajustes:S.ajustes,escala:S.escala,historicoEscalas:S.historicoEscalas||[],filaDomingos:S.filaDomingos||[],vagasManual:S.vagasManual||{},vagasManualTotal:S.vagasManualTotal||0,locais10pct:S.locais10pct??null,savedAt:new Date().toISOString()};
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(dados));
+    // pctManual/times/vgvTime/pctTime/modoTime entraram aqui em 2026-09-13:
+    // sem estar nesta lista, o que o dono digitasse sumia ao recarregar a
+    // página (o salvamento monta um objeto campo a campo, não salva o S
+    // inteiro — o que não estiver listado aqui simplesmente não persiste).
+    const dados={mes:S.mes,ano:S.ano,locais:S.locais,gerentes:S.gerentes,vgv:S.vgv,ajustes:S.ajustes,escala:S.escala,historicoEscalas:S.historicoEscalas||[],filaDomingos:S.filaDomingos||[],vagasManual:S.vagasManual||{},vagasManualTotal:S.vagasManualTotal||0,locais10pct:S.locais10pct??null,pctManual:S.pctManual||{},times:S.times||{},vgvTime:S.vgvTime||{},pctTime:S.pctTime||{},modoTime:S.modoTime||{},historicoDomingos:S.historicoDomingos||{},filaDomingosTime:S.filaDomingosTime||{},savedAt:new Date().toISOString()};
+    localStorage.setItem(storageKeyAtual(),JSON.stringify(dados));
     atualizarIndicadorSalvo(true);
   }catch(e){console.warn('Erro ao salvar:',e);showToast('Erro ao salvar dados!','error');}
 }
 
 function carregarDados(){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY);
+    const raw=localStorage.getItem(storageKeyAtual());
     if(!raw) return false;
     const dados=JSON.parse(raw);
     if(!dados) return false;
@@ -3219,6 +4276,13 @@ function carregarDados(){
     S.escala=dados.escala??null;S.historicoEscalas=dados.historicoEscalas??[];
     S.vagasManual=dados.vagasManual??{};S.vagasManualTotal=dados.vagasManualTotal??0;
     S.locais10pct=dados.locais10pct??null;
+    S.pctManual=dados.pctManual??{};
+    S.times=dados.times??{};
+    S.vgvTime=dados.vgvTime??{};
+    S.pctTime=dados.pctTime??{};
+    S.modoTime=dados.modoTime??{};
+    S.historicoDomingos=dados.historicoDomingos??{};
+    S.filaDomingosTime=dados.filaDomingosTime??{};
     const selMes=document.getElementById('sel-mes');const inpAno=document.getElementById('inp-ano');
     if(selMes) selMes.value=S.mes;if(inpAno) inpAno.value=S.ano;
     return dados.savedAt||true;
@@ -3263,14 +4327,15 @@ function renderHistorico(){
   topo.innerHTML=`<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--azul)">📋 Histórico de Escalas (${hist.length})</div>
     <div style="font-size:12px;color:var(--cinza-texto);margin-top:3px">As alterações ficam salvas neste navegador. Use “Enviar ao banco” para guardar PDF e dados permanentemente no Google Drive e Sheets.</div></div>
     <div class="row" style="gap:8px">
+      <button class="btn btn-outline btn-sm" onclick="carregarHistoricoDoBanco()">🔄 Atualizar do banco</button>
       <button class="btn btn-outline btn-sm" onclick="abrirPlanilhaBanco()">📊 Abrir planilha</button>
       <button class="btn btn-outline btn-sm" onclick="configurarBancoEscalas()">⚙️ Configurar banco</button>
     </div>`;
   cont.appendChild(topo);
+  cont.insertAdjacentHTML('beforeend','<div class="warn-box" id="historico-banco-status" style="display:none;margin-bottom:12px"></div>');
 
   if(hist.length===0){
     cont.insertAdjacentHTML('beforeend','<div class="warn-box">📋 Nenhuma escala gerada ainda.</div>');
-    return;
   }
 
   hist.forEach(esc=>{
@@ -3304,6 +4369,29 @@ function renderHistorico(){
       <button class="btn btn-danger btn-xs" onclick="excluirEscalaHistorico('${esc.id}')">🗑 Excluir</button>`;
     card.appendChild(btns);cont.appendChild(card);
   });
+
+  // ── Escalas que só existem no banco (enviadas de OUTRO computador) ─────
+  const idsLocais=new Set(hist.map(e=>String(e.id)));
+  const soNoBanco=historicoBancoCache.filter(e=>!idsLocais.has(String(e.id)));
+  if(soNoBanco.length>0){
+    cont.insertAdjacentHTML('beforeend',`<div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:var(--azul);margin:22px 0 4px">🌐 No banco (${soNoBanco.length}) — enviadas de outro computador</div>
+      <div style="font-size:12px;color:var(--cinza-texto);margin-bottom:12px">Aparecem aqui automaticamente, em qualquer navegador ou máquina, porque ficam guardadas no Google Drive/Sheets. Clique em "Importar" pra trazer pra este histórico.</div>`);
+    soNoBanco.forEach(e=>{
+      const card=document.createElement('div');
+      card.className='card';
+      card.style.cssText='margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-left:3px solid var(--azul-claro)';
+      const info=document.createElement('div');
+      info.style.minWidth='240px';
+      info.innerHTML=`<div style="font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:var(--azul)">${escaparHtml(e.nome||'Escala sem nome')}</div>
+        <div style="font-size:12px;color:var(--cinza-texto);margin-top:2px">Período: ${escaparHtml((e.dataInicial||'—')+' → '+(e.dataFinal||'—'))} &nbsp;·&nbsp; Responsável: ${escaparHtml(e.responsavel||'—')} &nbsp;·&nbsp; Gerado em: ${escaparHtml(e.geradoEm?new Date(e.geradoEm).toLocaleString('pt-BR'):'—')}</div>`;
+      card.appendChild(info);
+      const btns=document.createElement('div');btns.className='row';btns.style.cssText='gap:7px;flex-wrap:wrap;justify-content:flex-end';
+      btns.innerHTML=`${e.pdfUrl?`<button class="btn btn-outline btn-sm" onclick="window.open('${e.pdfUrl}','_blank','noopener')">☁️ Abrir PDF</button>`:''}
+        ${e.jsonUrl?`<button class="btn btn-outline btn-sm" onclick="window.open('${e.jsonUrl}','_blank','noopener')">📄 Abrir dados</button>`:''}
+        <button class="btn btn-primary btn-sm" onclick="importarEscalaDoBanco('${e.id}')">📥 Importar pra editar aqui</button>`;
+      card.appendChild(btns);cont.appendChild(card);
+    });
+  }
 }
 
 function carregarEscalaHistorico(id){
@@ -3357,6 +4445,87 @@ function abrirPdfBanco(id){
   if(esc?.banco?.pdfUrl) window.open(esc.banco.pdfUrl,'_blank','noopener');
 }
 
+// ─── HISTÓRICO PERSISTENTE ENTRE MÁQUINAS (2026-09-12) ─────────────────────
+// Antes disso, "Enviar ao banco" só ESCREVIA no Google Sheets/Drive — nada
+// no sistema LIA de volta. Trocar de computador ou de navegador (ou limpar o
+// cache) fazia o histórico sumir da tela, mesmo com tudo intacto na
+// planilha. Agora, toda vez que abre a aba Histórico, o sistema busca a
+// lista completa do banco e mostra separado do que já está neste navegador.
+let historicoBancoCache=[];
+let carregandoHistoricoBanco=false;
+
+async function carregarHistoricoDoBanco(){
+  const webAppUrl=(localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'').trim();
+  if(!webAppUrl){historicoBancoCache=[];return;}
+  if(carregandoHistoricoBanco) return;
+  carregandoHistoricoBanco=true;
+  const aviso=document.getElementById('historico-banco-status');
+  if(aviso){aviso.textContent='🔄 Buscando histórico no banco...';aviso.style.display='';}
+  try{
+    const resposta=await fetch(webAppUrl,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'listarEscalas'}),
+      redirect:'follow'
+    });
+    const texto=await resposta.text();
+    const retorno=JSON.parse(texto);
+    if(!resposta.ok||!retorno.ok) throw new Error(retorno?.error||'O banco não respondeu.');
+    // 2026-09-13: a planilha é COMPARTILHADA entre as duas empresas — filtra
+    // aqui pra Direcional nunca ver escala da Riva na lista "No banco" e
+    // vice-versa. Linha antiga (sem coluna EMPRESA) já volta como 'RIVA' do
+    // Code.gs, então continua aparecendo certo pra quem já usava antes disso.
+    historicoBancoCache=(retorno.escalas||[]).filter(e=>String(e.empresa||'RIVA').toUpperCase()===empresaAtualId);
+    if(aviso) aviso.style.display='none';
+  }catch(e){
+    console.warn('Não foi possível carregar o histórico do banco:',e);
+    // Falha silenciosa de propósito — sem internet ou banco ainda não
+    // configurado não pode travar quem só quer ver o histórico local.
+    if(aviso){aviso.textContent='⚠️ Não foi possível buscar o histórico do banco agora (histórico deste navegador continua normal).';aviso.style.display='';}
+  }finally{
+    carregandoHistoricoBanco=false;
+  }
+  renderHistorico();
+}
+
+// Traz pra este navegador uma escala que só existe no banco (foi gerada ou
+// enviada de outro computador) — a partir daqui ela passa a se comportar
+// como qualquer item do histórico local (abrir, reimprimir, reenviar).
+async function importarEscalaDoBanco(id){
+  const webAppUrl=(localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'').trim();
+  if(!webAppUrl) return;
+  const entrada=historicoBancoCache.find(e=>String(e.id)===String(id));
+  if(!entrada) return;
+  showToast(`Importando "${entrada.nome}"...`,'info',4000);
+  try{
+    const resposta=await fetch(webAppUrl,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'obterEscalaJson',id:String(id)}),
+      redirect:'follow'
+    });
+    const texto=await resposta.text();
+    const retorno=JSON.parse(texto);
+    if(!resposta.ok||!retorno.ok) throw new Error(retorno?.error||'O banco não devolveu os dados.');
+    const pacote=JSON.parse(retorno.conteudo);
+    if(!pacote?.escala) throw new Error('Arquivo de dados desta escala está incompleto.');
+    if(!S.historicoEscalas) S.historicoEscalas=[];
+    S.historicoEscalas=S.historicoEscalas.filter(e=>String(e.id)!==String(id));
+    S.historicoEscalas.unshift({
+      ...pacote.escala,
+      id:entrada.id,
+      nome:entrada.nome,
+      geradoEm:entrada.geradoEm,
+      banco:{status:'salva',pdfUrl:entrada.pdfUrl,jsonUrl:entrada.jsonUrl,enviadoEm:entrada.geradoEm}
+    });
+    autoSave();renderHistorico();
+    showToast(`"${entrada.nome}" importada — já aparece no histórico deste navegador.`,'success',6000);
+  }catch(e){
+    console.error(e);
+    showToast(e.message||'Não foi possível importar esta escala.','error',6000);
+  }
+}
+
 function configurarBancoEscalas(){
   const atual=localStorage.getItem(CLOUD_WEBAPP_STORAGE_KEY)||'';
   const informado=prompt(
@@ -3398,7 +4567,7 @@ function blobParaBase64(blob){
   });
 }
 
-async function gerarPdfEscalaBlob(esc){
+async function gerarPdfEscalaBlob(esc,locaisIds){
   if(!window.html2canvas||!window.jspdf?.jsPDF) throw new Error('O gerador de PDF não carregou. Verifique a internet e tente novamente.');
   const aba=document.getElementById('aba-4');
   if(!aba) throw new Error('A área da escala não foi encontrada.');
@@ -3410,12 +4579,42 @@ async function gerarPdfEscalaBlob(esc){
     renderEscalasVisu();
     if(document.fonts?.ready) await document.fonts.ready;
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    const blocos=Array.from(aba.querySelectorAll('.escala-bloco'));
+    let blocos=Array.from(aba.querySelectorAll('.escala-bloco'));
+    // locaisIds opcional (Set de ids) — usado pelo "Selecionar e Baixar PDF"
+    // pra incluir só os locais marcados, sem precisar de outra função.
+    if(locaisIds) blocos=blocos.filter(b=>locaisIds.has(+b.dataset.locId));
     if(!blocos.length) throw new Error('Esta escala não possui locais para gerar o PDF.');
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
     for(let i=0;i<blocos.length;i++){
-      const canvas=await window.html2canvas(blocos[i],{scale:1.45,useCORS:true,backgroundColor:'#FFFFFF',logging:false});
+      // BUG REAL (2026-09-13, reportado pelo dono com PDF em anexo): escalas
+      // com pouco conteúdo (o caso mais comum são as escalas de time, mais
+      // curtas que a principal) saíam "de lado" — o conteúdo espremido numa
+      // faixa estreita no canto da página, com um vazio enorme do lado.
+      // Causa: .cal-wrap tem `overflow-x:auto` (rolagem lateral, útil na
+      // tela num celular estreito) — e o html2canvas tem um problema
+      // documentado (não é bug nosso, é da própria biblioteca) de medir
+      // errado a largura de elementos dentro de um ancestral com overflow
+      // automático, ficando mais evidente quanto menos conteúdo tem pra
+      // "forçar" a largura certa. Corrigido: durante a captura, tira o
+      // overflow-x de todo `.cal-wrap` desse bloco (fica tudo visível, sem
+      // rolagem) e passa a largura/altura REAIS na mão pro html2canvas, em
+      // vez de deixar ele adivinhar.
+      const wraps=Array.from(blocos[i].querySelectorAll('.cal-wrap'));
+      const overflowAnterior=wraps.map(w=>w.style.overflowX);
+      wraps.forEach(w=>{w.style.overflowX='visible';});
+      const larguraReal=blocos[i].scrollWidth;
+      const alturaReal=blocos[i].scrollHeight;
+      let canvas;
+      try{
+        canvas=await window.html2canvas(blocos[i],{
+          scale:1.45,useCORS:true,backgroundColor:'#FFFFFF',logging:false,
+          width:larguraReal,height:alturaReal,
+          windowWidth:larguraReal,windowHeight:alturaReal
+        });
+      }finally{
+        wraps.forEach((w,idx)=>{w.style.overflowX=overflowAnterior[idx];});
+      }
       const img=canvas.toDataURL('image/jpeg',0.92);
       if(i>0) pdf.addPage('a4','landscape');
       const maxW=287,maxH=200;
@@ -3495,7 +4694,12 @@ async function enviarEscalaParaBanco(id){
       status:'ATIVA',
       observacoes:'',
       pdfBase64,
-      jsonConteudo:JSON.stringify(pacoteJson)
+      jsonConteudo:JSON.stringify(pacoteJson),
+      // 2026-09-13: diz pro Code.gs em qual pasta do Drive salvar (RIVA ou
+      // DIRECIONAL têm pastas separadas) e marca a coluna EMPRESA na
+      // planilha — é isso que permite listarEscalas() filtrar por empresa
+      // depois, sem misturar o histórico de uma na tela da outra.
+      empresa:empresaAtualId
     };
     const resposta=await fetch(webAppUrl,{
       method:'POST',
@@ -3531,7 +4735,7 @@ function renderRelatorio(){
   const tit=document.createElement('div');
   tit.style.cssText='font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:var(--azul);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px';
   tit.innerHTML=`<span>📈 Relatório — ${fmtDS(periodoIni)} a ${fmtDS(periodoFim)}</span>
-    <button class="btn btn-primary btn-sm" onclick="abrirModalImprimir()">🖨️ Imprimir</button>`;
+    <button class="btn btn-primary btn-sm" onclick="abrirModalImprimir()">🖨️ Baixar PDF</button>`;
   cont.appendChild(tit);
 
   // ── Contagem por gerente ──────────────────────────────────────────────────
@@ -3694,7 +4898,7 @@ function renderRelatorio(){
       const pctVGV=totalVGVAtivos>0?((vgv/totalVGVAtivos)*100).toFixed(1):0;
       const tr2=document.createElement('tr');
       tr2.innerHTML=`
-        <td style="font-weight:700">${g.nome}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}</td>
+        <td style="font-weight:700">${g.nome}${cargoBadge(g)}${g.novato?` <span class="badge badge-amarelo" style="font-size:9px">Novato</span>`:''}</td>
         <td><strong style="font-size:16px;font-family:'Barlow Condensed',sans-serif;color:var(--azul)">${cnt}</strong></td>
         <td style="font-weight:700;color:var(--azul-medio)">${pctTotal}%</td>
         <td style="font-size:12px;color:var(--cinza-texto)">${vgv>0?fmtR(vgv):'—'}</td>
@@ -3843,6 +5047,7 @@ document.addEventListener('keydown',e=>{
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 window.addEventListener('beforeunload',()=>salvarDados());
 
+aplicarBranding(); // logo/nome/título certos ANTES de carregar dados (evita "piscar" RIVA em quem abre já em Direcional)
 const savedAt=carregarDados();
 if(savedAt){
   const dt=typeof savedAt==='string'?new Date(savedAt).toLocaleString('pt-BR'):'';
@@ -3861,6 +5066,12 @@ if(savedAt){
   atualizarIndicadorSalvo(true);
   showToast('✅ Dados carregados'+(dt?' — salvo em '+dt:''),'success',4000);
 } else {
+  // BUG REAL encontrado ao revisar (2026-09-13): sem isso, abrir o sistema
+  // com Direcional selecionada mas SEM nada salvo ainda mostraria os
+  // exemplos da Riva (Shopping Parangaba, René, Cahú...) — porque o "S"
+  // inicial do arquivo sempre nasce com esse seed, pensado só pra quem abre
+  // a RIVA pela 1ª vez. Zera pra qualquer empresa que não seja a Riva.
+  if(empresaAtualId!=='RIVA') zerarEstadoParaEmpresaNova_();
   mudarMes();renderPainel();
   showToast('Bem-vindo! Os dados serão salvos automaticamente.','info',4000);
 }
