@@ -1173,7 +1173,9 @@ let S = {
     {id:3, nome:'Lumina', turnos:['m','t'], diatodo:true,
      padrao:{0:{m:1,t:1},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
      fechados:[], modo:'igual',
-     horarios:{m:'', t:'', n:''}},
+     horarios:{m:'09:00 – 13:00', t:'13:00 – 18:00', n:''},
+     horarios_sab:{m:'09:00 – 13:00', t:'13:00 – 18:00', n:''},
+     horarios_dom:{m:'09:00 – 12:00', t:'12:00 – 17:00', n:''}},
     // Nome precisa conter "loja": a fila de domingos só liga pra locais cujo
     // nome bate com isso (isLojaLocal, em gerarEscalasInterno). Renomeado de
     // "Estande da Riva" em 2026-09-13 a pedido do dono, justamente porque a
@@ -1181,7 +1183,9 @@ let S = {
     {id:4, nome:'Loja', turnos:['m','t'], diatodo:false,
      padrao:{0:{m:2,t:2},1:{m:2,t:2},2:{m:2,t:2},3:{m:2,t:2},4:{m:2,t:2},5:{m:2,t:2},6:{m:2,t:2}},
      fechados:[], modo:'igual',
-     horarios:{m:'', t:'', n:''}},
+     horarios:{m:'09:00 – 13:00', t:'13:00 – 18:00', n:''},
+     horarios_sab:{m:'09:00 – 13:00', t:'13:00 – 18:00', n:''},
+     horarios_dom:{m:'09:00 – 12:00', t:'12:00 – 17:00', n:''}},
     {id:5, nome:'Blip', turnos:['m','t','n'], diatodo:false,
      padrao:{0:{m:2,t:2,n:2},1:{m:2,t:2,n:2},2:{m:2,t:2,n:2},3:{m:2,t:2,n:2},4:{m:2,t:2,n:2},5:{m:2,t:2,n:2},6:{m:2,t:2,n:2}},
      fechados:[], modo:'vgv',
@@ -1192,7 +1196,13 @@ let S = {
     {id:6, nome:'Passaré', turnos:['m','t'], diatodo:false,
      padrao:{0:{m:1,t:1},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
      fechados:[], modo:'igual', diaSim:true, diaSimInicio:'',
-     horarios:{m:'09:00 – 13:30', t:'13:30 – 18:00', n:''}}
+     horarios:{m:'09:00 – 13:30', t:'13:30 – 18:00', n:''}},
+    {id:7, nome:'Benfica', turnos:['m','t'], diatodo:false,
+     padrao:{0:{m:2,t:2},1:{m:2,t:2},2:{m:2,t:2},3:{m:2,t:2},4:{m:2,t:2},5:{m:2,t:2},6:{m:2,t:2}},
+     fechados:[], modo:'igual',
+     horarios:{m:'10:00 – 16:00', t:'16:00 – 22:00', n:''},
+     horarios_sab:{m:'10:00 – 16:00', t:'16:00 – 22:00', n:''},
+     horarios_dom:{m:'13:00 – 17:00', t:'17:00 – 21:00', n:''}}
   ],
   gerentes: [
     {id:1,nome:'André',regional:'René',novato:false,inativo:false},
