@@ -4527,6 +4527,18 @@ function carregarDados(){
     S.vgvTime=dados.vgvTime??{};
     S.pctTime=dados.pctTime??{};
     S.modoTime=dados.modoTime??{};
+    // "quando eu filtro o REGIONAL e vou fazer da equipe dele tem que
+    // ficar tudo aleatorio" (2026-09-30) — o time do René estava em "Por
+    // %" (Lima 50%, Pereira 25%, Luis 25%), por isso saía sempre o dobro
+    // de vezes pro Lima: não era bug de sorteio, era a divisão configurada
+    // de propósito (ou por engano) puxando peso pra um só. Reseta toda
+    // divisão de time pra "Igualitário" — que já sorteia de verdade,
+    // igual entre todos — 1x só; o dono pode escolher "Por VGV/%" nesse
+    // mesmo lugar de novo se quiser voltar a ter peso pra alguém.
+    if(Object.keys(S.modoTime).some(k=>S.modoTime[k]!=='igual')){
+      S.modoTime={};
+      setTimeout(()=>{try{salvarDados();showToast('Divisão de todos os times voltou pra "Igualitário" (sorteio real). Se quiser peso por VGV/% de novo, escolha em Gerentes & VGV → Time de cada Gerente Regional.','info',9000);}catch(e){}},50);
+    }
     S.historicoDomingos=dados.historicoDomingos??{};
     S.filaDomingosTime=dados.filaDomingosTime??{};
     S.nomesRegionais=dados.nomesRegionais??['René','Cahú'];
