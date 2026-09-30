@@ -4396,6 +4396,43 @@ function carregarDados(){
       delete normalizado.horarios_fds;
       return normalizado;
     });
+    // Migração pontual (2026-09-30, pedido do dono: "adicione os
+    // horários" pra Lumina/Loja/Benfica): dado já salvo no navegador tem
+    // prioridade sobre os valores padrão do código, então só editar o
+    // código não mudava nada pra quem já tinha dados salvos. Aqui roda
+    // 1x ao carregar — só preenche o que estiver REALMENTE vazio (nunca
+    // sobrescreve horário que o dono já tenha digitado manualmente).
+    (function migrarHorariosLumLojBenfica(){
+      const setSeVazio=(loc,campo,valor)=>{
+        const atual=loc[campo];
+        if(!atual||(!atual.m&&!atual.t&&!atual.n)) loc[campo]=valor;
+      };
+      const lumina=S.locais.find(l=>l.nome==='Lumina');
+      if(lumina){
+        setSeVazio(lumina,'horarios',{m:'09:00 – 13:00',t:'13:00 – 18:00',n:''});
+        setSeVazio(lumina,'horarios_sab',{m:'09:00 – 13:00',t:'13:00 – 18:00',n:''});
+        setSeVazio(lumina,'horarios_dom',{m:'09:00 – 12:00',t:'12:00 – 17:00',n:''});
+      }
+      const loja=S.locais.find(l=>l.nome.toLowerCase().includes('loja'));
+      if(loja){
+        setSeVazio(loja,'horarios',{m:'09:00 – 13:00',t:'13:00 – 18:00',n:''});
+        setSeVazio(loja,'horarios_sab',{m:'09:00 – 13:00',t:'13:00 – 18:00',n:''});
+        setSeVazio(loja,'horarios_dom',{m:'09:00 – 12:00',t:'12:00 – 17:00',n:''});
+      }
+      if(!S.locais.some(l=>l.nome==='Benfica')){
+        S.locais.push({
+          id:Date.now(), nome:'Benfica', turnos:['m','t'], diatodo:false,
+          padrao:{0:{m:2,t:2},1:{m:2,t:2},2:{m:2,t:2},3:{m:2,t:2},4:{m:2,t:2},5:{m:2,t:2},6:{m:2,t:2}},
+          fechados:[], modo:'igual',
+          horarios:{m:'10:00 – 16:00',t:'16:00 – 22:00',n:''},
+          horarios_sab:{m:'10:00 – 16:00',t:'16:00 – 22:00',n:''},
+          horarios_dom:{m:'13:00 – 17:00',t:'17:00 – 21:00',n:''},
+        });
+      }
+      // Persiste a correção de imediato (não depende de o dono mexer em
+      // mais nada pra ficar salva de verdade no navegador).
+      setTimeout(()=>{try{salvarDados();}catch(e){}},0);
+    })();
     S.gerentes=(dados.gerentes??S.gerentes).map(g=>({novato:false,inativo:false,...g}));
     S.vgv=dados.vgv??S.vgv;S.ajustes=dados.ajustes??S.ajustes;
     S.escala=dados.escala??null;S.historicoEscalas=dados.historicoEscalas??[];
