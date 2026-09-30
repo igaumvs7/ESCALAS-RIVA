@@ -987,6 +987,24 @@ tbody tr:hover td { background: #FAFBFF; }
       <div id="blip-preview-dist" style="margin-top:10px;font-size:12px;color:#7A5A00"></div>
     </div>
 
+    <!-- REGIONAL POR TURNO — pedido do dono (2026-09-30): fila sequencial
+    editável (nome + posição de cada regional). Quando ativado, TODAS as
+    vagas de um turno (em todos os locais, num mesmo dia) vão pro próximo
+    da fila — sem dividir com ninguém, o nome do regional aparece direto.
+    A fila segue em ordem, dia após dia, avançando SEMPRE a partir de onde
+    parou na última geração (nunca reinicia sozinha). -->
+    <div style="background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${S.regionalPorTurnoAtivo?'10px':'0'}">
+        <input type="checkbox" id="chk-regional-turno" ${S.regionalPorTurnoAtivo?'checked':''} style="width:16px;height:16px" onchange="toggleRegionalPorTurnoAtivo(this.checked)">
+        <label for="chk-regional-turno" style="font-size:13px;font-weight:700;color:#9A3412;cursor:pointer">🔀 Regional por Turno</label>
+        <span style="font-size:11px;color:#7A5A00;font-weight:400">— cada turno inteiro vai pro próximo da fila</span>
+      </div>
+      <div id="regional-turno-fila-wrap" style="display:${S.regionalPorTurnoAtivo?'block':'none'}">
+        <div style="font-size:11px;color:#7A5A00;margin-bottom:8px">Todas as vagas de um turno (manhã, tarde ou noite), em todos os locais daquele dia, vão pro próximo regional da fila abaixo — sem dividir com time, direto no nome dele. Arraste (ou use ↑↓) pra reordenar.</div>
+        <div id="regional-turno-fila-lista" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+    </div>
+
     <div style="background:#F8F9FC;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
       <div style="font-size:12px;font-weight:700;color:var(--azul);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">✅ Locais a Gerar</div>
       <div id="locais-check-list"></div>
@@ -1338,6 +1356,81 @@ function inicializarFilaDomingos(){
   ger.forEach(g=>{if(!filaIds.has(g.id)) S.filaDomingos.push({gid:g.id,nome:g.nome});});
   // Atualiza nomes (podem ter mudado)
   S.filaDomingos.forEach(item=>{const g=ger.find(x=>x.id===item.gid);if(g)item.nome=g.nome;});
+}
+
+// ── Regional por Turno (2026-09-30, pedido do dono) ────────────────────────
+// Fila SEQUENCIAL editável (nome + posição de cada regional) — mesmo
+// mecanismo/UI da Fila Domingos, generalizada pra qualquer dia/turno, não só
+// domingo. Quando ativada na hora de gerar, cada turno (manhã/tarde/noite)
+// avança pro PRÓXIMO da fila (roleta sequencial, sem pular) e esse regional
+// pega TODAS as vagas daquele turno, em TODOS os locais que o têm aberto
+// naquele dia — sem dividir com time, nome dele direto na escala. O
+// ponteiro (S.regionalPorTurnoPonteiro) é permanente: cada geração continua
+// de onde a fila parou na vez anterior, nunca reinicia sozinha.
+function inicializarFilaRegionalPorTurno(){
+  if(!S.filaRegionalPorTurno) S.filaRegionalPorTurno=[];
+  const ger=gerentesAtivos();
+  const gerIds=new Set(ger.map(g=>g.id));
+  S.filaRegionalPorTurno=S.filaRegionalPorTurno.filter(item=>gerIds.has(item.gid));
+  const filaIds=new Set(S.filaRegionalPorTurno.map(item=>item.gid));
+  ger.forEach(g=>{if(!filaIds.has(g.id)) S.filaRegionalPorTurno.push({gid:g.id,nome:g.nome});});
+  S.filaRegionalPorTurno.forEach(item=>{const g=ger.find(x=>x.id===item.gid);if(g)item.nome=g.nome;});
+}
+function toggleRegionalPorTurnoAtivo(checked){
+  S.regionalPorTurnoAtivo=checked;
+  const wrap=document.getElementById('regional-turno-fila-wrap');
+  if(wrap) wrap.style.display=checked?'block':'none';
+  if(checked) renderFilaRegionalPorTurno();
+  autoSave();
+}
+function renderFilaRegionalPorTurno(){
+  inicializarFilaRegionalPorTurno();
+  const lista=document.getElementById('regional-turno-fila-lista');
+  if(!lista) return;
+  lista.innerHTML='';
+  let dragSrc=null;
+  const fila=S.filaRegionalPorTurno;
+  if(fila.length===0){
+    lista.innerHTML='<div style="font-size:11px;color:var(--cinza-texto)">Nenhum gerente ativo cadastrado ainda.</div>';
+    return;
+  }
+  fila.forEach((item,idx)=>{
+    const row=document.createElement('div');
+    row.draggable=true;
+    row.dataset.idx=idx;
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;border:1.5px solid #FDBA74;border-radius:8px;cursor:grab;user-select:none';
+    row.innerHTML=`
+      <span style="font-size:14px;color:var(--cinza-texto);cursor:grab">⠿</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:#9A3412;min-width:20px;text-align:center">${idx+1}</span>
+      <span style="flex:1;font-size:12px;font-weight:700;color:var(--texto)">${escaparHtml(item.nome)}</span>
+      <button class="btn btn-xs btn-outline" onclick="moverFilaRegionalTurnoUp(${idx})" ${idx===0?'disabled':''} style="padding:2px 6px">↑</button>
+      <button class="btn btn-xs btn-outline" onclick="moverFilaRegionalTurnoDown(${idx})" ${idx===fila.length-1?'disabled':''} style="padding:2px 6px">↓</button>`;
+    row.addEventListener('dragstart',e=>{dragSrc=idx;row.style.opacity='0.4';e.dataTransfer.effectAllowed='move';});
+    row.addEventListener('dragend',()=>{row.style.opacity='1';});
+    row.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(dragSrc===null||dragSrc===idx) return;
+      const arr=S.filaRegionalPorTurno;
+      const [moved]=arr.splice(dragSrc,1);
+      arr.splice(idx,0,moved);
+      autoSave();
+      renderFilaRegionalPorTurno();
+    });
+    lista.appendChild(row);
+  });
+}
+function moverFilaRegionalTurnoUp(idx){
+  if(idx===0) return;
+  const arr=S.filaRegionalPorTurno;
+  [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];
+  autoSave(); renderFilaRegionalPorTurno();
+}
+function moverFilaRegionalTurnoDown(idx){
+  const arr=S.filaRegionalPorTurno;
+  if(idx>=arr.length-1) return;
+  [arr[idx],arr[idx+1]]=[arr[idx+1],arr[idx]];
+  autoSave(); renderFilaRegionalPorTurno();
 }
 
 // ── Fila de domingos por TIME (2026-09-14, pedido do dono) ────────────────
@@ -2204,59 +2297,9 @@ function renderLocais(){
           <input type="date" value="${l.diaSimInicio||''}" style="font-size:13px;font-weight:600;border-color:#86EFAC" onchange="setDiaSimInicio(${l.id},this.value)">
           <span style="font-size:11px;color:var(--cinza-texto)">O padrão semanal define as <strong>vagas</strong> do dia com plantão.</span>
         </div>`:''}
-      </div>
-      ${renderSorteioPorTurnoLocal(l)}`;
+      </div>`;
     cont.appendChild(card);
   });
-}
-
-// Sorteio restrito por turno (pedido do dono, 2026-09-30): "cada turno tem
-// que ser sorteado mas tentando manter o máximo de igualdade possível [...]
-// cada turno é de apenas 1 regional [...] aleatório e não uma fila
-// sequencial [...] fica no nome dele [...] eu quero poder escolher quais
-// vão ser assim e quais não". Por local + turno: marca quais gerentes
-// participam do sorteio daquele turno (crédito+sorteio igual ao resto do
-// sistema, só que restrito à lista marcada) — sem ninguém marcado, o turno
-// continua "Livre" (todos concorrem, como hoje). Dia Todo não tem turno
-// independente, não mostra essa seção.
-function renderSorteioPorTurnoLocal(l){
-  if(l.diatodo) return '';
-  const ativos=gerentesAtivos();
-  if(ativos.length===0) return '';
-  const rpt=l.regionalPorTurno||{};
-  return `
-      <div style="margin-top:12px;padding:10px 14px;background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:var(--radius-sm)">
-        <div style="font-size:13px;font-weight:700;color:#9A3412;margin-bottom:4px">🎲 Sortear por Turno <span style="font-size:10px;font-weight:400;text-transform:none">(opcional)</span></div>
-        <div style="font-size:11px;color:#7A5A00;margin-bottom:10px">Escolha, turno por turno, quais gerentes participam do sorteio daquele turno NESTE local. A vaga fica sorteada — o mais igual possível, sem ordem fixa — só entre os marcados, no nome deles mesmo (sem dividir com ninguém). Sem ninguém marcado, o turno fica "Livre" e todo mundo concorre, como hoje.</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${l.turnos.map(tr=>{
-            const sel=new Set((rpt[tr]||[]).map(String));
-            return `
-          <div style="background:#fff;border:1px solid #FDBA74;border-radius:var(--radius-sm);padding:8px 10px">
-            <div style="font-size:11px;font-weight:700;color:#9A3412;margin-bottom:6px">${TURNOS_LABEL[tr]} ${sel.size>0?`<span style="font-weight:400;color:#7A5A00">— sorteando entre ${sel.size}</span>`:`<span style="font-weight:400;color:var(--cinza-texto)">— Livre</span>`}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px">
-              ${ativos.map(g=>`
-                <label style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--cinza-texto);cursor:pointer">
-                  <input type="checkbox" ${sel.has(String(g.id))?'checked':''} style="width:13px;height:13px" onchange="toggleSorteioTurnoGerente(${l.id},'${tr}',${g.id},this.checked)">
-                  ${escaparHtml(g.nome)}
-                </label>`).join('')}
-            </div>
-          </div>`;
-          }).join('')}
-        </div>
-      </div>`;
-}
-function toggleSorteioTurnoGerente(lid,turno,gid,checked){
-  const l=S.locais.find(x=>x.id===lid);
-  if(!l) return;
-  if(!l.regionalPorTurno) l.regionalPorTurno={};
-  const arr=l.regionalPorTurno[turno]=l.regionalPorTurno[turno]||[];
-  const gidStr=String(gid);
-  const idx=arr.findIndex(x=>String(x)===gidStr);
-  if(checked&&idx===-1) arr.push(gid);
-  else if(!checked&&idx!==-1) arr.splice(idx,1);
-  if(arr.length===0) delete l.regionalPorTurno[turno];
-  renderLocais();autoSave();
 }
 
 function setPadrao(lid,dia,turno,val){
@@ -2818,6 +2861,7 @@ function confirmarGerarEscalas(){
   const overrides=Object.keys(S.ajustes).filter(k=>k.startsWith('pad_')||k.startsWith('diatodo_')).length;
   document.getElementById('confirmar-desc').innerHTML=`Gerentes ativos: <strong>${gerentesAtivos().length}</strong> &nbsp;|&nbsp; Locais: <strong>${S.locais.length}</strong>${overrides>0?`<br><span style="color:var(--azul-claro)">📅 ${overrides} configurações de calendário salvas</span>`:''}`;
   renderCalPeriodo();
+  renderFilaRegionalPorTurno();
   document.getElementById('modal-confirmar').style.display='flex';
   // Inicializar painel BLIP
   const blipCampo=document.getElementById('blip-vagas-total');
@@ -3312,6 +3356,50 @@ function gerarEscalasInterno(){
   const novatos=ger.filter(g=>g.novato);
   const locBlip=S.locais.find(l=>l.nome.toLowerCase().includes('blip'));
 
+  // ── Regional por Turno — fila sequencial (pedido do dono, 2026-09-30):
+  // "eu coloque os nomes de cada regional, a posição de cada um, e você
+  // segue a fila". Quando ativo: cada turno (manhã/tarde/noite), em CADA
+  // DIA que tenha pelo menos 1 local elegível (não BLIP, não Dia Todo —
+  // lógica própria deles) aberto naquele turno, vai INTEIRO pro PRÓXIMO da
+  // fila — substitui totalmente a lógica normal desses locais (créditos,
+  // sorteio, fila de domingos), sem dividir com time, nome dele direto na
+  // escala. O ponteiro é permanente (S.regionalPorTurnoPonteiro): cada
+  // geração continua de onde a fila parou da vez anterior.
+  // Ponteiro ÚNICO combinado (não um por turno): avança dia a dia, sempre
+  // na ordem Manhã→Tarde→Noite dentro do mesmo dia — é isso que garante
+  // que manhã e tarde do MESMO dia saem para PESSOAS DIFERENTES na fila
+  // (exatamente como no exemplo do dono: "dia1 manhã René, dia1 tarde
+  // Cahú" — nunca a mesma posição da fila repetida no mesmo dia).
+  const regTurnoAtivo=S.regionalPorTurnoAtivo&&(S.filaRegionalPorTurno||[]).length>0;
+  const vencedorPorDiaTurno={}; // {tr: {ds: gerente|null}}
+  if(regTurnoAtivo){
+    const fila=S.filaRegionalPorTurno;
+    let ponteiro=S.regionalPorTurnoPonteiro;
+    if(typeof ponteiro!=='number') ponteiro=-1; // estado antigo/ausente
+    ['m','t','n'].forEach(tr=>{vencedorPorDiaTurno[tr]={};});
+    diasEntre(dsIni,dsFim).forEach(dia=>{
+      const ds=toDS(dia);
+      ['m','t','n'].forEach(tr=>{
+        const temAlguemAberto=S.locais.some(l=>{
+          if(!locaisSel.includes(l.id)) return false;
+          if(l.diatodo) return false;
+          if(locBlip&&l.id===locBlip.id) return false;
+          if(!l.turnos.includes(tr)) return false;
+          const pLoc=periodoPorLocal[l.id];
+          const lIni=pLoc?.ini||dsIni, lFim=pLoc?.fim||dsFim;
+          if(ds<lIni||ds>lFim) return false;
+          const v=vagasDia(l,dia);
+          return !!(v&&(v[tr]||0)>0);
+        });
+        if(!temAlguemAberto) return;
+        ponteiro=(ponteiro+1)%fila.length;
+        const g=ger.find(x=>x.id===fila[ponteiro].gid);
+        vencedorPorDiaTurno[tr][ds]=g||null;
+      });
+    });
+    S.regionalPorTurnoPonteiro=ponteiro;
+  }
+
   // ── Calcular créditos VGV para o BLIP ─────────────────────────────────────
   // Gerentes que venderam: têm VGV > 0. Os novatos têm reserva de 10%.
   // Cada gerente não-novato com VGV recebe vagas proporcionais ao seu VGV.
@@ -3364,6 +3452,30 @@ function gerarEscalasInterno(){
     const dias=diasEntre(locIni,locFim);
 
     agenda[loc.id]={};
+
+    // ── Regional por Turno ativo: substitui TODA a lógica normal deste
+    // local (não Blip, não Dia Todo) — cada turno vai inteiro pro vencedor
+    // da fila daquele dia, já calculado 1x acima pra todos os locais juntos.
+    if(regTurnoAtivo&&!isBlip&&!loc.diatodo){
+      dias.forEach(dia=>{
+        const ds=toDS(dia);
+        const v=vagasDia(loc,dia);
+        if(!v){agenda[loc.id][ds]={fechado:true};return;}
+        const daySlots={_diatodo:null};
+        loc.turnos.forEach(tr=>{
+          const n=v[tr]||0;
+          const vencedor=(vencedorPorDiaTurno[tr]&&vencedorPorDiaTurno[tr][ds])||null;
+          daySlots[tr]=[];
+          for(let s=0;s<n;s++){
+            const aKey=loc.id+'_'+ds+'_'+tr+'_'+s;
+            if(S.ajustes[aKey]!==undefined){daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);}
+            else{daySlots[tr].push(vencedor);}
+          }
+        });
+        agenda[loc.id][ds]=daySlots;
+      });
+      return; // próximo local
+    }
 
     // ── BLIP: distribuição por VGV ─────────────────────────────────────────
     if(isBlip){
@@ -3467,43 +3579,11 @@ function gerarEscalasInterno(){
     // aplica a % Direto, que já é um percentual combinado manualmente)
     const dez10ativo=modoVGV&&(!S.locais10pct||S.locais10pct.includes(loc.id));
 
-    // ── Sortear por turno (pedido do dono, 2026-09-30): "cada turno tem
-    // que ser sorteado mas tentando manter o máximo de igualdade possível
-    // [...] cada turno é de apenas 1 regional [...] aleatório e não uma
-    // fila sequencial". Configurado por local + turno (Locais & Padrões):
-    // quando o dono escolhe uma LISTA de gerentes pra um turno, a vaga
-    // daquele turno passa a ser sorteada SÓ entre eles (fica no nome do
-    // próprio gerente — não divide com time de ninguém), com o mesmo
-    // algoritmo de crédito+sorteio já usado no resto do sistema, só que a
-    // "bolsa" de crédito é exclusiva daquele turno (não do local inteiro).
-    // Turno sem lista escolhida (ou lista sem ninguém ativo) continua
-    // "Livre" — concorre no pool geral do local, como sempre. Dia Todo não
-    // tem conceito de turno independente, fica sempre livre.
-    const turnosTravados={}; // {tr: {pool:[...], creditos:{}}}
-    if(!loc.diatodo){
-      loc.turnos.forEach(tr=>{
-        const ids=(loc.regionalPorTurno||{})[tr];
-        if(!ids||ids.length===0) return;
-        const pool=ger.filter(g=>ids.includes(String(g.id))||ids.includes(g.id));
-        if(pool.length===0) return;
-        let totalVagasTurno=0;
-        dias.forEach(d=>{const v=vagasDia(loc,d);if(v) totalVagasTurno+=v[tr]||0;});
-        turnosTravados[tr]={
-          pool,
-          creditos:repartirPorPeso_(pool,totalVagasTurno,{}),
-          ultimos:[null,null],
-          diaTrabalhadoHoje:{},
-        };
-      });
-    }
-    const turnosLivres=loc.turnos.filter(tr=>!turnosTravados[tr]);
-
-    // ── Calcular total de vagas deste local no período (só turnos LIVRES —
-    // os travados já têm pool e créditos próprios, calculados acima) ──────
+    // ── Calcular total de vagas deste local no período ────────────────────
     let totalVagasLoc=0;
     dias.forEach(d=>{
       const v=vagasDia(loc,d);
-      if(v) turnosLivres.forEach(tr=>totalVagasLoc+=v[tr]||0);
+      if(v) loc.turnos.forEach(tr=>totalVagasLoc+=v[tr]||0);
     });
 
     // ── Verificar se há vagas manuais definidas ───────────────────────────
@@ -3634,10 +3714,8 @@ function gerarEscalasInterno(){
           // chave (não soma em dobro). Ver contarDomingos/registrarDomingo_.
           // Guarda o NOME junto (sobrevive à remoção da pessoa depois).
           registrarDomingo_(loc.id+'_'+ds+'|regional',domGer.id,{tipo:'regional',nome:domGer.nome});
-          // Todos os slots do domingo = domGer, debitar créditos. Só turnos
-          // LIVRES — turno travado pela opção global já tem dono fixo (o
-          // time daquele regional), não participa da fila geral de domingo.
-          turnosLivres.forEach(tr=>{
+          // Todos os slots do domingo = domGer, debitar créditos
+          loc.turnos.forEach(tr=>{
             const n=v[tr]||0;
             for(let s=0;s<n;s++){
               if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
@@ -3663,19 +3741,10 @@ function gerarEscalasInterno(){
       const ultimosNormal={locId:[null,null]};
       let diaAtualNormal=null;
       let diaTrabalhadoHojeNormal={};
-      // Contador de quantas vagas cada gerente já pegou em CADA turno
-      // travado — usado só no fallback de crédito esgotado (sobra de
-      // arredondamento), pra completar com quem trabalhou menos.
-      const contPorTurnoTravado={};
-      Object.keys(turnosTravados).forEach(tr=>{contPorTurnoTravado[tr]={};});
       dias.forEach(dia=>{
         const ds=toDS(dia);const v=vagasDia(loc,dia);if(!v) return;
-        if(ds!==diaAtualNormal){
-          diaTrabalhadoHojeNormal={};
-          Object.values(turnosTravados).forEach(t=>{t.diaTrabalhadoHoje={};});
-          diaAtualNormal=ds;
-        }
-        turnosLivres.forEach(tr=>{
+        if(ds!==diaAtualNormal){diaTrabalhadoHojeNormal={};diaAtualNormal=ds;}
+        loc.turnos.forEach(tr=>{
           const n=v[tr]||0;
           for(let s=0;s<n;s++){
             if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
@@ -3683,34 +3752,6 @@ function gerarEscalasInterno(){
             const ultimos=ultimosNormal.locId;
             const escolhido=escolherPorCredito_(ger,creditos,ultimos,ds,diaTrabalhadoHojeNormal);
             if(escolhido) ultimosNormal.locId=[ultimos[1],escolhido.id];
-            atrib[ds+'_'+tr+'_'+s]=escolhido;
-          }
-        });
-        // Turnos travados: sorteio restrito à lista de gerentes escolhida
-        // pra esse turno (pool/créditos calculados 1x, fora do loop de
-        // dias) — mesmo algoritmo de crédito+sorteio do resto do sistema.
-        Object.keys(turnosTravados).forEach(tr=>{
-          const t=turnosTravados[tr];
-          const n=v[tr]||0;
-          for(let s=0;s<n;s++){
-            if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
-            if(atrib[ds+'_'+tr+'_'+s]!==undefined) continue;
-            let escolhido=escolherPorCredito_(t.pool,t.creditos,t.ultimos,ds,t.diaTrabalhadoHoje);
-            if(!escolhido){
-              // Créditos esgotados (sobra de arredondamento): completa com
-              // quem trabalhou MENOS nesse turno até agora.
-              const cont=contPorTurnoTravado[tr];
-              const livresHoje=t.pool.filter(g=>!t.diaTrabalhadoHoje[g.id]);
-              const cand=livresHoje.length?livresHoje:t.pool;
-              const menos=Math.min(...cand.map(g=>cont[g.id]||0));
-              const empatados=cand.filter(g=>(cont[g.id]||0)===menos);
-              escolhido=empatados[Math.floor(Math.random()*empatados.length)]||null;
-              if(escolhido) t.diaTrabalhadoHoje[escolhido.id]=true;
-            }
-            if(escolhido){
-              t.ultimos=[t.ultimos[1],escolhido.id];
-              contPorTurnoTravado[tr][escolhido.id]=(contPorTurnoTravado[tr][escolhido.id]||0)+1;
-            }
             atrib[ds+'_'+tr+'_'+s]=escolhido;
           }
         });
@@ -3728,11 +3769,7 @@ function gerarEscalasInterno(){
           const n=v[tr]||0;daySlots[tr]=[];
           for(let s=0;s<n;s++){
             const aKey=loc.id+'_'+ds+'_'+tr+'_'+s;
-            if(S.ajustes[aKey]!==undefined){
-              // Pool do turno travado é sempre um subconjunto de `ger` (são
-              // gerentes normais, não um time de vendas à parte) — acha direto.
-              daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);
-            }
+            if(S.ajustes[aKey]!==undefined){daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);}
             else{daySlots[tr].push(atrib[ds+'_'+tr+'_'+s]||null);}
           }
         });
