@@ -987,20 +987,6 @@ tbody tr:hover td { background: #FAFBFF; }
       <div id="blip-preview-dist" style="margin-top:10px;font-size:12px;color:#7A5A00"></div>
     </div>
 
-    <!-- 1 REGIONAL POR TURNO — pedido do dono (2026-09-30): "o turno ser de
-    apenas 1 regional, ex: amanhã a tarde a Riva inteira tem 2 vagas, as 2
-    vai ser de 1 regional". Travado NA HORA DE GERAR (aqui), não por local:
-    quando marcado, TODAS as vagas daquele turno em TODOS os locais (exceto
-    BLIP e Dia Todo, que têm lógica própria) somam numa bolsa só e são
-    sorteadas, o mais igual possível, entre o time de vendas do regional
-    escolhido. Turno deixado "Livre" continua concorrendo entre todos, como
-    sempre. -->
-    <div style="background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
-      <div style="font-size:12px;font-weight:700;color:#9A3412;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">🗂️ 1 Regional por Turno <span style="font-size:10px;font-weight:400;text-transform:none">(opcional)</span></div>
-      <div style="font-size:11px;color:#7A5A00;margin-bottom:8px">Trava um turno inteiro (todos os locais juntos) só para o time de 1 regional — sorteado, o mais igual possível entre eles. Deixe "Livre" para manter o comportamento normal.</div>
-      <div id="regional-por-turno-global" style="display:flex;flex-wrap:wrap;gap:10px"></div>
-    </div>
-
     <div style="background:#F8F9FC;border:1px solid var(--cinza-borda);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
       <div style="font-size:12px;font-weight:700;color:var(--azul);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">✅ Locais a Gerar</div>
       <div id="locais-check-list"></div>
@@ -2218,9 +2204,59 @@ function renderLocais(){
           <input type="date" value="${l.diaSimInicio||''}" style="font-size:13px;font-weight:600;border-color:#86EFAC" onchange="setDiaSimInicio(${l.id},this.value)">
           <span style="font-size:11px;color:var(--cinza-texto)">O padrão semanal define as <strong>vagas</strong> do dia com plantão.</span>
         </div>`:''}
-      </div>`;
+      </div>
+      ${renderSorteioPorTurnoLocal(l)}`;
     cont.appendChild(card);
   });
+}
+
+// Sorteio restrito por turno (pedido do dono, 2026-09-30): "cada turno tem
+// que ser sorteado mas tentando manter o máximo de igualdade possível [...]
+// cada turno é de apenas 1 regional [...] aleatório e não uma fila
+// sequencial [...] fica no nome dele [...] eu quero poder escolher quais
+// vão ser assim e quais não". Por local + turno: marca quais gerentes
+// participam do sorteio daquele turno (crédito+sorteio igual ao resto do
+// sistema, só que restrito à lista marcada) — sem ninguém marcado, o turno
+// continua "Livre" (todos concorrem, como hoje). Dia Todo não tem turno
+// independente, não mostra essa seção.
+function renderSorteioPorTurnoLocal(l){
+  if(l.diatodo) return '';
+  const ativos=gerentesAtivos();
+  if(ativos.length===0) return '';
+  const rpt=l.regionalPorTurno||{};
+  return `
+      <div style="margin-top:12px;padding:10px 14px;background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:var(--radius-sm)">
+        <div style="font-size:13px;font-weight:700;color:#9A3412;margin-bottom:4px">🎲 Sortear por Turno <span style="font-size:10px;font-weight:400;text-transform:none">(opcional)</span></div>
+        <div style="font-size:11px;color:#7A5A00;margin-bottom:10px">Escolha, turno por turno, quais gerentes participam do sorteio daquele turno NESTE local. A vaga fica sorteada — o mais igual possível, sem ordem fixa — só entre os marcados, no nome deles mesmo (sem dividir com ninguém). Sem ninguém marcado, o turno fica "Livre" e todo mundo concorre, como hoje.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${l.turnos.map(tr=>{
+            const sel=new Set((rpt[tr]||[]).map(String));
+            return `
+          <div style="background:#fff;border:1px solid #FDBA74;border-radius:var(--radius-sm);padding:8px 10px">
+            <div style="font-size:11px;font-weight:700;color:#9A3412;margin-bottom:6px">${TURNOS_LABEL[tr]} ${sel.size>0?`<span style="font-weight:400;color:#7A5A00">— sorteando entre ${sel.size}</span>`:`<span style="font-weight:400;color:var(--cinza-texto)">— Livre</span>`}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              ${ativos.map(g=>`
+                <label style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--cinza-texto);cursor:pointer">
+                  <input type="checkbox" ${sel.has(String(g.id))?'checked':''} style="width:13px;height:13px" onchange="toggleSorteioTurnoGerente(${l.id},'${tr}',${g.id},this.checked)">
+                  ${escaparHtml(g.nome)}
+                </label>`).join('')}
+            </div>
+          </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+}
+function toggleSorteioTurnoGerente(lid,turno,gid,checked){
+  const l=S.locais.find(x=>x.id===lid);
+  if(!l) return;
+  if(!l.regionalPorTurno) l.regionalPorTurno={};
+  const arr=l.regionalPorTurno[turno]=l.regionalPorTurno[turno]||[];
+  const gidStr=String(gid);
+  const idx=arr.findIndex(x=>String(x)===gidStr);
+  if(checked&&idx===-1) arr.push(gid);
+  else if(!checked&&idx!==-1) arr.splice(idx,1);
+  if(arr.length===0) delete l.regionalPorTurno[turno];
+  renderLocais();autoSave();
 }
 
 function setPadrao(lid,dia,turno,val){
@@ -2470,7 +2506,10 @@ function abrirModalDia(lid,ds,diaNum,diaWeek){
   const secVagas=document.createElement('div');
   secVagas.id='sec-vagas-manual';
   secVagas.style.display=diatodoGid?'none':'block';
-  secVagas.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--cinza-texto);margin-bottom:8px">Número de vagas neste dia: <span style="font-weight:400;font-size:11px">(Padrão: M=${padraoBase.m||0}, T=${padraoBase.t||0}${loc.turnos.includes('n')?', N='+(padraoBase.n||0):''}</span>)</div>`;
+  secVagas.innerHTML=`<div class="row-between" style="margin-bottom:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--cinza-texto)">Número de vagas neste dia: <span style="font-weight:400;font-size:11px">(Padrão: M=${padraoBase.m||0}, T=${padraoBase.t||0}${loc.turnos.includes('n')?', N='+(padraoBase.n||0):''}</span>)</div>
+    <button type="button" class="btn btn-xs btn-outline" style="border-color:var(--vermelho);color:var(--vermelho)" onclick="zerarVagasModalDia()">🚫 Zerar</button>
+  </div>`;
   loc.turnos.forEach(tr=>{
     const classes={m:'turno-badge-m',t:'turno-badge-t',n:'turno-badge-n'};
     const row=document.createElement('div');row.className='vagas-input-row';
@@ -2481,6 +2520,21 @@ function abrirModalDia(lid,ds,diaNum,diaWeek){
   document.getElementById('modal-dia').style.display='flex';
 }
 
+// Botão "Zerar" (pedido do dono, 2026-09-30): "quando eu clicar no dia pra
+// editar as vagas eu possa colocar que o dia não vai ter ninguém [...] um
+// botão chamado zerar ai zera as vagas desse dia". Só zera os campos de
+// vaga NA TELA (ainda precisa clicar Salvar) — diferente de "Marcar como
+// FECHADO", que é outra coisa (o dia some da escala, aqui ele continua
+// aberto só que com 0 vagas em todos os turnos).
+function zerarVagasModalDia(){
+  if(!modalDiaCtx) return;
+  const loc=S.locais.find(x=>x.id===modalDiaCtx.lid);
+  if(!loc) return;
+  loc.turnos.forEach(tr=>{
+    const el=document.getElementById('vd2-'+tr);
+    if(el) el.value=0;
+  });
+}
 function toggleDiaTodoSelect(checked){
   document.getElementById('diatodo-select-wrap').style.display=checked?'block':'none';
   document.getElementById('sec-vagas-manual').style.display=checked?'none':'block';
@@ -2763,7 +2817,6 @@ function confirmarGerarEscalas(){
   });
   const overrides=Object.keys(S.ajustes).filter(k=>k.startsWith('pad_')||k.startsWith('diatodo_')).length;
   document.getElementById('confirmar-desc').innerHTML=`Gerentes ativos: <strong>${gerentesAtivos().length}</strong> &nbsp;|&nbsp; Locais: <strong>${S.locais.length}</strong>${overrides>0?`<br><span style="color:var(--azul-claro)">📅 ${overrides} configurações de calendário salvas</span>`:''}`;
-  renderRegionalPorTurnoGlobal();
   renderCalPeriodo();
   document.getElementById('modal-confirmar').style.display='flex';
   // Inicializar painel BLIP
@@ -2908,40 +2961,6 @@ function atualizarPreviewPeriodo(){
 }
 function toggleTodosLocais(val){S.locais.forEach(l=>{const ck=document.getElementById('loc-ck-'+l.id);if(ck)ck.checked=val;});}
 function fecharModalConfirmar(e){if(!e||e.target===document.getElementById('modal-confirmar'))document.getElementById('modal-confirmar').style.display='none';}
-
-// Regionais com pelo menos 1 vendedor ativo no time — únicos elegíveis pra
-// travar um turno (sem time, não tem quem escalar).
-function regionaisComTime(){
-  return S.gerentes.filter(g=>!g.inativo && timeAtivo(g.id).length>0);
-}
-// Monta os selects de "1 Regional por Turno" no modal de gerar escala — um
-// por turno que exista em algum local (Manhã/Tarde/Noite). Lembra a última
-// escolha (S.regionalPorTurnoGlobal), pra não ter que reconfigurar toda vez.
-function renderRegionalPorTurnoGlobal(){
-  const cont=document.getElementById('regional-por-turno-global');
-  if(!cont) return;
-  const turnosExistentes=['m','t','n'].filter(tr=>S.locais.some(l=>l.turnos.includes(tr)));
-  const salvo=S.regionalPorTurnoGlobal||{};
-  const regionais=regionaisComTime();
-  if(regionais.length===0){
-    cont.innerHTML='<div style="font-size:11px;color:var(--cinza-texto)">Nenhum regional com time cadastrado ainda (Gerentes & VGV → Time de cada Gerente Regional).</div>';
-    return;
-  }
-  cont.innerHTML=turnosExistentes.map(tr=>`
-    <div style="flex:1;min-width:150px">
-      <label style="font-size:10px;font-weight:700;color:#7A5A00;display:block;margin-bottom:3px">${TURNOS_LABEL[tr]}</label>
-      <select id="regglobal-${tr}" style="width:100%;font-size:12px" onchange="setRegionalTurnoGlobal('${tr}',this.value)">
-        <option value="">Livre (todos concorrem)</option>
-        ${regionais.map(r=>`<option value="${r.id}" ${String(salvo[tr]||'')===String(r.id)?'selected':''}>${escaparHtml(r.nome)}</option>`).join('')}
-      </select>
-    </div>`).join('');
-}
-function setRegionalTurnoGlobal(turno,regionalId){
-  if(!S.regionalPorTurnoGlobal) S.regionalPorTurnoGlobal={};
-  if(regionalId) S.regionalPorTurnoGlobal[turno]=regionalId;
-  else delete S.regionalPorTurnoGlobal[turno];
-  autoSave();
-}
 
 // ─── GERAR ESCALAS ────────────────────────────────────────────────────────────
 function executarGerarEscalas(){
@@ -3293,69 +3312,6 @@ function gerarEscalasInterno(){
   const novatos=ger.filter(g=>g.novato);
   const locBlip=S.locais.find(l=>l.nome.toLowerCase().includes('blip'));
 
-  // ── 1 Regional por Turno (GLOBAL, 2026-09-30, pedido do dono: "o turno
-  // ser de apenas 1 regional, ex: amanhã a tarde a Riva inteira tem 2
-  // vagas, as 2 vai ser de 1 regional"). Diferente da trava por local: aqui
-  // TODAS as vagas daquele turno, em TODOS os locais (exceto BLIP e Dia
-  // Todo — lógica própria deles, incompatível com "por turno"), formam UMA
-  // bolsa só, sorteada e dividida o mais igual possível entre o time de
-  // vendas do regional escolhido. Regional sem time ativo cai de volta pro
-  // turno livre, por segurança (nunca deixa vaga sem ninguém pra escalar).
-  const regPorTurnoGlobal=S.regionalPorTurnoGlobal||{};
-  const turnosTravadosGlobal={}; // {tr: regionalId}
-  Object.keys(regPorTurnoGlobal).forEach(tr=>{
-    const rid=regPorTurnoGlobal[tr];
-    if(rid&&timeAtivo(rid).length>0) turnosTravadosGlobal[tr]=rid;
-  });
-  const poolPorTurnoGlobal={};
-  const creditosPorTurnoGlobal={};
-  // "diaTrabalhadoHoje" chaveado por DATA (não por ordem de iteração) — assim
-  // funciona certo mesmo cruzando vários locais no mesmo dia, em qualquer
-  // ordem que sejam processados abaixo: {tr: {ds: {vendedorId:true}}}.
-  const diaTrabalhadoHojeGlobal={};
-  const ultimosPorTurnoGlobal={};
-  Object.keys(turnosTravadosGlobal).forEach(tr=>{
-    let totalVagasTurno=0;
-    S.locais.forEach(l=>{
-      if(!locaisSel.includes(l.id)) return;
-      if(l.diatodo) return;
-      if(locBlip&&l.id===locBlip.id) return;
-      if(!l.turnos.includes(tr)) return;
-      const pLoc=periodoPorLocal[l.id];
-      const lIni=pLoc?.ini||dsIni, lFim=pLoc?.fim||dsFim;
-      diasEntre(lIni,lFim).forEach(d=>{const v=vagasDia(l,d);if(v) totalVagasTurno+=v[tr]||0;});
-    });
-    poolPorTurnoGlobal[tr]=timeAtivo(turnosTravadosGlobal[tr]);
-    creditosPorTurnoGlobal[tr]=repartirPorPeso_(poolPorTurnoGlobal[tr],totalVagasTurno,{});
-    diaTrabalhadoHojeGlobal[tr]={};
-    ultimosPorTurnoGlobal[tr]=[null,null];
-  });
-  // Escolhe quem do time pega o slot travado. Créditos esgotados (sobra de
-  // arredondamento): completa com quem trabalhou MENOS no turno até agora,
-  // mesma regra de fallback usada na escala do time (gerarEscalaDoTime_).
-  function escolherDoTurnoGlobal_(tr,ds,atribGlobalCont){
-    const pool=poolPorTurnoGlobal[tr];
-    if(!pool||pool.length===0) return null;
-    if(!diaTrabalhadoHojeGlobal[tr][ds]) diaTrabalhadoHojeGlobal[tr][ds]={};
-    const ultimos=ultimosPorTurnoGlobal[tr];
-    let escolhido=escolherPorCredito_(pool,creditosPorTurnoGlobal[tr],ultimos,ds,diaTrabalhadoHojeGlobal[tr][ds]);
-    if(!escolhido){
-      const livresHoje=pool.filter(v=>!diaTrabalhadoHojeGlobal[tr][ds][v.id]);
-      const cand=livresHoje.length?livresHoje:pool;
-      const menos=Math.min(...cand.map(v=>atribGlobalCont[v.id]||0));
-      const empatados=cand.filter(v=>(atribGlobalCont[v.id]||0)===menos);
-      escolhido=empatados[Math.floor(Math.random()*empatados.length)]||null;
-      if(escolhido) diaTrabalhadoHojeGlobal[tr][ds][escolhido.id]=true;
-    }
-    if(escolhido){
-      ultimosPorTurnoGlobal[tr]=[ultimos[1],escolhido.id];
-      atribGlobalCont[escolhido.id]=(atribGlobalCont[escolhido.id]||0)+1;
-    }
-    return escolhido;
-  }
-  const contAtribPorTurnoGlobal={};
-  Object.keys(turnosTravadosGlobal).forEach(tr=>{contAtribPorTurnoGlobal[tr]={};});
-
   // ── Calcular créditos VGV para o BLIP ─────────────────────────────────────
   // Gerentes que venderam: têm VGV > 0. Os novatos têm reserva de 10%.
   // Cada gerente não-novato com VGV recebe vagas proporcionais ao seu VGV.
@@ -3511,16 +3467,39 @@ function gerarEscalasInterno(){
     // aplica a % Direto, que já é um percentual combinado manualmente)
     const dez10ativo=modoVGV&&(!S.locais10pct||S.locais10pct.includes(loc.id));
 
-    // Turnos travados pela opção global "1 Regional por Turno" que valem
-    // pra ESTE local (só os que ele tem, e só se não for Dia Todo — Dia
-    // Todo não tem conceito de turno independente).
-    const turnosTravados=loc.diatodo?{}:Object.fromEntries(
-      loc.turnos.filter(tr=>turnosTravadosGlobal[tr]).map(tr=>[tr,turnosTravadosGlobal[tr]])
-    );
+    // ── Sortear por turno (pedido do dono, 2026-09-30): "cada turno tem
+    // que ser sorteado mas tentando manter o máximo de igualdade possível
+    // [...] cada turno é de apenas 1 regional [...] aleatório e não uma
+    // fila sequencial". Configurado por local + turno (Locais & Padrões):
+    // quando o dono escolhe uma LISTA de gerentes pra um turno, a vaga
+    // daquele turno passa a ser sorteada SÓ entre eles (fica no nome do
+    // próprio gerente — não divide com time de ninguém), com o mesmo
+    // algoritmo de crédito+sorteio já usado no resto do sistema, só que a
+    // "bolsa" de crédito é exclusiva daquele turno (não do local inteiro).
+    // Turno sem lista escolhida (ou lista sem ninguém ativo) continua
+    // "Livre" — concorre no pool geral do local, como sempre. Dia Todo não
+    // tem conceito de turno independente, fica sempre livre.
+    const turnosTravados={}; // {tr: {pool:[...], creditos:{}}}
+    if(!loc.diatodo){
+      loc.turnos.forEach(tr=>{
+        const ids=(loc.regionalPorTurno||{})[tr];
+        if(!ids||ids.length===0) return;
+        const pool=ger.filter(g=>ids.includes(String(g.id))||ids.includes(g.id));
+        if(pool.length===0) return;
+        let totalVagasTurno=0;
+        dias.forEach(d=>{const v=vagasDia(loc,d);if(v) totalVagasTurno+=v[tr]||0;});
+        turnosTravados[tr]={
+          pool,
+          creditos:repartirPorPeso_(pool,totalVagasTurno,{}),
+          ultimos:[null,null],
+          diaTrabalhadoHoje:{},
+        };
+      });
+    }
     const turnosLivres=loc.turnos.filter(tr=>!turnosTravados[tr]);
 
     // ── Calcular total de vagas deste local no período (só turnos LIVRES —
-    // os travados já saíram pra bolsa global, calculada antes do loop) ────
+    // os travados já têm pool e créditos próprios, calculados acima) ──────
     let totalVagasLoc=0;
     dias.forEach(d=>{
       const v=vagasDia(loc,d);
@@ -3684,9 +3663,18 @@ function gerarEscalasInterno(){
       const ultimosNormal={locId:[null,null]};
       let diaAtualNormal=null;
       let diaTrabalhadoHojeNormal={};
+      // Contador de quantas vagas cada gerente já pegou em CADA turno
+      // travado — usado só no fallback de crédito esgotado (sobra de
+      // arredondamento), pra completar com quem trabalhou menos.
+      const contPorTurnoTravado={};
+      Object.keys(turnosTravados).forEach(tr=>{contPorTurnoTravado[tr]={};});
       dias.forEach(dia=>{
         const ds=toDS(dia);const v=vagasDia(loc,dia);if(!v) return;
-        if(ds!==diaAtualNormal){diaTrabalhadoHojeNormal={};diaAtualNormal=ds;}
+        if(ds!==diaAtualNormal){
+          diaTrabalhadoHojeNormal={};
+          Object.values(turnosTravados).forEach(t=>{t.diaTrabalhadoHoje={};});
+          diaAtualNormal=ds;
+        }
         turnosLivres.forEach(tr=>{
           const n=v[tr]||0;
           for(let s=0;s<n;s++){
@@ -3698,16 +3686,32 @@ function gerarEscalasInterno(){
             atrib[ds+'_'+tr+'_'+s]=escolhido;
           }
         });
-        // Turnos travados pela opção global "1 Regional por Turno": a bolsa
-        // de créditos e o "trabalhou hoje" são COMPARTILHADOS entre todos os
-        // locais (calculados fora do loop de locais, antes deste bloco) —
-        // por isso usa escolherDoTurnoGlobal_, não a lógica local acima.
+        // Turnos travados: sorteio restrito à lista de gerentes escolhida
+        // pra esse turno (pool/créditos calculados 1x, fora do loop de
+        // dias) — mesmo algoritmo de crédito+sorteio do resto do sistema.
         Object.keys(turnosTravados).forEach(tr=>{
+          const t=turnosTravados[tr];
           const n=v[tr]||0;
           for(let s=0;s<n;s++){
             if(S.ajustes[loc.id+'_'+ds+'_'+tr+'_'+s]!==undefined) continue;
             if(atrib[ds+'_'+tr+'_'+s]!==undefined) continue;
-            atrib[ds+'_'+tr+'_'+s]=escolherDoTurnoGlobal_(tr,ds,contAtribPorTurnoGlobal[tr]);
+            let escolhido=escolherPorCredito_(t.pool,t.creditos,t.ultimos,ds,t.diaTrabalhadoHoje);
+            if(!escolhido){
+              // Créditos esgotados (sobra de arredondamento): completa com
+              // quem trabalhou MENOS nesse turno até agora.
+              const cont=contPorTurnoTravado[tr];
+              const livresHoje=t.pool.filter(g=>!t.diaTrabalhadoHoje[g.id]);
+              const cand=livresHoje.length?livresHoje:t.pool;
+              const menos=Math.min(...cand.map(g=>cont[g.id]||0));
+              const empatados=cand.filter(g=>(cont[g.id]||0)===menos);
+              escolhido=empatados[Math.floor(Math.random()*empatados.length)]||null;
+              if(escolhido) t.diaTrabalhadoHoje[escolhido.id]=true;
+            }
+            if(escolhido){
+              t.ultimos=[t.ultimos[1],escolhido.id];
+              contPorTurnoTravado[tr][escolhido.id]=(contPorTurnoTravado[tr][escolhido.id]||0)+1;
+            }
+            atrib[ds+'_'+tr+'_'+s]=escolhido;
           }
         });
       });
@@ -3725,12 +3729,9 @@ function gerarEscalasInterno(){
           for(let s=0;s<n;s++){
             const aKey=loc.id+'_'+ds+'_'+tr+'_'+s;
             if(S.ajustes[aKey]!==undefined){
-              // Ajuste manual: procura primeiro no pool geral (caso normal);
-              // turno travado pela opção global pode ter sido ajustado pra
-              // um vendedor do time (id que não existe em `ger`) — procura lá também.
-              const achado=ger.find(x=>x.id===S.ajustes[aKey])
-                ||(turnosTravados[tr]?(poolPorTurnoGlobal[tr]||[]).find(x=>String(x.id)===String(S.ajustes[aKey])):null);
-              daySlots[tr].push(achado||null);
+              // Pool do turno travado é sempre um subconjunto de `ger` (são
+              // gerentes normais, não um time de vendas à parte) — acha direto.
+              daySlots[tr].push(ger.find(x=>x.id===S.ajustes[aKey])||null);
             }
             else{daySlots[tr].push(atrib[ds+'_'+tr+'_'+s]||null);}
           }
