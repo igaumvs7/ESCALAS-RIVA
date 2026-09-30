@@ -714,6 +714,17 @@ tbody tr:hover td { background: #FAFBFF; }
 
   <!-- ABA 3: GERENTES -->
   <div id="aba-3" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div class="row-between" style="margin-bottom:10px">
+        <div class="card-title" style="margin-bottom:0">Regionais</div>
+      </div>
+      <div class="info-box" style="margin-bottom:10px">Nomes de Regional disponíveis pra escolher em cada gerente (ex: René, Cahú, Jéssica...). Adicione quantos precisar.</div>
+      <div id="lista-regionais" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+      <div class="row" style="gap:8px">
+        <input type="text" id="novo-regional-input" placeholder="Nome do novo regional" style="flex:1;max-width:240px" onkeydown="if(event.key==='Enter')addRegional()">
+        <button class="btn btn-outline btn-sm" onclick="addRegional()">+ Adicionar Regional</button>
+      </div>
+    </div>
     <div class="grid-2">
       <div class="card">
         <div class="row-between" style="margin-bottom:14px">
@@ -1131,6 +1142,21 @@ const LOC_CORES = [
   {bg:'#1A7A42',tx:'#fff'}, {bg:'#5A3FC0',tx:'#fff'},
   {bg:'#B45309',tx:'#fff'}, {bg:'#0D7490',tx:'#fff'}
 ];
+// Cores por Regional (2026-09-30, pedido do dono: adicionar mais de 2
+// regionais) — antes era condicional binário azul/verde (só René/Cahú);
+// agora indexa por posição em S.nomesRegionais, suporta quantos forem
+// cadastrados, repetindo a paleta se acabar.
+const REGIONAL_CORES = [
+  {badge:'badge-azul', hex:'var(--azul-claro)'},
+  {badge:'badge-verde', hex:'var(--verde)'},
+  {badge:'badge-amarelo', hex:'#B45309'},
+  {badge:'badge-roxo', hex:'#5A3FC0'},
+  {badge:'badge-vermelho', hex:'#C0272D'},
+];
+function corRegional(nome){
+  const idx=Math.max(0,(S.nomesRegionais||[]).indexOf(nome));
+  return REGIONAL_CORES[idx%REGIONAL_CORES.length];
+}
 
 // ─── ESTADO ───────────────────────────────────────────────────────────────────
 let S = {
@@ -1179,6 +1205,11 @@ let S = {
     {id:8,nome:'Helena',regional:'Cahú',novato:false,inativo:false},
     {id:9,nome:'Igor',regional:'Cahú',novato:false,inativo:false}
   ],
+  // Nomes de Regional disponíveis nos seletores (2026-09-30, pedido do
+  // dono: "eu quero poder cadastrar mais um regional [...] só tem Cahú e
+  // René, quero por a Jéssica também") — antes era fixo (René/Cahú
+  // hardcoded), agora é uma lista editável em Gerentes & VGV.
+  nomesRegionais: ['René','Cahú'],
   vgv: {},
   escala: null,
   ajustes: {},
@@ -2141,7 +2172,7 @@ function renderPainelRelatorioRapido(){
   `;
 
   // Cards regionais rápidos
-  ['René','Cahú'].forEach(reg=>{
+  (S.nomesRegionais||[]).forEach(reg=>{
     const gReg=ativos.filter(g=>g.regional===reg);
     if(!gReg.length) return;
     const div=document.createElement('div');
@@ -2626,7 +2657,54 @@ function salvarModalDia(){
 }
 
 // ─── GERENTES & VGV ──────────────────────────────────────────────────────────
+// Lista de Regionais disponíveis nos seletores (pedido do dono, 2026-09-30):
+// antes era fixo René/Cahú, agora editável — adiciona quantos quiser (ex:
+// Jéssica). Remover um regional que ainda está em uso pede confirmação e
+// realoca os gerentes afetados pro primeiro da lista restante (nunca deixa
+// gerente com um regional "órfão", fora da lista de seletores).
+function renderListaRegionais(){
+  const cont=document.getElementById('lista-regionais');
+  if(!cont) return;
+  if(!S.nomesRegionais) S.nomesRegionais=['René','Cahú'];
+  cont.innerHTML=S.nomesRegionais.map((nome,idx)=>{
+    const cor=REGIONAL_CORES[idx%REGIONAL_CORES.length];
+    return `<span class="badge ${cor.badge}" style="display:flex;align-items:center;gap:6px;padding:5px 10px;font-size:12px">
+      ${escaparHtml(nome)}
+      <button onclick="removerRegional(${argJs_(nome)})" title="Remover" style="background:none;border:none;cursor:pointer;font-weight:800;color:inherit;padding:0;line-height:1">✕</button>
+    </span>`;
+  }).join('');
+}
+function addRegional(){
+  const input=document.getElementById('novo-regional-input');
+  const nome=(input.value||'').trim();
+  if(!nome){showToast('Digite um nome pro regional.','warning');return;}
+  if(!S.nomesRegionais) S.nomesRegionais=['René','Cahú'];
+  if(S.nomesRegionais.some(n=>n.toLowerCase()===nome.toLowerCase())){
+    showToast('Esse regional já existe.','warning');return;
+  }
+  S.nomesRegionais.push(nome);
+  renderGerentesVGV();autoSave();
+  const inputNovo=document.getElementById('novo-regional-input');
+  if(inputNovo) inputNovo.value='';
+  showToast(`Regional "${nome}" adicionado!`,'success');
+}
+function removerRegional(nome){
+  if(!S.nomesRegionais||S.nomesRegionais.length<=1){
+    showToast('Precisa ter pelo menos 1 regional cadastrado.','warning');return;
+  }
+  const afetados=S.gerentes.filter(g=>g.regional===nome);
+  const restante=S.nomesRegionais.filter(n=>n!==nome);
+  if(afetados.length>0){
+    const ok=confirm(`${afetados.length} gerente(s) está(ão) em "${nome}": ${afetados.map(g=>g.nome).join(', ')}.\n\nAo remover, eles passam pra "${restante[0]}". Continuar?`);
+    if(!ok) return;
+    afetados.forEach(g=>{g.regional=restante[0];});
+  }
+  S.nomesRegionais=restante;
+  renderListaRegionais();renderGerentesVGV();autoSave();
+}
+
 function renderGerentesVGV(){
+  renderListaRegionais();
   const lg=document.getElementById('lista-gerentes');
   lg.innerHTML='';
   const novatos=S.gerentes.filter(g=>g.novato&&!g.inativo);
@@ -2650,9 +2728,8 @@ function renderGerentesVGV(){
     if(g.inativo) d.style.opacity='0.5';
     d.innerHTML=`
       <input type="text" value="${g.nome}" style="flex:1;font-weight:600${g.inativo?';color:var(--cinza-texto)':''}" onchange="S.gerentes.find(x=>x.id===${g.id}).nome=this.value;renderGerentesVGV();autoSave()">
-      <select style="width:auto" onchange="S.gerentes.find(x=>x.id===${g.id}).regional=this.value;autoSave()">
-        <option${g.regional==='René'?' selected':''}>René</option>
-        <option${g.regional==='Cahú'?' selected':''}>Cahú</option>
+      <select style="width:auto" onchange="S.gerentes.find(x=>x.id===${g.id}).regional=this.value;renderGerentesVGV();autoSave()">
+        ${S.nomesRegionais.map(nome=>`<option${g.regional===nome?' selected':''}>${escaparHtml(nome)}</option>`).join('')}
       </select>
       <select title="Cargo — aparece no relatório pra diferenciar quem é Regional de quem é Vendas" style="width:auto;font-weight:600;color:${g.cargo==='regional'?'#1A4A9C':g.cargo==='vendas'?'#7A5A00':'var(--cinza-texto)'}" onchange="S.gerentes.find(x=>x.id===${g.id}).cargo=this.value||null;renderGerentesVGV();autoSave()">
         <option value=""${!g.cargo?' selected':''}>— Cargo? —</option>
@@ -2685,7 +2762,7 @@ function renderGerentesVGV(){
     const tr=document.createElement('tr');
     if(g.inativo) tr.style.opacity='0.45';
     tr.innerHTML=`<td style="font-weight:600">${g.nome}</td>
-      <td><span class="badge ${g.regional==='René'?'badge-azul':'badge-verde'}">${g.regional}</span></td>
+      <td><span class="badge ${corRegional(g.regional).badge}">${g.regional}</span></td>
       <td><input type="number" value="${v}" min="0" style="width:130px" onchange="setVGV(${g.id},+this.value)" ${g.inativo?'disabled':''}></td>
       <td style="font-size:12px;min-width:36px;font-weight:600">${g.inativo?'—':pct+'%'}</td>
       <td><input type="number" value="${S.pctManual[g.id]||0}" min="0" max="100" style="width:90px" onchange="setPctManual(${g.id},+this.value)" ${g.inativo?'disabled':''}> %</td>
@@ -2713,7 +2790,7 @@ function renderGerentesVGV(){
 function setVGV(id,val){S.vgv[id]=val;renderGerentesVGV();autoSave();}
 function setPctManual(id,val){if(!S.pctManual)S.pctManual={};S.pctManual[id]=Math.max(0,Math.min(100,val));renderGerentesVGV();autoSave();}
 function removerGerente(id){if(confirm('Remover gerente?')){S.gerentes=S.gerentes.filter(x=>x.id!==id);renderGerentesVGV();autoSave();}}
-function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regional:'René',cargo:null,novato:false,inativo:false});renderGerentesVGV();autoSave();showToast('Gerente adicionado!','success');}
+function addGerente(){S.gerentes.push({id:Date.now(),nome:'Novo Gerente',regional:(S.nomesRegionais&&S.nomesRegionais[0])||'René',cargo:null,novato:false,inativo:false});renderGerentesVGV();autoSave();showToast('Gerente adicionado!','success');}
 
 // Badge de cargo (2026-09-12, pedido do dono): usado nos relatórios pra
 // diferenciar Gerente Regional de Gerente de Vendas — mesma pessoa, mesma
@@ -4283,7 +4360,7 @@ function salvarDados(){
     // sem estar nesta lista, o que o dono digitasse sumia ao recarregar a
     // página (o salvamento monta um objeto campo a campo, não salva o S
     // inteiro — o que não estiver listado aqui simplesmente não persiste).
-    const dados={mes:S.mes,ano:S.ano,locais:S.locais,gerentes:S.gerentes,vgv:S.vgv,ajustes:S.ajustes,escala:S.escala,historicoEscalas:S.historicoEscalas||[],filaDomingos:S.filaDomingos||[],vagasManual:S.vagasManual||{},vagasManualTotal:S.vagasManualTotal||0,locais10pct:S.locais10pct??null,pctManual:S.pctManual||{},times:S.times||{},vgvTime:S.vgvTime||{},pctTime:S.pctTime||{},modoTime:S.modoTime||{},historicoDomingos:S.historicoDomingos||{},filaDomingosTime:S.filaDomingosTime||{},savedAt:new Date().toISOString()};
+    const dados={mes:S.mes,ano:S.ano,locais:S.locais,gerentes:S.gerentes,vgv:S.vgv,ajustes:S.ajustes,escala:S.escala,historicoEscalas:S.historicoEscalas||[],filaDomingos:S.filaDomingos||[],vagasManual:S.vagasManual||{},vagasManualTotal:S.vagasManualTotal||0,locais10pct:S.locais10pct??null,pctManual:S.pctManual||{},times:S.times||{},vgvTime:S.vgvTime||{},pctTime:S.pctTime||{},modoTime:S.modoTime||{},historicoDomingos:S.historicoDomingos||{},filaDomingosTime:S.filaDomingosTime||{},nomesRegionais:S.nomesRegionais||['René','Cahú'],regionalPorTurnoAtivo:S.regionalPorTurnoAtivo||false,filaRegionalPorTurno:S.filaRegionalPorTurno||[],regionalPorTurnoPonteiro:S.regionalPorTurnoPonteiro??-1,savedAt:new Date().toISOString()};
     localStorage.setItem(storageKeyAtual(),JSON.stringify(dados));
     atualizarIndicadorSalvo(true);
   }catch(e){console.warn('Erro ao salvar:',e);showToast('Erro ao salvar dados!','error');}
@@ -4321,6 +4398,14 @@ function carregarDados(){
     S.modoTime=dados.modoTime??{};
     S.historicoDomingos=dados.historicoDomingos??{};
     S.filaDomingosTime=dados.filaDomingosTime??{};
+    S.nomesRegionais=dados.nomesRegionais??['René','Cahú'];
+    // Dado antigo pode ter gerente com `regional` fora da lista (nunca
+    // deveria, mas por segurança nunca deixa um nome "órfão" sem estar na
+    // lista de seletores).
+    S.gerentes.forEach(g=>{if(g.regional&&!S.nomesRegionais.includes(g.regional))S.nomesRegionais.push(g.regional);});
+    S.regionalPorTurnoAtivo=dados.regionalPorTurnoAtivo??false;
+    S.filaRegionalPorTurno=dados.filaRegionalPorTurno??[];
+    S.regionalPorTurnoPonteiro=dados.regionalPorTurnoPonteiro??-1;
     const selMes=document.getElementById('sel-mes');const inpAno=document.getElementById('inp-ano');
     if(selMes) selMes.value=S.mes;if(inpAno) inpAno.value=S.ano;
     return dados.savedAt||true;
@@ -4880,18 +4965,19 @@ function renderRelatorio(){
     cardVGVReg.style.cssText='background:var(--cinza-fundo);border:1px solid var(--cinza-borda);border-radius:var(--radius);padding:16px 20px;margin-bottom:18px';
     cardVGVReg.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">💰 VGV por Regional — Participação no Total</div>
       <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:12px">
-        ${['René','Cahú'].map(reg=>{
+        ${(S.nomesRegionais||[]).map(reg=>{
           const gReg=ativos.filter(g=>g.regional===reg);
           const vgvReg=gReg.reduce((s,g)=>s+(S.vgv[g.id]||0),0);
           const pct=totalVGVAtivos>0?((vgvReg/totalVGVAtivos)*100).toFixed(1):0;
+          const corHex=corRegional(reg).hex;
           return `<div style="flex:1;min-width:140px;background:#fff;border-radius:8px;padding:12px 16px;border:1.5px solid var(--cinza-borda)">
             <div style="font-size:11px;font-weight:700;color:var(--cinza-texto);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Regional ${reg}</div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--azul);line-height:1">${fmtR(vgvReg)}</div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
               <div style="flex:1;height:6px;background:var(--cinza-borda);border-radius:4px;overflow:hidden">
-                <div style="height:100%;width:${pct}%;background:${reg==='René'?'var(--azul-claro)':'var(--verde)'};border-radius:4px"></div>
+                <div style="height:100%;width:${pct}%;background:${corHex};border-radius:4px"></div>
               </div>
-              <span style="font-size:12px;font-weight:800;color:${reg==='René'?'var(--azul-claro)':'var(--verde)'}">${pct}%</span>
+              <span style="font-size:12px;font-weight:800;color:${corHex}">${pct}%</span>
             </div>
           </div>`;
         }).join('')}
@@ -4904,7 +4990,7 @@ function renderRelatorio(){
     cont.appendChild(cardVGVReg);
   }
 
-  ['René','Cahú'].forEach(reg=>{
+  (S.nomesRegionais||[]).forEach(reg=>{
     const gReg=ativos.filter(g=>g.regional===reg);
     if(!gReg.length) return;
     const sec=document.createElement('div');sec.className='card';sec.style.marginBottom='18px';
