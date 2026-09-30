@@ -1170,8 +1170,11 @@ let S = {
      padrao:{0:{m:0,t:0},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
      fechados:[], modo:'igual',
      horarios:{m:'08:00 – 13:00', t:'13:00 – 18:00', n:''}},
-    {id:3, nome:'Lumina', turnos:['m','t'], diatodo:true,
-     padrao:{0:{m:1,t:1},1:{m:1,t:1},2:{m:1,t:1},3:{m:1,t:1},4:{m:1,t:1},5:{m:1,t:1},6:{m:1,t:1}},
+    // diatodo:false — Lumina NÃO é "dia todo" (pedido do dono, 2026-09-30:
+    // "está o nome dia todo e não é dia todo"). Cada turno sorteia
+    // separado, igual ao resto dos locais.
+    {id:3, nome:'Lumina', turnos:['m','t'], diatodo:false,
+     padrao:{0:{m:2,t:2},1:{m:2,t:2},2:{m:2,t:2},3:{m:2,t:2},4:{m:2,t:2},5:{m:2,t:2},6:{m:2,t:2}},
      fechados:[], modo:'igual',
      horarios:{m:'09:00 – 13:00', t:'13:00 – 18:00', n:''},
      horarios_sab:{m:'09:00 – 13:00', t:'13:00 – 18:00', n:''},
@@ -2446,6 +2449,12 @@ function renderCalendarioVagas(){
 // no final da grade, além do mês selecionado — cresce clicando no botão
 // "+ mostrar mais dias", reseta ao trocar de local ou de mês.
 let calSemanasExtras=0;
+// Copiar/colar vagas entre dias do Calendário (pedido do dono, 2026-09-30:
+// "eu quero poder copiar um balão e colar no outro, tipo apertar com o
+// botão direito e aparecer copiar e colar"). Guarda só o número de vagas
+// por turno copiado — colar NÃO reabre o dia fechado sozinho, só aplica o
+// override de vagas (fechado é decisão separada, o dono desmarca se quiser).
+let calVagasCopiadas=null;
 
 // Constrói 1 célula do calendário — extraído pra ser usado tanto pros dias
 // do mês selecionado quanto pros dias extras do próximo mês (mesmo template
@@ -2460,6 +2469,7 @@ function construirCelulaDiaVagas_(loc,d,ehProximoMes){
   cell.className='cal-dia'+(fechado?' fechado':'')+(override?' tem-override':'')+(ehProximoMes?' prox-mes':'');
   if(ehProximoMes) cell.style.opacity='0.72';
   cell.onclick=()=>abrirModalDia(loc.id,ds,d.getDate(),d.getDay());
+  cell.oncontextmenu=(e)=>{e.preventDefault();abrirMenuCopiarColarVagas_(e,loc,ds,fechado,vagas);};
   const num=document.createElement('div');num.className='cal-dia-num';
   num.textContent=ehProximoMes?`${d.getDate()}/${MESES[d.getMonth()+1].slice(0,3)}`:d.getDate();
   cell.appendChild(num);
@@ -2479,6 +2489,77 @@ function construirCelulaDiaVagas_(loc,d,ehProximoMes){
     const ov=document.createElement('div');ov.style.cssText='font-size:9px;color:var(--azul-claro);font-weight:700;margin-top:2px;text-align:right';ov.textContent='✏️ override';cell.appendChild(ov);
   }
   return cell;
+}
+
+// Menu flutuante de Copiar/Colar vagas (botão direito num dia do
+// Calendário de Vagas). Um menu só por vez — fecha o anterior antes de
+// abrir outro, e fecha sozinho ao clicar em qualquer lugar fora dele.
+function fecharMenuCopiarColarVagas_(){
+  const existente=document.getElementById('menu-copiar-colar-vagas');
+  if(existente) existente.remove();
+}
+function abrirMenuCopiarColarVagas_(e,loc,ds,fechado,vagas){
+  fecharMenuCopiarColarVagas_();
+  const menu=document.createElement('div');
+  menu.id='menu-copiar-colar-vagas';
+  menu.style.cssText=`position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:9999;background:#fff;border:1.5px solid var(--cinza-borda);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(0,0,0,0.18);min-width:170px;overflow:hidden;font-size:13px`;
+  const itemStyle='display:block;width:100%;text-align:left;padding:9px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--texto)';
+
+  const btnCopiar=document.createElement('button');
+  btnCopiar.style.cssText=itemStyle;
+  btnCopiar.textContent='📋 Copiar vagas deste dia';
+  btnCopiar.disabled=fechado||!vagas;
+  if(btnCopiar.disabled) btnCopiar.style.cssText+=';opacity:0.4;cursor:not-allowed';
+  btnCopiar.onmouseover=()=>{if(!btnCopiar.disabled)btnCopiar.style.background='var(--cinza-fundo)';};
+  btnCopiar.onmouseout=()=>{btnCopiar.style.background='none';};
+  btnCopiar.onclick=()=>{
+    if(btnCopiar.disabled) return;
+    calVagasCopiadas={};
+    loc.turnos.forEach(tr=>{calVagasCopiadas[tr]=vagas[tr]||0;});
+    fecharMenuCopiarColarVagas_();
+    showToast('Vagas copiadas! Clique com o botão direito no dia de destino pra colar.','success');
+  };
+  menu.appendChild(btnCopiar);
+
+  const btnColar=document.createElement('button');
+  btnColar.style.cssText=itemStyle+';border-top:1px solid var(--cinza-borda)';
+  const podeColar=!!calVagasCopiadas;
+  btnColar.textContent=podeColar?'📥 Colar vagas aqui':'📥 Colar vagas (copie algo primeiro)';
+  btnColar.disabled=!podeColar;
+  if(!podeColar) btnColar.style.cssText+=';opacity:0.4;cursor:not-allowed';
+  btnColar.onmouseover=()=>{if(podeColar)btnColar.style.background='var(--cinza-fundo)';};
+  btnColar.onmouseout=()=>{btnColar.style.background='none';};
+  btnColar.onclick=()=>{
+    if(!podeColar) return;
+    S.ajustes['pad_'+loc.id+'_'+ds]={...calVagasCopiadas};
+    fecharMenuCopiarColarVagas_();
+    renderCalMes();autoSave();
+    showToast('Vagas coladas neste dia! ✅','success');
+  };
+  menu.appendChild(btnColar);
+
+  document.body.appendChild(menu);
+  // Ajusta se estourar a borda direita/inferior da tela.
+  const rect=menu.getBoundingClientRect();
+  if(rect.right>window.innerWidth) menu.style.left=(window.innerWidth-rect.width-8)+'px';
+  if(rect.bottom>window.innerHeight) menu.style.top=(window.innerHeight-rect.height-8)+'px';
+  // Listener ÚNICO, registrado 1x só (nunca removido/reempilhado) — sempre
+  // busca o menu ATUAL pelo id em vez de guardar a referência antiga numa
+  // closure. Só fecha em CLIQUE ESQUERDO fora do menu — nunca em
+  // 'contextmenu': esse é o mesmo evento que ABRE um menu novo (borbulha
+  // da célula até o document), então ficar de olho nele fechava o menu
+  // recém-criado no mesmo instante em que abria (bug real pego testando:
+  // funcionava a 1ª vez, nunca mais depois). Clicar com o botão direito
+  // numa outra célula já troca de menu sozinho (abrirMenuCopiarColarVagas_
+  // fecha o anterior no início, antes de criar o novo).
+  if(!window._menuCopiarColarListenerAtivo){
+    window._menuCopiarColarListenerAtivo=true;
+    const fecharSeForaDoMenu=(ev)=>{
+      const atual=document.getElementById('menu-copiar-colar-vagas');
+      if(atual&&!atual.contains(ev.target)) atual.remove();
+    };
+    setTimeout(()=>{document.addEventListener('click',fecharSeForaDoMenu);},0);
+  }
 }
 
 function renderCalMes(){
@@ -4412,6 +4493,9 @@ function carregarDados(){
         setSeVazio(lumina,'horarios',{m:'09:00 – 13:00',t:'13:00 – 18:00',n:''});
         setSeVazio(lumina,'horarios_sab',{m:'09:00 – 13:00',t:'13:00 – 18:00',n:''});
         setSeVazio(lumina,'horarios_dom',{m:'09:00 – 12:00',t:'12:00 – 17:00',n:''});
+        // "está o nome dia todo e não é dia todo você sabe disso" — Lumina
+        // não deveria estar marcado como Dia Todo. Corrige o dado já salvo.
+        lumina.diatodo=false;
       }
       const loja=S.locais.find(l=>l.nome.toLowerCase().includes('loja'));
       if(loja){
